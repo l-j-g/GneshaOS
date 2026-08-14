@@ -2,7 +2,7 @@
 # Auto-brightness from IIO ambient light sensor via brightnessctl (logind D-Bus).
 # Polls every 2s with exponential smoothing — same approach as illuminanced.
 
-SENSOR=/sys/bus/iio/devices/iio:device4/in_illuminance_raw
+SENSOR=__ALS_SENSOR_PATH__
 SMOOTH=0.3        # lower = smoother but slower to react
 INTERVAL=2
 
@@ -18,7 +18,7 @@ to_pct() {
 }
 
 # Seed the smoothed value from current brightness
-current=$(brightnessctl -d intel_backlight -m | cut -d, -f4 | tr -d %\n)
+current=$(brightnessctl -d __BACKLIGHT_DEVICE__ -m | cut -d, -f4 | tr -d %\n)
 smoothed_raw=$(cat "$SENSOR" 2>/dev/null)
 smoothed_pct=$(to_pct "$smoothed_raw")
 echo "als-brightness: start (current=${current}%, lux~=$((smoothed_raw/1000)))"

@@ -4,6 +4,7 @@
   config,
   pkgs,
   lib,
+  params,
   ...
 }:
 
@@ -65,7 +66,7 @@ in
       };
 
       backlight = {
-        device = "intel_backlight";
+        device = params.userSettings.backlightDevice;
         format = "󰃟";
         on-scroll-up = "brightness.sh up | wob.sh ${v.accent} ${v.bg}";
         on-scroll-down = "brightness.sh down | wob.sh ${v.accent} ${v.bg}";

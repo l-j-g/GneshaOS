@@ -5,33 +5,36 @@
   config,
   pkgs,
   lib,
+  params,
   ...
 }:
 
 let
   sessionTarget = "sway-session.target";
+  u = params.userSettings;
 in
 {
-  # --- Idle: dim 240s, lock 300s, DPMS off 600s, suspend only on battery 900s.
+  # --- Idle: dim -> lock -> DPMS off -> suspend only on battery.
+  # Timeouts and dim level come from the top-level params.
   services.swayidle = {
     enable = true;
     timeouts = [
       {
-        timeout = 240;
-        command = "${pkgs.brightnessctl}/bin/brightnessctl -s && ${pkgs.brightnessctl}/bin/brightnessctl set 10";
+        timeout = u.idleDimSec;
+        command = "${pkgs.brightnessctl}/bin/brightnessctl -s && ${pkgs.brightnessctl}/bin/brightnessctl set ${toString u.idleDimPercent}";
         resumeCommand = "${pkgs.brightnessctl}/bin/brightnessctl -r";
       }
       {
-        timeout = 300;
+        timeout = u.idleLockSec;
         command = "${pkgs.swaylock}/bin/swaylock";
       }
       {
-        timeout = 600;
+        timeout = u.idleOffSec;
         command = "${pkgs.sway}/bin/swaymsg \"output * power off\"";
         resumeCommand = "${pkgs.sway}/bin/swaymsg \"output * power on\"";
       }
       {
-        timeout = 900;
+        timeout = u.idleSuspendSec;
         command = "${pkgs.acpi}/bin/acpi --ac-adapter | grep -q 'on-line' || systemctl suspend";
       }
     ];
@@ -224,7 +227,7 @@ in
       PartOf = [ "graphical-session.target" ];
     };
     Service = {
-      ExecStart = "${pkgs.bash}/bin/bash /etc/nixos/home/desktop/scripts/als-brightness.sh";
+      ExecStart = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/als-brightness.sh";
       Restart = "on-failure";
       RestartSec = 10;
     };

@@ -3,6 +3,7 @@
   pkgs,
   lib,
   username,
+  params,
   ...
 }:
 
@@ -77,26 +78,27 @@
   zramSwap.enable = true;
   zramSwap.memoryPercent = 50;
 
-  networking.hostName = "cf-fv1";
+  networking.hostName = params.systemSettings.hostName;
   networking.networkmanager.enable = true;
 
   # Make dconf/gsettings available so home-manager can apply the GTK theme
   # (home-manager writes the theme/icon to org/gnome/desktop/interface).
   programs.dconf.enable = true;
 
-  # Local time = Australia/Sydney (matches the wlsunset coordinates).
-  time.timeZone = "Australia/Sydney";
+  # Local time = system timezone from the top-level params (should match the
+  # wlsunset coordinates).
+  time.timeZone = params.userSettings.timeZone;
 
   # macOS SMB share for the exFAT media volume.
   # Access is limited to the home LAN; authentication uses Samba's
-  # separate password database for user lg.
+  # separate password database for the user from the top-level params.
   services.samba = {
     enable = true;
     openFirewall = true;
     settings = {
       global = {
         workgroup = "WORKGROUP";
-        "server string" = "cf-fv1";
+        "server string" = params.systemSettings.hostName;
         security = "user";
         "map to guest" = "never";
         "server min protocol" = "SMB2";
@@ -109,8 +111,8 @@
         path = "/media";
         browseable = "yes";
         "read only" = "no";
-        "valid users" = "lg";
-        "force user" = "lg";
+        "valid users" = params.userSettings.userName;
+        "force user" = params.userSettings.userName;
         "create mask" = "0664";
         "directory mask" = "0775";
       };
@@ -172,8 +174,8 @@
     enable = true;
     dates = "weekly";
   };
-  # Let lg run docker without sudo and manage the stack
-  users.users.lg.extraGroups = [
+  # Let the user run docker without sudo and manage the stack
+  users.users.${params.userSettings.userName}.extraGroups = [
     "docker"
     "input"
   ];
@@ -188,7 +190,7 @@
       Type = "oneshot";
       RemainAfterExit = true;
       ExecStart = "${pkgs.coreutils}/bin/true";
-      ExecStop = "${pkgs.docker}/bin/docker compose -f /home/lg/src/arr/docker-compose.yml down";
+      ExecStop = "${pkgs.docker}/bin/docker compose -f ${params.userSettings.arrComposePath} down";
       TimeoutStopSec = 60;
     };
   };

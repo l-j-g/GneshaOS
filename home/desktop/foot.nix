@@ -4,6 +4,7 @@
   config,
   pkgs,
   lib,
+  params,
   ...
 }:
 
@@ -14,7 +15,7 @@ in
 {
   xdg.configFile."foot/foot.ini".text = ''
     [main]
-    font=monospace:size=11
+    font=monospace:size=${toString params.userSettings.terminalFontSize}
     pad=8x8
 
     [cursor]

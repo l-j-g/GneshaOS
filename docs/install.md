@@ -141,7 +141,10 @@ secure-boot state, so tampered boot will prompt for the key instead.)
 
 ## Rebuild command
 
-    nixos-rebuild switch --flake .#cf-fv1
+    nixos-rebuild switch --flake .#<hostName>
+
+(`<hostName>` and every other user-facing value come from `params.nix` at the
+repo root — see `params.example.nix` for the documented list.)
 
 ## Known gotchas hit during install
 

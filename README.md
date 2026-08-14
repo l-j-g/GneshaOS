@@ -65,24 +65,34 @@ A declarative NixOS configuration for a [Panasonic Let's Note CF-FV1](https://pa
 
 | Path | Contents |
 | --- | --- |
-| `hosts/cf-fv1/` | Machine configuration: `default.nix` + machine-generated `hardware-configuration.nix` |
+| `hosts/cf-fv1/` | Machine configuration: `default.nix` + machine-generated `hardware-configuration.nix` (the only file with machine-specific values — disk UUIDs — and intentionally not parameterised) |
 | `modules/` | Reusable NixOS modules: `btrfs`, `fonts`, `hardening`, `letsnote` |
 | `home/` | Home-manager user environment (apps, desktop, editors, fonts, shell, theme) |
+| `params.nix` | **Top-level user parameters** — edit this one file to make the config yours |
+| `params.example.nix` | Documented template / fallback (same values as `params.nix`) |
 | `docs/` | Install runbook |
 
 ## Install / usage
 
 ```sh
-# Build and switch the system
-sudo nixos-rebuild switch --flake .#cf-fv1
+# 1. (First time only) personalise the top-level parameters
+cp params.example.nix params.nix   # or just edit params.nix directly
+#    ... change userName, gitUserEmail, hostName, timeZone, displayWidth/Height,
+#    displayScale, keyboardLayout ... every user-facing value lives here.
+
+# 2. Build and switch the system
+sudo nixos-rebuild switch --flake .#<hostName from params.nix>
 
 # Dry-run build
-nixos-rebuild build --flake .#cf-fv1
+nixos-rebuild build --flake .#<hostName from params.nix>
 ```
 
-The hostname is `cf-fv1` and the username is `lg` by default — both are
-configurable in `flake.nix` (`username` is set once, near the top; the host is
-the `nixosConfigurations` key).
+`params.nix` is the single top-level parameter file — username, hostname,
+display resolution/scaling, keyboard layout, timezone, paths and preferences.
+It is tracked by design (git flakes only see tracked files), so fork it and
+make it yours. `params.example.nix` is the fully commented template and also
+the fallback if `params.nix` is ever missing, so a fresh clone always
+evaluates.
 
 For a from-scratch install, follow [`docs/install.md`](docs/install.md).
 

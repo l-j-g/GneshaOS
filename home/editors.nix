@@ -1,4 +1,10 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  params,
+  ...
+}:
 
 let
   initLua = builtins.readFile ./init.lua;
@@ -56,8 +62,8 @@ in
     enable = true;
     settings = {
       user = {
-        name = "lg";
-        email = "lg@lgreve.com";
+        name = params.userSettings.gitUserName;
+        email = params.userSettings.gitUserEmail;
       };
       init.defaultBranch = "main";
       core.autocrlf = "input";

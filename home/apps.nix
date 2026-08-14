@@ -25,7 +25,12 @@
       inputs.mcp-nixos.packages.${pkgs.system}.default
     ];
 
-  xdg.configFile."opencode/opencode.jsonc".source = ../opencode.json;
+  # Optional local opencode config. Only installed when the file exists next
+  # to the repo (it is machine-specific and intentionally not tracked), so a
+  # fresh clone evaluates without it. Copy your own into place if you use it.
+  xdg.configFile = lib.optionalAttrs (builtins.pathExists ../opencode.json) {
+    "opencode/opencode.jsonc".source = ../opencode.json;
+  };
 
   # Open files from nnn with nvim (text) / imv/mpv (media).
   home.sessionVariables.NNN_OPENER = "nnn-opener";

@@ -8,10 +8,15 @@
   config,
   pkgs,
   lib,
+  params,
   ...
 }:
 
 let
+  # Wallpaper SVG is sized to the native panel resolution (top-level params).
+  wpW = toString params.userSettings.displayWidth;
+  wpH = toString params.userSettings.displayHeight;
+
   # Decode the Braille Ganesha into its individual dots, then replace each dot
   # with a tiny Matrix glyph. The fixed seed preserves Nix build reproducibility
   # while varying glyph shape, size, colour, and intensity.
@@ -29,8 +34,8 @@ let
     # Match the original 20px monospace Braille layout: its cells are roughly
     # 12px wide by 20px tall.  The earlier 18x24 grid widened Ganesha by 50%.
     my ($cell_w, $cell_h) = (12, 20);
-    my $start_x = (2160 - 60 * $cell_w) / 2 + $cell_w / 4;
-    my $start_y = (1440 - 45 * $cell_h) / 2 + 7;
+    my $start_x = (${wpW} - 60 * $cell_w) / 2 + $cell_w / 4;
+    my $start_y = (${wpH} - 45 * $cell_h) / 2 + 7;
     srand(314159);
     my $matrix_art = "";
     my $line = 0;
@@ -60,7 +65,7 @@ let
     }
 
     print <<'SVG';
-    <svg xmlns="http://www.w3.org/2000/svg" width="2160" height="1440" viewBox="0 0 2160 1440">
+    <svg xmlns="http://www.w3.org/2000/svg" width="${wpW}" height="${wpH}" viewBox="0 0 ${wpW} ${wpH}">
       <defs>
         <radialGradient id="glow" cx="50%" cy="40%" r="80%">
           <stop offset="0%" stop-color="#00ff9c" stop-opacity="0.10"/>
@@ -74,8 +79,8 @@ let
           <feGaussianBlur in="SourceGraphic" stdDeviation="6"/>
         </filter>
       </defs>
-      <rect width="2160" height="1440" fill="#050805"/>
-      <rect width="2160" height="1440" fill="url(#glow)"/>
+      <rect width="${wpW}" height="${wpH}" fill="#050805"/>
+      <rect width="${wpW}" height="${wpH}" fill="url(#glow)"/>
       <g text-anchor="middle" dominant-baseline="central" font-family="Terminess Nerd Font, monospace" font-weight="bold" filter="url(#halo)" opacity="0.42">
     SVG
     print $matrix_art;
@@ -86,8 +91,8 @@ let
     print $matrix_art;
     print <<'SVG';
       </g>
-      <rect width="2160" height="1440" fill="url(#scanlines)"/>
-      <text x="1080" y="1330" text-anchor="middle" font-family="Terminess Nerd Font, Noto Sans Devanagari, sans-serif" font-size="42"
+      <rect width="${wpW}" height="${wpH}" fill="url(#scanlines)"/>
+      <text x="${toString (params.userSettings.displayWidth / 2)}" y="${toString (params.userSettings.displayHeight - 110)}" text-anchor="middle" font-family="Terminess Nerd Font, Noto Sans Devanagari, sans-serif" font-size="42"
             fill="#00ff9c" fill-opacity="0.55" letter-spacing="1.5">ॐ गणपतये नमः</text>
     </svg>
     SVG
@@ -101,7 +106,7 @@ in
   colorScheme = {
     slug = "matrix-green";
     name = "Matrix Green";
-    author = "lg";
+    author = params.userSettings.userName;
 
     palette = {
       base00 = "#050805"; # default background

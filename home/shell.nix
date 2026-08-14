@@ -1,5 +1,15 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  params,
+  ...
+}:
 
+let
+  # Rebuild targets — host + flake location come from the top-level params.
+  flakeRef = "${params.systemSettings.flakePath}#${params.systemSettings.hostName}";
+in
 {
   home.packages = with pkgs; [
     zoxide
@@ -29,14 +39,14 @@
       ll = "eza --icons=auto -la";
       cat = "bat";
       # NixOS build/apply
-      rebuild = "sudo nixos-rebuild switch --flake /etc/nixos#cf-fv1";
-      retest = "sudo nixos-rebuild test --flake /etc/nixos#cf-fv1";       # activate, no boot entry
-      rebuild-boot = "sudo nixos-rebuild boot --flake /etc/nixos#cf-fv1"; # build now, switch on reboot
+      rebuild = "sudo nixos-rebuild switch --flake ${flakeRef}";
+      retest = "sudo nixos-rebuild test --flake ${flakeRef}";         # activate, no boot entry
+      rebuild-boot = "sudo nixos-rebuild boot --flake ${flakeRef}";   # build now, switch on reboot
       # Formatting
       nf = "nixfmt";
       nfcheck = "nixfmt --check";
       # Whole-flake validation
-      nixcheck = "nix flake check --show-trace /etc/nixos";
+      nixcheck = "nix flake check --show-trace ${params.systemSettings.flakePath}";
       # Garbage collection
       nixgc = "sudo nix-collect-garbage -d";
     };
@@ -45,7 +55,7 @@
       # Usage: nixeval programs.neovim.plugins
       nixeval = {
         description = "Eval-check one flake option with full trace";
-        body = "nix eval --show-trace \"path:/etc/nixos#nixosConfigurations.cf-fv1.config.$argv[1]\"";
+        body = "nix eval --show-trace \"path:${params.systemSettings.flakePath}#nixosConfigurations.${params.systemSettings.hostName}.config.$argv[1]\"";
       };
       # Syntax-check a .nix file fast (catches parse errors before eval).
       # Usage: nixparse hosts/cf-fv1/default.nix

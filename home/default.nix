@@ -1,4 +1,11 @@
-{ config, pkgs, lib, inputs, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  inputs,
+  params,
+  ...
+}:
 
 {
   imports = [
@@ -10,7 +17,7 @@
     inputs.nix-colors.homeManagerModules.default
   ];
 
-  home.username = "lg";
-  home.homeDirectory = "/home/lg";
+  home.username = params.userSettings.userName;
+  home.homeDirectory = params.userSettings.homeDirectory;
   home.stateVersion = "25.05";
 }

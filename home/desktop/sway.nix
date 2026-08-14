@@ -4,12 +4,30 @@
   config,
   pkgs,
   lib,
+  params,
   ...
 }:
 
 let
   v = import ./vars.nix { inherit config pkgs; };
   mod = "Mod4";
+
+  u = params.userSettings;
+
+  # sway-extra.conf is static sway syntax, so user-adjustable values inside it
+  # (gaps, screenshot upload URL) are filled in via placeholder substitution.
+  extraConf = lib.replaceStrings
+    [
+      "__GAPS_INNER_PX__"
+      "__GAPS_OUTER_PX__"
+      "__SCREENSHOT_UPLOAD_URL__"
+    ]
+    [
+      (toString u.gapsInner + "px")
+      (toString u.gapsOuter + "px")
+      u.screenshotUploadUrl
+    ]
+    (builtins.readFile ./sway-extra.conf);
 
   # Terminal (foot socket server -> footclient). Inlined (not $term var):
   # home-manager's sway module doesn't emit `set $term`/`set $menu` here.
@@ -62,11 +80,12 @@ in
       menu = menu;
 
       output = {
-        # 2160x1440 @ 14" is ~216 dpi -> 200% scaling.
+        # Native panel is ${toString u.displayWidth}x${toString u.displayHeight}
+        # @ 14" -> ~216 dpi; scale comes from the top-level params.
         # (Wallpaper is applied via swaymsg in `startup` so sway config
         # validation doesn't fail before the SVG exists.)
         "*" = {
-          scale = "2";
+          scale = u.displayScale;
         };
       };
 
@@ -119,16 +138,16 @@ in
           natural_scroll = "enabled";
         };
         "type:keyboard" = {
-          xkb_layout = "us";
-          xkb_options = "ctrl:nocaps";
+          xkb_layout = u.keyboardLayout;
+          xkb_options = u.keyboardOptions;
         };
       };
 
       startup = [
-        { command = "mkdir -p ~/Pictures/Screenshots"; }
+        { command = "mkdir -p ${u.screenshotDir}"; }
         { command = "xdg-user-dirs-update"; }
         { command = "waybar"; }
-        { command = "wlsunset -l -33.87 -L 151.21"; }
+        { command = "wlsunset -l ${toString u.latitude} -L ${toString u.longitude}"; }
         { command = "dex -a -e SWAY"; }
         { command = "noisetorch -u && noisetorch -i"; always = true; }
         {
@@ -140,7 +159,7 @@ in
 
       inherit keybindings;
     };
-    extraConfig = builtins.readFile ./sway-extra.conf;
+    extraConfig = extraConf;
   };
 
 }

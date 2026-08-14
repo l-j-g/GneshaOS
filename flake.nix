@@ -1,5 +1,5 @@
 {
-  description = "GneshaOS — NixOS + home-manager configuration";
+  description = "GnueshaOS — NixOS + home-manager configuration";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -26,19 +26,30 @@
     }@inputs:
     let
       system = "x86_64-linux";
-      username = "lg";
+
+      # Single source of truth for every user-changeable value (username,
+      # hostname, resolution, scaling, paths, ...). Edit params.nix — see
+      # params.example.nix for the fully documented template. Falls back to
+      # the example so a fresh clone evaluates even before you've written
+      # your own params.nix.
+      params = if builtins.pathExists ./params.nix then import ./params.nix else import ./params.example.nix;
+
+      # Kept as a specialArg for modules that predate params (hardening.nix,
+      # btrfs.nix); derived from the same source so they can never diverge.
+      username = params.userSettings.userName;
     in
     {
-      nixosConfigurations.cf-fv1 = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.${params.systemSettings.hostName} = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit inputs username; };
+        specialArgs = { inherit inputs username params; };
         modules = [
+          # Host dir name is repo layout, independent of the hostName param.
           ./hosts/cf-fv1
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.extraSpecialArgs = { inherit inputs; };
+            home-manager.extraSpecialArgs = { inherit inputs params; };
             home-manager.users.${username} = import ./home;
           }
         ];
