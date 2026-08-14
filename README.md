@@ -90,9 +90,9 @@ nixos-rebuild build --flake .#<hostName from params.nix>
 `params.nix` is the single top-level parameter file — username, hostname,
 display resolution/scaling, keyboard layout, timezone, paths and preferences.
 It is tracked by design (git flakes only see tracked files), so fork it and
-make it yours. `params.example.nix` is the fully commented template and also
-the fallback if `params.nix` is ever missing, so a fresh clone always
-evaluates.
+make it yours. [`params.example.nix`](params.example.nix) documents every
+variable with allowed/example values and is also the fallback if `params.nix`
+is ever missing, so a fresh clone always evaluates.
 
 For a from-scratch install, follow [`docs/install.md`](docs/install.md).
 
