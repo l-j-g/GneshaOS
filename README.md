@@ -70,6 +70,7 @@ A declarative NixOS configuration for a [Panasonic Let's Note CF-FV1](https://pa
 | `home/` | Home-manager user environment (apps, desktop, editors, fonts, shell, theme) |
 | `params.nix` | **Top-level user parameters** — edit this one file to make the config yours |
 | `params.example.nix` | Documented template / fallback (same values as `params.nix`) |
+| `USER_PARAMETERS.md` | **Full self-service reference** — every variable, allowed values, quickstart |
 | `docs/` | Install runbook |
 
 ## Install / usage
@@ -90,9 +91,11 @@ nixos-rebuild build --flake .#<hostName from params.nix>
 `params.nix` is the single top-level parameter file — username, hostname,
 display resolution/scaling, keyboard layout, timezone, paths and preferences.
 It is tracked by design (git flakes only see tracked files), so fork it and
-make it yours. [`params.example.nix`](params.example.nix) documents every
-variable with allowed/example values and is also the fallback if `params.nix`
-is ever missing, so a fresh clone always evaluates.
+make it yours. [`USER_PARAMETERS.md`](USER_PARAMETERS.md) is the full
+self-service reference: every variable with allowed/example values, a new-user
+quickstart, and how to apply changes. [`params.example.nix`](params.example.nix)
+is the documented template and the fallback if `params.nix` is ever missing,
+so a fresh clone always evaluates.
 
 For a from-scratch install, follow [`docs/install.md`](docs/install.md).
 
