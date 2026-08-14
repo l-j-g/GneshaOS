@@ -1,4 +1,4 @@
-# 🐘 GnueshaOS
+# 🐘 GneshaOS
 
 > NixOS + home-manager configuration, blessed by the elephant.
 

@@ -1,5 +1,5 @@
 {
-  description = "GnueshaOS — NixOS + home-manager configuration";
+  description = "GneshaOS — NixOS + home-manager configuration";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
