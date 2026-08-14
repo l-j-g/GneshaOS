@@ -1,0 +1,10 @@
+window {
+    background-color: rgba(5, 8, 5, 0.85);
+    color: #a8f5c9;
+    border: 1px solid #00ff9c;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 20px;
+    font-family: monospace;
+    font-size: 13px;
+}

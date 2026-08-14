@@ -1,0 +1,17 @@
+#!/bin/sh
+# nnn-opener — NNN_OPENER for nnn. Text/code opens in nvim (same terminal,
+# returns to nnn on quit); images/video/audio open in imv/mpv in the
+# background so nnn keeps control of the terminal.
+for f in "$@"; do
+    case "$f" in
+        *.png|*.jpg|*.jpeg|*.gif|*.webp|*.bmp|*.svg|*.ico|*.tif|*.tiff)
+            nohup imv "$f" >/dev/null 2>&1 &
+            ;;
+        *.mp4|*.mkv|*.webm|*.avi|*.mov|*.mp3|*.flac|*.ogg|*.wav|*.m4a|*.opus)
+            nohup mpv "$f" >/dev/null 2>&1 &
+            ;;
+        *)
+            nvim "$f"
+            ;;
+    esac
+done

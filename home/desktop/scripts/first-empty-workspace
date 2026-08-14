@@ -1,0 +1,33 @@
+#!/usr/bin/env python3
+# first-empty-workspace [--switch] [--move]
+# Move the focused container and/or switch to the first empty workspace.
+import json
+import subprocess
+import sys
+
+NUM = 10
+
+
+def main():
+    switch = "--switch" in sys.argv or "-s" in sys.argv
+    move = "--move" in sys.argv or "-m" in sys.argv
+    if not (switch or move):
+        sys.exit("first-empty-workspace: need --switch and/or --move")
+
+    ws = json.loads(subprocess.run(
+        ["swaymsg", "-t", "get_workspaces"], capture_output=True, text=True, check=True).stdout)
+    used = {w["num"] for w in ws}
+    free = sorted(set(range(1, NUM + 1)) - used)
+    current = next((w["num"] for w in ws if w.get("focused")), None)
+    target = free[0] if free else current
+
+    cmds = []
+    if move:
+        cmds.append("move container to workspace number %d" % target)
+    if switch:
+        cmds.append("workspace number %d" % target)
+    subprocess.run(["swaymsg", ", ".join(cmds)], check=True)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Print the working directory of the focused window (best effort).
+pid=$(swaymsg -t get_tree | jq -r '.. | objects | select(.focused == true) | .pid // empty' | head -n1)
+if [ -n "$pid" ] && [ -r "/proc/$pid/cwd" ]; then
+    readlink "/proc/$pid/cwd"
+else
+    echo "$HOME"
+fi

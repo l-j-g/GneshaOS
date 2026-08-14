@@ -1,0 +1,20 @@
+#!/bin/sh
+# sway-help [--toggle] — show/hide the nwg-wrapper keybinding overlay.
+LOCK="$HOME/.local/state/help_disabled"
+
+if [ "${1:-}" = "--toggle" ]; then
+    if [ -f "$LOCK" ]; then
+        rm -f "$LOCK"
+    else
+        touch "$LOCK"
+    fi
+fi
+
+pkill -f 'nwg-wrapper.*-s help.sh' 2>/dev/null
+sleep 0.1
+
+[ -f "$LOCK" ] && exit 0
+
+for out in $(swaymsg -t get_outputs --raw | jq -r '.[].name'); do
+    nwg-wrapper -o "$out" -s help.sh -p left -a end &
+done

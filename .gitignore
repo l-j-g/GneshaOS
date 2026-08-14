@@ -1,0 +1,12 @@
+# Local dev tooling (machine-specific paths)
+opencode.json
+
+# Build output
+result
+
+# Install transcripts / scratch / backups
+session-*.md
+*.orig
+
+# Direnv
+.direnv/
