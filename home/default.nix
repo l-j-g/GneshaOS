@@ -14,6 +14,7 @@
     ./apps.nix
     ./theme.nix
     ./desktop
+    inputs.nix-index-database.homeModules.nix-index
     inputs.nix-colors.homeManagerModules.default
   ];
 

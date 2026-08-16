@@ -8,7 +8,14 @@
 
 let
   # Rebuild targets — host + flake location come from the top-level params.
-  flakeRef = "${params.systemSettings.flakePath}#${params.systemSettings.hostName}";
+  flakePath = params.systemSettings.flakePath;
+  hostName = params.systemSettings.hostName;
+  flakeRef = "${flakePath}#${hostName}";
+  systemBuildRef = "${flakePath}#nixosConfigurations.${hostName}.config.system.build.toplevel";
+  fishWorkflow = lib.replaceStrings
+    [ "__FLAKE_PATH__" "__HOST_NAME__" "__SYSTEM_BUILD_REF__" ]
+    [ flakePath hostName systemBuildRef ]
+    (builtins.readFile ./scripts/nix-workflow.fish);
 in
 {
   home.packages = with pkgs; [
@@ -22,7 +29,15 @@ in
     htop
     btop
     jq
+    nh
+    nvd
+    nix-output-monitor
   ];
+
+  # Use the prebuilt nixpkgs index so `, command` and `nix-locate` work
+  # immediately without a local index-generation step.
+  programs.nix-index.enable = true;
+  programs.nix-index-database.comma.enable = true;
 
   programs.fish = {
     enable = true;
@@ -39,40 +54,17 @@ in
       ls = "eza --icons=auto";
       ll = "eza --icons=auto -la";
       cat = "bat";
-      # NixOS build/apply
-      rebuild = "sudo nixos-rebuild switch --flake ${flakeRef}";
-      retest = "sudo nixos-rebuild test --flake ${flakeRef}";         # activate, no boot entry
-      rebuild-boot = "sudo nixos-rebuild boot --flake ${flakeRef}";   # build now, switch on reboot
-      # Formatting
+      nixrun = ",";
       nf = "nixfmt";
       nfcheck = "nixfmt --check";
-      # Whole-flake validation
-      nixcheck = "nix flake check --show-trace ${params.systemSettings.flakePath}";
-      # Garbage collection
+      nixcheck = "nix flake check --show-trace ${flakePath}";
       nixgc = "sudo nix-collect-garbage -d";
+      # Explicit raw fallbacks for feature parity or troubleshooting.
+      rebuild-raw = "sudo nixos-rebuild switch --flake ${flakeRef}";
+      retest-raw = "sudo nixos-rebuild test --flake ${flakeRef}";
+      rebuild-boot-raw = "sudo nixos-rebuild boot --flake ${flakeRef}";
     };
-    functions = {
-      # Eval-check a single flake option with a full error trace.
-      # Usage: nixeval programs.neovim.plugins
-      nixeval = {
-        description = "Eval-check one flake option with full trace";
-        body = "nix eval --show-trace \"path:${params.systemSettings.flakePath}#nixosConfigurations.${params.systemSettings.hostName}.config.$argv[1]\"";
-      };
-      # Syntax-check a .nix file fast (catches parse errors before eval).
-      # Usage: nixparse hosts/cf-fv1/default.nix
-      nixparse = {
-        description = "Fast syntax check of a .nix file";
-        body = "nix-instantiate --parse \"$argv[1]\" > /dev/null; and echo \"OK: $argv[1]\"";
-      };
-      # Start Codex in the NixOS configuration repository.
-      codex-nix = {
-        description = "Start Codex in the NixOS configuration";
-        body = ''
-          cd ~/.config/nix; or return 1
-          codex
-        '';
-      };
-    };
+    interactiveShellInit = fishWorkflow;
   };
 
   programs.zoxide.enable = true;
