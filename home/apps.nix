@@ -9,6 +9,30 @@
   ...
 }:
 
+let
+  lfPreviewer = pkgs.writeShellScript "lf-preview" ''
+    # Keep the preview offset in lf's user option so the pane can be scrolled
+    # without changing the selected file.
+    mime=$(${pkgs.file}/bin/file --mime-type -b -- "$1")
+    case "$mime" in
+      text/*|application/json|application/javascript|application/xml|image/svg+xml)
+        ${pkgs.bat}/bin/bat \
+          --paging=never \
+          --style=plain \
+          --color=always \
+          --line-range="$lf_user_preview_offset:" \
+          -- "$1" || ${pkgs.coreutils}/bin/cat -- "$1"
+        ;;
+      *)
+        ${pkgs.file}/bin/file --brief --dereference -- "$1"
+        ;;
+    esac
+
+    # A non-zero status disables lf's preview cache. This is required so the
+    # previewer is called again after the offset changes.
+    exit 1
+  '';
+in
 {
   home.packages =
     with pkgs;
@@ -102,6 +126,23 @@
 
   programs.lf = {
     enable = true;
+    previewer.source = lfPreviewer;
+    commands = {
+      # Reset the preview position whenever the selected file changes.
+      on-select = "set user_preview_offset 1";
+      scroll-preview = ''&{{
+        offset=$((lf_user_preview_offset + $1))
+        [ "$offset" -lt 1 ] && offset=1
+        lf -remote "send $id :set user_preview_offset $offset; set preview true"
+      }}'';
+    };
+    keybindings = {
+      "<a-j>" = "scroll-preview 5";
+      "<a-k>" = "scroll-preview -5";
+    };
+    extraConfig = ''
+      set user_preview_offset 1
+    '';
     settings = {
       hidden = true;
       number = true;
