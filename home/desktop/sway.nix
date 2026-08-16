@@ -13,17 +13,20 @@ let
   mod = "Mod4";
 
   u = params.userSettings;
+  screenshotDir = lib.replaceStrings [ "~" ] [ config.home.homeDirectory ] u.screenshotDir;
 
-  # sway-extra.conf is static sway syntax, so user-adjustable gap values are
-  # filled in via placeholder substitution.
+  # sway-extra.conf is static sway syntax, so user-adjustable values inside it
+  # (gaps, screenshot upload URL) are filled in via placeholder substitution.
   extraConf = lib.replaceStrings
     [
       "__GAPS_INNER_PX__"
       "__GAPS_OUTER_PX__"
+      "__SCREENSHOT_UPLOAD_URL__"
     ]
     [
       (toString u.gapsInner + "px")
       (toString u.gapsOuter + "px")
+      u.screenshotUploadUrl
     ]
     (builtins.readFile ./sway-extra.conf);
 
@@ -67,6 +70,15 @@ let
   };
 in
 {
+  xdg.userDirs = {
+    enable = true;
+    createDirectories = true;
+    setSessionVariables = true;
+    extraConfig = {
+      SCREENSHOTS = screenshotDir;
+    };
+  };
+
   wayland.windowManager.sway = {
     enable = true;
     package = pkgs.sway;
