@@ -23,6 +23,14 @@ let
           --line-range="$lf_user_preview_offset:" \
           -- "$1" || ${pkgs.coreutils}/bin/cat -- "$1"
         ;;
+      image/*)
+        # Foot renders chafa's ANSI symbol output without a graphics protocol.
+        ${pkgs.chafa}/bin/chafa \
+          --format symbols \
+          --colors 256 \
+          --size "''${2}x''${3}" \
+          -- "$1"
+        ;;
       *)
         ${pkgs.file}/bin/file --brief --dereference -- "$1"
         ;;
@@ -44,6 +52,7 @@ in
       opencode
       codex
       uv
+      chafa
     ]
     ++ [
       inputs.mcp-nixos.packages.${pkgs.system}.default
