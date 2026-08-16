@@ -209,14 +209,14 @@ in
   systemd.user.services.poweralertd = {
     Unit = {
       Description = "Power status notifications";
-      After = [ "graphical-session.target" ];
-      PartOf = [ "graphical-session.target" ];
+      After = [ sessionTarget ];
+      PartOf = [ sessionTarget ];
     };
     Service = {
       ExecStart = "${pkgs.poweralertd}/bin/poweralertd";
       Restart = "on-failure";
     };
-    Install.WantedBy = [ "graphical-session.target" ];
+    Install.WantedBy = [ sessionTarget ];
   };
 
   # --- Adaptive ambient brightness. Wluma learns manual adjustments and

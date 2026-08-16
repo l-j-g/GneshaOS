@@ -68,8 +68,8 @@ in
       backlight = {
         device = params.userSettings.backlightDevice;
         format = "󰃟";
-        on-scroll-up = "brightness.sh up | wob.sh ${v.accent} ${v.bg}";
-        on-scroll-down = "brightness.sh down | wob.sh ${v.accent} ${v.bg}";
+        on-scroll-up = "swayosd-client --brightness raise --device ${params.userSettings.backlightDevice}";
+        on-scroll-down = "swayosd-client --brightness lower --device ${params.userSettings.backlightDevice}";
       };
 
       network = {

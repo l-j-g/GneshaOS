@@ -43,16 +43,13 @@ let
   # Clipboard picker (rofi + cliphist).
   clipboard = "cliphist list | rofi -dmenu -p \"Select item to copy\" -lines 10 | cliphist decode | wl-copy";
 
-  # On-screen bar (wob) helpers.
-  wob = "wob.sh \"${v.accent}\" \"${v.bg}\"";
-  sinkVol = "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf \"%d\", $2*100}'";
-  sourceVol = "wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | awk '{printf \"%d\", $2*100}'";
-  volumeUp = "${wob} $(wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ && ${sinkVol})";
-  volumeDown = "${wob} $(wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- && ${sinkVol})";
-  volumeMute = "${wob} $(wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q MUTED && echo 0 || ${sinkVol})";
-  micMute = "${wob} $(wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | grep -q MUTED && echo 0 || ${sourceVol})";
-  brightnessUp = "${wob} $(brightness.sh up)";
-  brightnessDown = "${wob} $(brightness.sh down)";
+  # SwayOSD owns volume/brightness changes and displays the matching OSD.
+  volumeUp = "swayosd-client --output-volume raise";
+  volumeDown = "swayosd-client --output-volume lower";
+  volumeMute = "swayosd-client --output-volume mute-toggle";
+  micMute = "swayosd-client --input-volume mute-toggle";
+  brightnessUp = "swayosd-client --brightness raise --device ${u.backlightDevice}";
+  brightnessDown = "swayosd-client --brightness lower --device ${u.backlightDevice}";
 
   keybindings = import ./bindings.nix {
     inherit
@@ -149,6 +146,8 @@ in
         { command = "mkdir -p ${u.screenshotDir}"; }
         { command = "xdg-user-dirs-update"; }
         { command = "waybar"; }
+        { command = "nm-applet --indicator"; }
+        { command = "blueman-applet"; }
         { command = "wlsunset -l ${toString u.latitude} -L ${toString u.longitude}"; }
         { command = "dex -a -e SWAY"; }
         { command = "noisetorch -u && noisetorch -i"; always = true; }

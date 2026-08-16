@@ -29,6 +29,9 @@
     ./scripts.nix
   ];
 
+  # Use Home Manager's packaged SwayOSD service for volume/backlight OSDs.
+  services.swayosd.enable = true;
+
   # Firefox runs natively on Wayland (not XWayland) so Sway's `scale 2`
   # isn't applied twice -> no blurry/oversized UI.
   home.sessionVariables = {
@@ -59,6 +62,8 @@
     vlc
     way-displays
     bluetuith
+    networkmanagerapplet
+    blueman
     xdg-desktop-portal-gtk
     xdg-desktop-portal-wlr
 
@@ -77,7 +82,6 @@
     wf-recorder
     swappy
     sway-contrib.grimshot
-    wob
     emoji-picker
     bc
     python3

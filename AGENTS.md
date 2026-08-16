@@ -30,6 +30,13 @@ isolated Git worktree.
   modules.
 - Follow existing Nix style and keep module options, comments, and parameter
   documentation in sync when behavior changes.
+- Prefer verified, existing NixOS/Home Manager modules and packaged tools for
+  desktop behavior before adding custom implementation code. Keep Nix modules
+  declarative and compact; do not embed long shell programs or polling daemons
+  in configuration files when an existing package or service provides the
+  behavior. If custom code is genuinely required, keep it as a focused,
+  separately testable script under `home/desktop/scripts/` and document why a
+  packaged alternative was not suitable.
 - Never put passwords, tokens, private keys, or machine secrets in the repo.
 - Do not run `sudo`, `nixos-rebuild switch`, `nixos-rebuild boot`,
   `nixos-install`, disk/partitioning commands, TPM/LUKS changes, or destructive

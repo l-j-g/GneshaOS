@@ -101,6 +101,11 @@ For a from-scratch install, follow [`docs/install.md`](docs/install.md).
 
 ## Notes
 
+- Prefer existing, verified NixOS/Home Manager modules and packages for desktop
+  behavior. Keep configuration modules declarative and compact; avoid embedding
+  long shell programs or polling daemons in `.nix` files. Only add a focused
+  script under `home/desktop/scripts/` when no suitable packaged alternative
+  exists, and document the reason alongside the change.
 - `hosts/cf-fv1/hardware-configuration.nix` is **machine-generated** by
   `nixos-generate-config` — it ships for reference but is not meant to be
   hand-edited.
