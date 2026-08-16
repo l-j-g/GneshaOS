@@ -24,7 +24,7 @@
 
     # Absolute path of this flake directory on your machine.
     #   Used by: home/shell.nix (rebuild/retest/rebuild-boot/nixcheck/nixeval
-    #   aliases), home/desktop/daemons.nix (als-brightness unit).
+    #   aliases).
     #   Default: /etc/nixos (standard location; often a symlink to your repo).
     flakePath = "/etc/nixos";
   };
@@ -100,12 +100,15 @@
 
     # Backlight device name (check `brightnessctl -l`).
     #   Used by: home/desktop/waybar.nix (backlight module),
-    #   home/desktop/scripts/als-brightness.sh.
+    #   home/desktop/daemons.nix (wluma).
     backlightDevice = "intel_backlight";
 
+    # Set true to let the ambient light sensor manage brightness.
+    autoBrightness = false;
+
     # IIO ambient-light sensor raw path (check /sys/bus/iio/devices/ —
-    # the *in_illuminance_raw* device). Used by als-brightness.sh.
-    alsSensorPath = "/sys/bus/iio/devices/iio:device4/in_illuminance_raw";
+    # the *in_illuminance_raw* device). Used by wluma documentation/config.
+    alsSensorPath = "/sys/bus/iio/devices/iio:device5/in_illuminance_raw";
 
     # Absolute path of your docker-compose.yml for the *arr media stack.
     #   Used by: hosts/<host>/default.nix (docker-compose-stop unit).

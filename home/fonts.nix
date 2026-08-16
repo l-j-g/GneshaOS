@@ -43,6 +43,8 @@ in
     pkgs.noto-fonts-cjk-sans
     pkgs.noto-fonts-color-emoji
     pkgs.liberation_ttf
+    pkgs.symbola
+    pkgs.nerd-fonts.symbols-only
     pkgs.nerd-fonts.fira-code
     pkgs.fira-code-symbols
     pkgs.mplus-outline-fonts.githubRelease

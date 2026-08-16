@@ -33,6 +33,7 @@ in
     };
     shellAliases = {
       vim = "nvim";
+      nnnp = "nnn -a -P p";
       cf = "cd ~/.config";
       cfn = "cd ~/.config/nix/";
       ls = "eza --icons=auto";

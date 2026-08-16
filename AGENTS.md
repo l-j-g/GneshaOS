@@ -37,6 +37,10 @@ isolated Git worktree.
   Default to evaluation, checks, and dry-run builds.
 - Do not change generated hardware configuration, `flake.lock`, or ignored
   machine-local tooling unless the task specifically requires it.
+- After a requested change is complete and its relevant build/check succeeds,
+  commit the complete scoped change with a concise, descriptive commit message.
+  Stage only files belonging to that change; leave unrelated dirty work alone.
+- Do not create or move Git tags unless the user explicitly requests tagging.
 
 ## Validation
 

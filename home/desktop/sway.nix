@@ -32,7 +32,9 @@ let
   # Terminal (foot socket server -> footclient). Inlined (not $term var):
   # home-manager's sway module doesn't emit `set $term`/`set $menu` here.
   term = "footclient";
-  termCwd = "${term} -D \"$(swaycwd 2>/dev/null || echo $HOME)\"";
+  # The default terminal shortcut attaches to one persistent tmux session.
+  # Shift+Mod4+Return remains a plain Foot terminal (see bindings.nix).
+  termCwd = "${term} -D \"$(swaycwd 2>/dev/null || echo $HOME)\" tmux new-session -A -s main";
   termFloat = "${term} --app-id floating_shell --window-size-chars 82x25";
 
   # Launcher (Manjaro: rofi combi = drun + run).

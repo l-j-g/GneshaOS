@@ -37,6 +37,14 @@ in
         "i8042.nomux=1"
         "i8042.reset=1"
       ];
+
+      # brightnessctl writes the backlight sysfs attribute directly. The
+      # kernel exposes it as root:root 0644, so grant video-group users write
+      # access for the desktop brightness keys and Waybar controls.
+      services.udev.extraRules = ''
+        ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="intel_backlight", RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/%k/brightness"
+        ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="intel_backlight", RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/%k/brightness"
+      '';
     })
 
     (lib.mkIf cfg.jisKeys {

@@ -17,7 +17,7 @@
     hostName = "cf-fv1";
 
     # Absolute path of this flake on the machine. Used by the rebuild/nixcheck
-    # shell aliases and the als-brightness systemd unit. Default /etc/nixos.
+    # shell aliases. Default /etc/nixos.
     flakePath = "/etc/nixos";
   };
 
@@ -67,7 +67,9 @@
     # `/sys/class/backlight/*` and your IIO sensor under
     # /sys/bus/iio/devices/ on the target machine).
     backlightDevice = "intel_backlight";
-    alsSensorPath = "/sys/bus/iio/devices/iio:device4/in_illuminance_raw";
+    # Set true to let the ambient light sensor manage brightness.
+    autoBrightness = true;
+    alsSensorPath = "/sys/bus/iio/devices/iio:device5/in_illuminance_raw";
 
     # Absolute path to the docker-compose file of the self-hosted media stack
     # (stopped before /media unmounts at shutdown).

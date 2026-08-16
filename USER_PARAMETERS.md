@@ -75,7 +75,7 @@ settings.
 | Variable | Type / allowed values | Example | What it does | Used by |
 | --- | --- | --- | --- | --- |
 | `hostName` | string (hostname) | `"cf-fv1"` | Machine hostname. Sets `networking.hostName` and the samba "server string". **Also the flake attr name**: rebuild with `--flake .#<hostName>`. | `flake.nix`, `hosts/<host>/default.nix` |
-| `flakePath` | string (absolute path) | `"/etc/nixos"` | Where this flake lives on the machine. Feeds the `rebuild`/`nixcheck`/`nixeval` shell aliases and the als-brightness systemd unit. Default `/etc/nixos`. | `home/shell.nix`, `home/desktop/daemons.nix` |
+| `flakePath` | string (absolute path) | `"/etc/nixos"` | Where this flake lives on the machine. Feeds the `rebuild`/`nixcheck`/`nixeval` shell aliases. Default `/etc/nixos`. | `home/shell.nix` |
 
 ### `userSettings` — who sits at the machine, and preferences
 
@@ -103,8 +103,9 @@ settings.
 | `idleLockSec` | int (seconds) | `300` | swayidle: lock after N s idle. | `home/desktop/daemons.nix` |
 | `idleOffSec` | int (seconds) | `600` | swayidle: DPMS off after N s idle. | `home/desktop/daemons.nix` |
 | `idleSuspendSec` | int (seconds) | `900` | swayidle: suspend after N s idle (battery only). Sequence: dim → lock → off → suspend. | `home/desktop/daemons.nix` |
-| `backlightDevice` | string (device name) | `"intel_backlight"` | Backlight device. Find yours with `brightnessctl -l` (or look in `/sys/class/backlight/*`). | `home/desktop/waybar.nix`, `home/desktop/scripts/als-brightness.sh` |
-| `alsSensorPath` | string (absolute path) | `"/sys/bus/iio/devices/iio:device4/in_illuminance_raw"` | Ambient-light sensor raw path for automatic brightness. Find yours: `ls /sys/bus/iio/devices/` — the device exposing `in_illuminance_raw` (may differ per machine/port). | `home/desktop/scripts/als-brightness.sh` |
+| `backlightDevice` | string (device name) | `"intel_backlight"` | Backlight device. Find yours with `brightnessctl -l` (or look in `/sys/class/backlight/*`). | `home/desktop/waybar.nix`, `home/desktop/daemons.nix` |
+| `autoBrightness` | bool | `false` | When true, enable wluma's adaptive ambient-brightness service; manual changes teach its brightness model. | `home/desktop/daemons.nix` |
+| `alsSensorPath` | string (absolute path) | `"/sys/bus/iio/devices/iio:device4/in_illuminance_raw"` | Ambient-light sensor raw path for automatic brightness (retained for hardware documentation; wluma discovers IIO sensors under `/sys/bus/iio/devices`). | `home/desktop/daemons.nix` |
 | `arrComposePath` | string (absolute path) | `"/home/lg/src/arr/docker-compose.yml"` | docker-compose file of the self-hosted *arr media stack (stopped cleanly before `/media` unmounts at shutdown). Point at your compose file or ignore if you don't run the stack. | `hosts/<host>/default.nix` (docker-compose-stop unit) |
 
 ---

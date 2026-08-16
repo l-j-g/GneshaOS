@@ -219,18 +219,34 @@ in
     Install.WantedBy = [ "graphical-session.target" ];
   };
 
-  # --- Ambient light sensor -> auto-brightness daemon.
-  systemd.user.services.als-brightness = {
-    Unit = {
-      Description = "Ambient light sensor auto-brightness";
-      After = [ "graphical-session.target" ];
-      PartOf = [ "graphical-session.target" ];
+  # --- Adaptive ambient brightness. Wluma learns manual adjustments and
+  # interpolates the preferred brightness for each ambient-light level.
+  services.wluma = lib.mkIf u.autoBrightness {
+    enable = true;
+    systemd = {
+      enable = true;
+      target = sessionTarget;
     };
-    Service = {
-      ExecStart = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/als-brightness.sh";
-      Restart = "on-failure";
-      RestartSec = 10;
+    settings = {
+      als.iio = {
+        path = "/sys/bus/iio/devices";
+        thresholds = {
+          "0" = "night";
+          "20" = "dark";
+          "80" = "dim";
+          "250" = "normal";
+          "500" = "bright";
+          "800" = "outdoors";
+        };
+      };
+      output.backlight = [
+        {
+          name = "eDP-1";
+          path = "/sys/class/backlight/${u.backlightDevice}";
+          # Learn from ambient light only; avoid screen-content-driven changes.
+          capturer = "none";
+        }
+      ];
     };
-    Install.WantedBy = [ "graphical-session.target" ];
   };
 }
