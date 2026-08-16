@@ -1,0 +1,8 @@
+# Project-scoped Codex settings for the GneshaOS NixOS configuration.
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 4
+default_subagent_model = "gpt-5.6-luna"
+default_subagent_reasoning_effort = "medium"
+interrupt_message = true

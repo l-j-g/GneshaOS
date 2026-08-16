@@ -63,6 +63,14 @@ in
         description = "Fast syntax check of a .nix file";
         body = "nix-instantiate --parse \"$argv[1]\" > /dev/null; and echo \"OK: $argv[1]\"";
       };
+      # Start Codex in the NixOS configuration repository.
+      codex-nix = {
+        description = "Start Codex in the NixOS configuration";
+        body = ''
+          cd ~/.config/nix; or return 1
+          codex
+        '';
+      };
     };
   };
 
