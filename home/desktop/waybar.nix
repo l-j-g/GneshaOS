@@ -168,7 +168,7 @@ in
       }
 
       #window {
-        color: ${v.subtle};
+        color: ${v.foreground};
       }
 
       #network, #bluetooth, #battery, #backlight, #pulseaudio, #memory, #cpu, #clock, #tray {
