@@ -152,7 +152,7 @@ in
   "Mod1+Shift+e" = "exec emoji-picker";
 
   # Screenshot / recording / shutdown / scratchpad / resize modes
-  "Print" = "mode screenshot";
+  "Print" = "mode \"screenshot (o/p)\"";
   "${m}+Shift+r" = "mode recording";
   "${m}+Escape" = "exec killall -SIGINT wf-recorder";
   "${m}+Shift+e" = "mode shutdown";

@@ -16,8 +16,11 @@
 
 let
   u = params.userSettings;
+  screenshotDir = lib.replaceStrings [ "~" ] [ config.home.homeDirectory ] u.screenshotDir;
   # Scripts we install raw (no parameter substitution needed).
-  swayScripts = lib.filterAttrs (name: _: name != "scale.sh") (builtins.readDir ./scripts);
+  swayScripts = lib.filterAttrs
+    (name: _: name != "scale.sh" && name != "screenshot.sh")
+    (builtins.readDir ./scripts);
   installScript = name: {
     source = ./scripts/${name};
     executable = true;
@@ -28,6 +31,10 @@ let
     [ "__DEFAULT_SCALE__" ]
     [ u.displayScale ]
     (builtins.readFile ./scripts/scale.sh);
+  screenshotScript = lib.replaceStrings
+    [ "__SCREENSHOT_DIR__" "__SCREENSHOT_UPLOAD_URL__" ]
+    [ screenshotDir u.screenshotUploadUrl ]
+    (builtins.readFile ./scripts/screenshot.sh);
 in
 {
   home.sessionPath = [ "$HOME/.config/sway/scripts" ];
@@ -38,6 +45,10 @@ in
   }) (builtins.attrNames swayScripts))) // {
     ".config/sway/scripts/scale.sh" = {
       text = scaleScript;
+      executable = true;
+    };
+    ".config/sway/scripts/screenshot.sh" = {
+      text = screenshotScript;
       executable = true;
     };
     ".config/nwg-wrapper/help.sh".source = ./nwg-wrapper/help.sh;
