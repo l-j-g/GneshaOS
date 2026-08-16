@@ -106,14 +106,14 @@ in
         focusedInactive = {
           border = v.subtleBg;
           background = v.surface;
-          text = v.subtle;
+          text = v.foreground;
           indicator = v.subtleBg;
           childBorder = v.subtleBg;
         };
         unfocused = {
           border = v.selection;
           background = v.surface;
-          text = v.subtle;
+          text = v.foreground;
           indicator = v.selection;
           childBorder = v.selection;
         };
@@ -127,7 +127,7 @@ in
         placeholder = {
           border = v.bg;
           background = v.bg;
-          text = v.subtle;
+          text = v.foreground;
           indicator = v.bg;
           childBorder = v.bg;
         };
