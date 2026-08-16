@@ -87,6 +87,7 @@ in
       };
       init.defaultBranch = "main";
       core.autocrlf = "input";
+      push.autoSetupRemote = true;
     };
   };
 
