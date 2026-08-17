@@ -53,9 +53,9 @@ in
   ];
 
   fonts.fontconfig = {
-    # Terminess TTF (non-mono) is the desktop monospace. It renders sharp at
-    # any size; no bitmap-style hinting rules needed.
-    defaultFonts.monospace = [ "Terminess Nerd Font" ];
+    # Use the fixed-width TTF family for the generic monospace alias. Without
+    # this, Fontconfig can fall back to bitmap Terminus instead.
+    defaultFonts.monospace = [ "Terminess Nerd Font Mono" ];
   };
 
   console = {
