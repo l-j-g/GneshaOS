@@ -10,36 +10,7 @@
 }:
 
 let
-  lfPreviewer = pkgs.writeShellScript "lf-preview" ''
-    # Keep the preview offset in lf's user option so the pane can be scrolled
-    # without changing the selected file.
-    mime=$(${pkgs.file}/bin/file --mime-type -b -- "$1")
-    case "$mime" in
-      text/*|application/json|application/javascript|application/xml|image/svg+xml)
-        ${pkgs.bat}/bin/bat \
-          --paging=never \
-          --style=plain \
-          --color=always \
-          --line-range="$lf_user_preview_offset:" \
-          -- "$1" || ${pkgs.coreutils}/bin/cat -- "$1"
-        ;;
-      image/*)
-        # Foot renders chafa's ANSI symbol output without a graphics protocol.
-        ${pkgs.chafa}/bin/chafa \
-          --format symbols \
-          --colors 256 \
-          --size "''${2}x''${3}" \
-          -- "$1"
-        ;;
-      *)
-        ${pkgs.file}/bin/file --brief --dereference -- "$1"
-        ;;
-    esac
-
-    # A non-zero status disables lf's preview cache. This is required so the
-    # previewer is called again after the offset changes.
-    exit 1
-  '';
+  lfPreviewer = ./desktop/scripts/lf/preview;
 in
 {
   home.packages =
@@ -52,7 +23,7 @@ in
       opencode
       codex
       uv
-      chafa
+      ueberzugpp
     ]
     ++ [
       inputs.mcp-nixos.packages.${pkgs.system}.default
@@ -88,9 +59,21 @@ in
   # Optional local opencode config. Only installed when the file exists next
   # to the repo (it is machine-specific and intentionally not tracked), so a
   # fresh clone evaluates without it. Copy your own into place if you use it.
-  xdg.configFile = lib.optionalAttrs (builtins.pathExists ../opencode.json) {
+  # LF's image layer and wrapper live outside the Nix module so the preview
+  # protocol stays readable and independently testable.
+  xdg.configFile = (lib.optionalAttrs (builtins.pathExists ../opencode.json) {
     "opencode/opencode.jsonc".source = ../opencode.json;
+  }) // {
+    "lf/cleaner" = {
+      source = ./desktop/scripts/lf/cleaner;
+      executable = true;
+    };
   };
+  home.file.".local/bin/lf-image" = {
+    source = ./desktop/scripts/lf/lf-image;
+    executable = true;
+  };
+  home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
 
   # Open files from nnn with nvim (text) / imv/mpv (media).
   home.sessionVariables = {
@@ -136,6 +119,7 @@ in
   programs.lf = {
     enable = true;
     previewer.source = lfPreviewer;
+    settings.cleaner = "${config.xdg.configHome}/lf/cleaner";
     commands = {
       # Reset the preview position whenever the selected file changes.
       on-select = "set user_preview_offset 1";

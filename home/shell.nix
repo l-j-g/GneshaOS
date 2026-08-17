@@ -49,6 +49,7 @@ in
     shellAliases = {
       vim = "nvim";
       nnnp = "nnn -a -P p";
+      lf = "lf-image";
       cf = "cd ~/.config";
       cfn = "cd ~/.config/nix/";
       ls = "eza --icons=auto";

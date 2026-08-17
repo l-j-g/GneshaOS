@@ -1,0 +1,46 @@
+#!/bin/sh
+
+image() {
+    file_path="$1"
+    x="$4"
+    y="$5"
+    max_width=$(( $2 - 1 ))
+    max_height="$3"
+
+    if [ -n "${UB_SOCKET:-}" ]; then
+        ueberzugpp cmd \
+            -s "$UB_SOCKET" \
+            -a add \
+            -i PREVIEW \
+            -x "$x" \
+            -y "$y" \
+            --max-width "$max_width" \
+            --max-height "$max_height" \
+            -f "$file_path"
+    fi
+
+    # External image layers must not be cached by lf: their position changes
+    # whenever the preview pane is resized or scrolled.
+    exit 1
+}
+
+mime=$(file --mime-type -b -- "$1")
+case "$mime" in
+    text/*|application/json|application/javascript|application/xml|image/svg+xml)
+        bat \
+            --paging=never \
+            --style=plain \
+            --color=always \
+            --line-range="${lf_user_preview_offset:-1}:" \
+            -- "$1" || cat -- "$1"
+        ;;
+    image/*)
+        image "$1" "$2" "$3" "$4" "$5"
+        ;;
+    *)
+        file --brief --dereference -- "$1"
+        ;;
+esac
+
+# Keep the preview offset responsive to the Alt-j / Alt-k LF bindings.
+exit 1

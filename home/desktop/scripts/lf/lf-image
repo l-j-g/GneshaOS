@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# Start ueberzugpp beside lf so image previews are real Wayland child windows,
+# not ANSI approximations. The wrapper is deliberately bypassed over SSH.
+set -eu
+
+if [ -n "${SSH_CLIENT:-}" ] || [ -n "${SSH_TTY:-}" ]; then
+    exec lf "$@"
+fi
+
+case "${WAYLAND_DISPLAY:-}" in
+    "") exec lf "$@" ;;
+esac
+
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/lf"
+mkdir -p "$cache_dir"
+pid_file="$cache_dir/ueberzugpp-$$.pid"
+rm -f "$pid_file"
+
+cleanup() {
+    if [ -n "${UB_SOCKET:-}" ]; then
+        ueberzugpp cmd -s "$UB_SOCKET" -a remove -i PREVIEW >/dev/null 2>&1 || :
+        ueberzugpp cmd -s "$UB_SOCKET" -a exit >/dev/null 2>&1 || :
+    fi
+    rm -f "$pid_file"
+}
+
+trap cleanup EXIT HUP INT QUIT TERM
+
+ueberzugpp layer \
+    --output wayland \
+    --silent \
+    --no-stdin \
+    --use-escape-codes \
+    --pid-file "$pid_file"
+
+UB_PID=$(sed -n '1p' "$pid_file")
+UB_SOCKET="${UEBERZUGPP_TMPDIR:-${TMPDIR:-/tmp}}/ueberzugpp-${UB_PID}.socket"
+export UB_PID UB_SOCKET
+
+exec lf "$@"
