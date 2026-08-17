@@ -45,13 +45,13 @@ in
     shellAbbrs = {
       n = "nvim";
       v = "nvim";
+      cfn = "cd ~/.config/nix/home/";
+      cf = "cd ~/.config";
     };
     shellAliases = {
       vim = "nvim";
       nnnp = "nnn -a -P p";
       lf = "lf-image";
-      cf = "cd ~/.config";
-      cfn = "cd ~/.config/nix/";
       ls = "eza --icons=auto";
       ll = "eza --icons=auto -la";
       cat = "bat";

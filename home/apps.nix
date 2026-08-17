@@ -16,6 +16,8 @@ in
   home.packages =
     with pkgs;
     [
+      tor-browser
+      discord
       firefox
       imv
       mpv
