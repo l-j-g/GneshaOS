@@ -11,6 +11,7 @@
   imports = [
     ./shell.nix
     ./editors.nix
+    ./neovim.nix
     ./apps.nix
     ./theme.nix
     ./desktop

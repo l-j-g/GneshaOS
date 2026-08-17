@@ -1,0 +1,5 @@
+require("gnesha.plugins.completion").setup()
+require("gnesha.plugins.nnnp").setup()
+require("gnesha.plugins.project").setup()
+require("gnesha.plugins.telescope").setup()
+require("gnesha.plugins.tree").setup()
