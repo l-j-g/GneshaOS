@@ -65,10 +65,11 @@ A declarative NixOS configuration for a [Panasonic Let's Note CF-FV1](https://pa
 
 | Path | Contents |
 | --- | --- |
-| `hosts/cf-fv1/` | Machine configuration: `default.nix` + machine-generated `hardware-configuration.nix` (the only file with machine-specific values — disk UUIDs — and intentionally not parameterised) |
+| `hosts/` | One directory per NixOS host; real directories become `nixosConfigurations.<name>`, while `_template/` is excluded |
+| `hosts/cf-fv1/` | Panasonic CF-FV1 composition, split by responsibility, plus machine-generated `hardware-configuration.nix` |
 | `modules/` | Reusable NixOS modules: `btrfs`, `fonts`, `hardening`, `letsnote` |
-| `home/` | Home-manager user environment (apps, desktop, editors, fonts, shell, theme) |
-| `params.nix` | **Top-level user parameters** — edit this one file to make the config yours |
+| `home/` | Shared Home Manager environment (apps, desktop, editors, fonts, shell, theme) |
+| `params.nix` | **Shared consumer/user defaults** — edit this file for common preferences |
 | `params.example.nix` | Documented template / fallback (same values as `params.nix`) |
 | `USER_PARAMETERS.md` | **Full self-service reference** — every variable, allowed values, quickstart |
 | `docs/` | Install runbook |
@@ -78,24 +79,32 @@ A declarative NixOS configuration for a [Panasonic Let's Note CF-FV1](https://pa
 ```sh
 # 1. (First time only) personalise the top-level parameters
 cp params.example.nix params.nix   # or just edit params.nix directly
-#    ... change userName, gitUserEmail, hostName, timeZone, displayWidth/Height,
+#    ... change userName, gitUserEmail, timeZone, displayWidth/Height,
 #    displayScale, keyboardLayout ... every user-facing value lives here.
 
-# 2. Build and switch the system
-sudo nixos-rebuild switch --flake .#<hostName from params.nix>
+# 2. Add or choose a host. Existing hosts are listed with:
+nix eval .#nixosConfigurations --apply builtins.attrNames
+
+# 3. Build and switch the system
+sudo nixos-rebuild switch --flake .#<host-directory-name>
 
 # Dry-run build
-nixos-rebuild build --flake .#<hostName from params.nix>
+nixos-rebuild build --flake .#<host-directory-name>
 ```
 
-`params.nix` is the single top-level parameter file — username, hostname,
-display resolution/scaling, keyboard layout, timezone, paths and preferences.
-It is tracked by design (git flakes only see tracked files), so fork it and
-make it yours. [`USER_PARAMETERS.md`](USER_PARAMETERS.md) is the full
-self-service reference: every variable with allowed/example values, a new-user
-quickstart, and how to apply changes. [`params.example.nix`](params.example.nix)
-is the documented template and the fallback if `params.nix` is ever missing,
-so a fresh clone always evaluates.
+`params.nix` is the tracked consumer/user parameter file — username, display
+resolution/scaling, keyboard layout, timezone, paths and preferences. The
+host directory name is authoritative for the flake output and is overlaid into
+that host's `systemSettings.hostName`; the older value in `params.nix` remains
+as a reference/default for compatibility. [`USER_PARAMETERS.md`](USER_PARAMETERS.md)
+is the full self-service reference. To add a machine, copy
+[`hosts/_template/`](hosts/_template/), generate its hardware configuration,
+and add host-specific imports/settings. The flake discovers the new directory
+automatically.
+
+`params.example.nix` is the documented fallback if `params.nix` is missing, so
+a fresh clone still evaluates. Keep both parameter files tracked: Git flakes
+do not include ignored or untracked files.
 
 For a from-scratch install, follow [`docs/install.md`](docs/install.md).
 

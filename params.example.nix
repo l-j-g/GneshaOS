@@ -9,7 +9,7 @@
 #   1. cp params.example.nix params.nix
 #   2. Edit the values you care about (at minimum userName, gitUserName,
 #      gitUserEmail, timeZone, latitude/longitude, keyboardLayout).
-#   3. nixos-rebuild switch --flake .#<hostName>
+#   3. nixos-rebuild switch --flake .#<host-directory-name>
 #
 # Every field below flows into the configs listed next to it. Nothing else in
 # the repo needs editing for a new user — except hosts/<host>/hardware-
@@ -17,9 +17,9 @@
 # (disk UUIDs etc.) and is intentionally not parameterised.
 {
   systemSettings = {
-    # Machine hostname. Sets networking.hostName, the samba "server string",
-    # and is the attr name you target with `--flake .#<hostName>`.
-    #   Used by: flake.nix, hosts/<host>/default.nix
+    # Compatibility/default reference. The host directory name is authoritative
+    # for the flake output and is overlaid into each discovered host's params.
+    #   Used by: flake.nix as the pre-overlay reference only.
     hostName = "cf-fv1";
 
     # Absolute path of this flake directory on your machine.
@@ -104,7 +104,7 @@
     backlightDevice = "intel_backlight";
 
     # Set true to let the ambient light sensor manage brightness.
-    autoBrightness = false;
+    autoBrightness = true;
 
     # IIO ambient-light sensor raw path (check /sys/bus/iio/devices/ —
     # the *in_illuminance_raw* device). Used by wluma documentation/config.

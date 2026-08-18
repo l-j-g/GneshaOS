@@ -31,32 +31,61 @@
     let
       system = "x86_64-linux";
 
-      # Single source of truth for every user-changeable value (username,
-      # hostname, resolution, scaling, paths, ...). Edit params.nix — see
-      # params.example.nix for the fully documented template. Falls back to
-      # the example so a fresh clone evaluates even before you've written
-      # your own params.nix.
+      # Shared consumer/user defaults (username, resolution, scaling, paths,
+      # ...). Edit params.nix — see params.example.nix for the fully
+      # documented template. Host identity and optional machine overrides are
+      # resolved per directory below. Fall back to the example so a fresh
+      # clone evaluates even before you've written your own params.nix.
       params = if builtins.pathExists ./params.nix then import ./params.nix else import ./params.example.nix;
 
-      # Kept as a specialArg for modules that predate params (hardening.nix,
-      # btrfs.nix); derived from the same source so they can never diverge.
-      username = params.userSettings.userName;
+      hostNames = builtins.filter (
+        name:
+        let
+          hostType = (builtins.readDir ./hosts).${name};
+        in
+        hostType == "directory" && !(nixpkgs.lib.hasPrefix "_" name)
+      ) (builtins.attrNames (builtins.readDir ./hosts));
+
+      hostConfiguration = hostName:
+        let
+          hostPath = ./hosts + "/${hostName}";
+          hostParamsPath = hostPath + "/params.nix";
+          hostOverrides = if builtins.pathExists hostParamsPath then import hostParamsPath else { };
+          # Root params provide shared defaults. A host can override only the
+          # values that differ on that machine in hosts/<name>/params.nix.
+          mergedParams = nixpkgs.lib.recursiveUpdate params hostOverrides;
+          hostParams = mergedParams // {
+            systemSettings = mergedParams.systemSettings // { inherit hostName; };
+          };
+          username = hostParams.userSettings.userName;
+        in
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = {
+            inherit inputs username hostName;
+            params = hostParams;
+          };
+          modules = [
+            hostPath
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.extraSpecialArgs = {
+                inherit inputs;
+                params = hostParams;
+              };
+              home-manager.users.${username} = import ./home;
+            }
+          ];
+        };
     in
     {
-      nixosConfigurations.${params.systemSettings.hostName} = nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = { inherit inputs username params; };
-        modules = [
-          # Host dir name is repo layout, independent of the hostName param.
-          ./hosts/cf-fv1
-          home-manager.nixosModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.extraSpecialArgs = { inherit inputs params; };
-            home-manager.users.${username} = import ./home;
-          }
-        ];
-      };
+      nixosConfigurations = builtins.listToAttrs (
+        map (hostName: {
+          name = hostName;
+          value = hostConfiguration hostName;
+        }) hostNames
+      );
     };
 }

@@ -141,10 +141,11 @@ secure-boot state, so tampered boot will prompt for the key instead.)
 
 ## Rebuild command
 
-    nixos-rebuild switch --flake .#<hostName>
+    nixos-rebuild switch --flake .#<host-directory-name>
 
-(`<hostName>` and every other user-facing value come from `params.nix` at the
-repo root — see `params.example.nix` for the documented list.)
+(`<host-directory-name>` is the directory name under `hosts/`; the flake
+discovers it automatically. Shared user-facing values come from `params.nix`
+at the repo root, while host-specific overrides may live in the host directory.)
 
 ## Known gotchas hit during install
 
