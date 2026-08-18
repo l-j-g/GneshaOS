@@ -32,6 +32,7 @@ in
     nh
     nvd
     nix-output-monitor
+    nix-inspect
   ];
 
   # Use the prebuilt nixpkgs index so `, command` and `nix-locate` work

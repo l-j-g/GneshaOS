@@ -76,6 +76,14 @@ function nixeval
     nix eval --show-trace "path:__FLAKE_PATH__#nixosConfigurations.__HOST_NAME__.config.$argv[1]"
 end
 
+function nixinspect
+    if test (count $argv) -gt 0
+        command nix-inspect $argv
+    else
+        command nix-inspect --path "__FLAKE_PATH__"
+    end
+end
+
 function nixparse
     if test (count $argv) -lt 1
         echo "Usage: nixparse FILE"

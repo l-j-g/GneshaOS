@@ -23,8 +23,8 @@
     hostName = "cf-fv1";
 
     # Absolute path of this flake directory on your machine.
-    #   Used by: home/shell.nix (rebuild/retest/rebuild-boot/nixcheck/nixeval
-    #   aliases).
+    #   Used by: home/shell.nix and home/scripts/nix-workflow.fish
+    #   (rebuild/retest/rebuild-boot/nixcheck/nixeval/nixinspect helpers).
     #   Default: /etc/nixos (standard location; often a symlink to your repo).
     flakePath = "/etc/nixos";
   };

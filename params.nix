@@ -17,7 +17,7 @@
     hostName = "cf-fv1";
 
     # Absolute path of this flake on the machine. Used by the rebuild/nixcheck
-    # shell aliases. Default /etc/nixos.
+    # shell helpers and nixinspect. Default /etc/nixos.
     flakePath = "/etc/nixos";
   };
 
