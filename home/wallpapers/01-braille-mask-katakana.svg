@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Braille mask with katakana rain; archived preview, not the active wallpaper. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="2160" height="1440" viewBox="0 0 2160 1440">
+  <defs>
+
+    <radialGradient id="glow" cx="50%" cy="40%" r="80%">
+      <stop offset="0%" stop-color="#00ff9c" stop-opacity="0.10"/>
+      <stop offset="70%" stop-color="#00ff41" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#050805" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="scanlines" width="2" height="4" patternUnits="userSpaceOnUse">
+      <rect width="2" height="2" fill="#000000" fill-opacity="0.18"/>
+    </pattern>
+    <filter id="halo" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6"/>
+    </filter>
+
+    <pattern id="rain" width="48" height="200" patternUnits="userSpaceOnUse">
+      <g font-family="Terminess Nerd Font, monospace" font-size="18" font-weight="bold">
+        <text x="4" y="26" fill="#00ff9c" fill-opacity="0.95">ア</text>
+        <text x="4" y="44" fill="#00ff41" fill-opacity="0.60">7</text>
+        <text x="4" y="62" fill="#00ff9c" fill-opacity="0.40">ウ</text>
+        <text x="4" y="80" fill="#35ffcf" fill-opacity="0.25">1</text>
+        <text x="4" y="98" fill="#00ff41" fill-opacity="0.14">エ</text>
+        <text x="24" y="66" fill="#00ff41" fill-opacity="0.85">キ</text>
+        <text x="24" y="84" fill="#00ff9c" fill-opacity="0.55">3</text>
+        <text x="24" y="102" fill="#00ff41" fill-opacity="0.35">ク</text>
+        <text x="24" y="120" fill="#00ff9c" fill-opacity="0.18">0</text>
+        <text x="24" y="138" fill="#35ffcf" fill-opacity="0.10">ケ</text>
+        <text x="42" y="10" fill="#00ff9c" fill-opacity="0.80">サ</text>
+        <text x="42" y="28" fill="#00ff41" fill-opacity="0.50">5</text>
+        <text x="42" y="46" fill="#35ffcf" fill-opacity="0.30">シ</text>
+        <text x="42" y="64" fill="#00ff41" fill-opacity="0.16">2</text>
+        <text x="42" y="82" fill="#00ff9c" fill-opacity="0.08">ス</text>
+      </g>
+    </pattern>
+    <g id="ganesha">    <text x="1080" y="180" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠔⠑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="200" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢘⡤⠤⣜⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="220" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠾⠀⠀⠀⠀⠹⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="240" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠰⣑⠶⠬⠭⠭⠥⠶⢆⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="260" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡤⠐⠊⠉⢩⢼⡹⢉⠉⠑⠓⠤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="280" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡴⣑⠊⠁⠠⡬⠔⢱⡢⠩⠓⣀⠠⠡⢊⢦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="300" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⢔⠉⢐⢄⢈⠬⣩⡘⠃⠈⢡⣎⠡⣀⠁⠖⠉⡢⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="320" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⢎⠤⡐⡮⡐⢃⡇⠸⡑⠁⠈⢊⠇⢈⡼⠐⣺⢢⠈⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="340" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⠢⡈⣢⠔⡂⠬⠍⠛⢫⠅⠩⡭⠍⠭⠄⢒⠤⡒⣐⠘⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="360" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⢀⠶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠣⢥⠎⢅⠥⠂⠈⠉⠉⠉⠐⠂⠉⠉⠉⠀⠒⢅⡊⣃⠈⡅⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠶⡀⠀⡄⠀⠀⠀⠀</text>
+    <text x="1080" y="380" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⢀⢠⡄⢀⣓⣲⡁⠀⠀⠀⢀⠔⠂⠈⠁⠐⠢⢴⡓⣱⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢳⡴⣱⡣⠔⠒⠒⠒⠤⡀⠀⢖⠴⠀⡞⠀⠘⡀⠱⠂⠇⠀⠀</text>
+    <text x="1080" y="400" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⡜⠁⠐⢄⣰⠄⡺⡠⢄⠀⡔⢁⠄⠊⠉⠉⠁⠢⡌⢻⠇⠀⠊⠉⠐⣄⠀⠀⠦⠴⠀⠀⡴⠊⠐⠒⠌⣷⠏⠠⠂⠈⠁⠐⢤⠈⢆⠘⡀⢄⢧⠀⠀⢃⠇⡜⠀⠀⠀</text>
+    <text x="1080" y="420" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠸⠀⠀⠀⣆⡸⢀⠉⡰⡸⠸⡐⠁⠀⠀⠀⠀⠀⠠⢔⡏⠀⠠⣮⣥⣂⠀⠀⠀⠀⠀⠀⠈⢀⣰⡤⠢⠀⢸⣎⠠⠤⠀⠀⠀⠀⠑⠌⡆⡨⠓⡹⠓⠚⡷⣉⠩⠓⠀⠀</text>
+    <text x="1080" y="440" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠣⣰⠁⠀⠇⡜⢏⡠⠁⠀⠀⡆⠀⠀⠀⠀⠀⠄⠀⡇⠀⠀⠙⠉⠘⠀⠀⠀⠀⠀⠀⠀⠸⠛⠃⠁⠀⢸⠀⠀⠄⠀⠀⠀⠀⢠⠊⠁⠃⠁⠀⠉⠹⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="460" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⡤⣼⠉⠁⠀⠀⠀⠀⠀⠸⡀⠀⠀⠀⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⠀⠀⠠⠄⠀⠀⠀⠀⠀⠀⠀⢸⠀⠀⠀⠀⠀⠀⠀⠇⠀⠀⠀⠀⠀⢠⢧⠋⢙⠀⠀⠀⠀</text>
+    <text x="1080" y="480" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⡰⡉⢣⠈⠀⢣⠀⠀⠀⠀⠀⠀⠑⢄⠀⠀⠀⠀⠀⢰⡀⠀⢀⡀⡐⠀⠀⠀⠀⠐⠀⠀⠀⡄⠀⠀⠀⡄⠀⠀⠀⠀⠀⢀⠌⠀⠀⠀⠀⠀⢠⠁⡞⡒⢁⠼⢄⠀⠀</text>
+    <text x="1080" y="500" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠔⠢⡘⣄⠏⠄⠀⡆⠀⠀⠀⠀⠀⠀⠀⢡⠀⠀⢀⠠⢂⢗⣄⠘⡤⠁⠀⠀⠀⠀⠀⠀⠀⠀⢑⡄⡠⢎⢃⠀⠀⠀⢀⠔⠁⠀⠀⠀⠀⠀⠀⡇⠀⢸⣤⡂⡔⠊⠂⠀</text>
+    <text x="1080" y="520" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠈⠁⠋⡏⠀⠀⢀⠀⠀⠀⠀⡀⡀⠀⠀⣸⠀⠤⠐⠺⠩⢜⣧⠽⠉⢰⠀⠀⠀⠀⠀⠀⠀⢷⠁⠹⡸⠭⠴⣅⡀⠀⠠⢀⠀⠀⠀⠀⠀⠀⠀⢱⠀⠀⠈⡝⢅⢃⠇⠀</text>
+    <text x="1080" y="540" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠸⡀⠀⠃⠀⠠⣎⠀⢀⣰⠉⠀⠋⢡⠊⠀⠀⠀⠀⢰⢨⢡⢂⢇⠈⢱⠀⠀⠀⠀⠀⠀⢰⠁⢑⢲⠎⡩⠁⡇⠀⠉⠁⠀⠙⢆⠀⠀⠀⠀⠀⣠⢷⠀⠀⠁⠈⣎⠄⠀</text>
+    <text x="1080" y="560" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⡷⠆⠀⠤⡂⢊⡇⡎⢸⠀⠀⢈⢸⢀⣀⠀⡄⠀⠈⠆⣊⢏⠷⡢⢸⠀⠀⠀⠀⠀⠀⠘⣔⡡⢏⠁⡱⠱⠀⠀⠀⡀⠀⠀⠀⢣⠀⠀⠀⡠⠦⡢⠑⣢⠤⢞⡌⠋⡆</text>
+    <text x="1080" y="580" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⢫⠤⠬⠕⠂⠁⠈⠁⢸⣀⡄⠸⠀⡏⢰⢱⠀⠀⠀⠈⢆⢞⡸⡬⣑⢆⠀⠀⠀⠀⠀⠀⠱⡜⡌⡖⡑⠁⠀⠀⠀⠇⠀⠀⠀⡸⢱⢀⠔⠁⠀⠈⠀⠒⠛⡒⠀⠀⠀</text>
+    <text x="1080" y="600" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠐⡄⠀⠀⠀⠀⢠⠀⠉⠀⠀⢀⠤⠁⠘⣼⠀⠀⠀⠀⠀⢊⢂⢳⠀⠈⠢⡀⠀⠀⠀⠀⠀⠘⡜⠌⠀⠀⠀⠀⠀⡆⠀⠀⡰⢡⠧⢣⠀⠀⠀⠀⠀⠀⢠⠁⠀⠀⠀</text>
+    <text x="1080" y="620" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⢇⠀⠀⠀⠀⠀⠀⠀⠀⢀⠁⠀⠀⢀⡇⠇⠀⠀⡀⠀⠀⡌⣁⡄⠀⠀⠸⠉⠠⡀⠀⠀⠀⠹⠀⠀⡀⠀⠀⢠⣁⠠⢈⠄⢹⡀⣄⡄⠀⠀⠀⠀⠀⡈⠀⠀⠀⠀</text>
+    <text x="1080" y="640" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠈⢄⠀⠀⠀⡰⣇⠀⠀⠸⠀⠀⢀⡜⠔⡌⠂⠄⠉⡀⠀⠠⡇⠇⠀⡌⠀⠰⠤⠞⠀⠀⢀⡇⣀⡒⣁⡀⠴⡚⢀⠜⡉⠬⠐⠪⠤⣇⡀⠀⠀⠀⡰⠁⠀⠀⠀⠀</text>
+    <text x="1080" y="660" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠈⠦⡀⢠⠱⠣⡣⢒⣀⣀⠲⡙⡅⢸⠇⠀⠀⠀⠀⠀⠰⡇⢅⠀⠐⣀⠀⠀⠀⠀⣠⡎⡄⠀⠀⠀⠀⠀⢧⠢⠋⡀⠤⠤⢄⣰⠁⠈⡆⢀⠴⠁⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="680" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠉⢎⠀⠁⠪⠄⠀⠀⠬⠊⣰⠏⠀⠀⠀⠀⠀⠀⢰⢱⣘⡀⠀⠀⠉⠀⠈⢁⠥⢢⠀⠀⠀⠀⠀⠀⠈⢦⠊⠀⣀⠰⡁⠀⡱⢎⠀⢀⠦⣀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="700" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠘⡀⠀⠀⠀⠀⠀⠀⠠⡏⠀⠀⠀⠀⠀⠀⠀⠈⢆⢆⢑⢄⣀⣀⡀⢤⢫⢍⠎⠀⠀⠀⠀⠀⠀⠀⠸⣠⣴⠁⠀⢈⠊⠀⠀⢱⠁⠀⠈⣤⡀⠀⠀⠀</text>
+    <text x="1080" y="720" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠀⠘⠢⢀⣀⡀⠤⠂⠁⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠢⢅⡒⣤⢤⠧⣈⠥⠊⠀⠀⠀⠀⠀⠀⠀⠀⢠⠱⢞⠩⠥⠬⠥⣄⡠⡮⡴⡬⠍⠳⣅⠀⠀⠀</text>
+    <text x="1080" y="740" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠀⢀⣀⡤⠤⢔⣀⠺⢯⡵⡑⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⡌⢔⠢⠡⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡠⠺⣧⢘⠲⠤⡔⠒⠁⢹⠀⡎⠀⠶⠥⠊⠀⠀⠀</text>
+    <text x="1080" y="760" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⢀⠔⠊⠁⠀⠀⠈⠑⠂⢌⠢⡙⢮⡂⠕⠢⢄⠀⠀⠀⠀⠀⠀⠈⠒⠒⠁⠀⠀⠀⠀⠀⠀⠀⡠⠔⡪⢜⡟⠤⠙⠚⣤⣥⣜⣠⣃⣴⠤⠚⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="780" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⢠⠃⠀⠀⠀⠀⠀⠀⠁⠀⠉⠉⠚⠪⢎⠂⠌⡂⠠⢍⡒⠀⠠⠤⠤⠄⡀⠠⠤⠤⠄⠀⣒⠩⠄⢒⡡⠈⡡⠐⢊⣁⣀⣀⡀⠀⠉⠂⠀⠈⠂⡀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="800" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠢⢄⠉⠒⠀⠠⠤⢽⣉⡏⡍⣣⣉⣉⠠⠤⠀⡲⢫⡬⠄⠚⠉⠉⠉⠈⠁⠂⠀⠀⠀⠀⠀⠀⠀⠘⡄⠀⠀⠀⠀</text>
+    <text x="1080" y="820" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠊⠙⣦⠤⡤⠄⢒⡵⠗⠉⡑⢍⣉⣉⣥⠴⡚⠃⠠⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡥⠀⠀⠀⠀</text>
+    <text x="1080" y="840" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⢱⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠔⠁⢠⠢⢁⠀⠱⢩⢲⡮⢠⠒⠓⠫⣕⢠⠘⢕⢄⠑⢄⠀⠈⠁⠐⠒⠒⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⡅⠀⠀⠀⠀</text>
+    <text x="1080" y="860" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠣⠀⠢⡀⠀⠈⠒⠤⠤⠤⠤⠒⠈⠀⠀⡠⡂⠃⡈⠀⡘⡐⡘⢰⠀⠑⡀⠀⠈⡄⠱⡀⢂⠡⡀⠑⠤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡰⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="880" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠑⣑⢌⠐⠄⢀⡀⠀⠀⠀⣀⠠⢔⠨⠊⠀⠐⠁⠠⡁⢡⠁⠎⠀⠀⡇⠀⠰⡏⡄⠱⡀⠡⡈⠢⡀⠈⠁⠒⠠⠤⠤⠄⠒⠀⠀⠀⢀⠜⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="900" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⠈⣲⣑⠤⣄⡀⠉⢉⡃⠀⠈⠀⢀⠠⠊⢀⢔⠅⢑⠡⠊⠀⠀⠀⢣⠀⠀⠰⠈⢄⠐⢄⠀⠢⡈⠁⠢⠤⠀⠀⠠⠄⠀⠀⡀⠔⠁⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="920" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⠀⢎⠒⢨⠋⠀⠴⢀⢀⣧⡔⣂⣈⠁⠠⠒⡁⠕⠈⠹⠀⠀⠀⠀⠀⢸⠀⠀⠀⢳⠄⢑⣠⣁⠒⠤⢁⡐⠢⡤⠤⠤⠒⠂⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="940" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⠀⠀⢀⡠⠗⠀⠀⠀⢀⠄⠉⠀⠀⠈⠉⠀⠉⠓⠒⠐⠀⡝⠄⠆⠀⣃⠀⢪⠀⠢⢠⠙⠀⠀⠀⠀⠈⠉⠁⢀⠔⠉⢢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="960" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⢀⠔⠁⠀⠀⠀⠀⡀⣜⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠚⠶⠤⢅⠥⠊⠣⠭⠋⠀⠀⠀⠀⠀⠀⡠⠒⢆⠀⡤⣀⠗⠙⢠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="980" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⡎⠀⠀⠀⠂⢄⠠⣈⠩⢕⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠔⢎⠀⢀⣠⠃⠀⠈⢂⢄⢀⠗⠢⡀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="1000" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠀⠀⠀⡇⠀⠀⠀⠀⢀⢀⠎⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠄⢲⠁⠀⢀⡕⠁⠈⠑⣄⠔⠁⠀⠙⡄⠀⠘⠀⠤⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="1020" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⢀⢄⡲⠍⠤⣀⡀⠠⠾⢯⣝⠑⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢆⠬⢖⣂⡸⠤⠤⠤⠤⠼⠤⠤⠤⠤⠊⣐⡚⢥⠔⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="1040" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠆⡇⠀⠀⠀⠀⠀⠀⠀⠈⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠒⠂⠤⠤⢄⣈⣈⣁⣁⣀⠤⠤⠄⠐⠊⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    <text x="1080" y="1060" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="20">⠈⠚⠡⠖⠶⠒⠦⠴⠲⠤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</text>
+    </g>
+    <mask id="ganesha-mask">
+      <use href="#ganesha" fill="#ffffff" stroke="#ffffff" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+    </mask>
+  </defs>
+  <rect width="2160" height="1440" fill="#050805"/>
+  <rect width="2160" height="1440" fill="url(#glow)"/>
+  <use href="#ganesha" fill="#00ff9c" fill-opacity="0.18" stroke="#00ff9c" stroke-opacity="0.55" stroke-width="3" filter="url(#halo)"/>
+  <use href="#ganesha" fill="#00ff9c" fill-opacity="0.10" stroke="#00ff9c" stroke-opacity="0.45" stroke-width="1.5"/>
+  <rect width="2160" height="1440" fill="url(#rain)" mask="url(#ganesha-mask)"/>
+  <rect width="2160" height="1440" fill="url(#scanlines)"/>
+  <text x="1080" y="1330" text-anchor="middle" font-family="Noto Sans Devanagari, sans-serif" font-size="42"
+        fill="#00ff9c" fill-opacity="0.55" letter-spacing="1.5">ॐ गणपतये नमः</text>
+</svg>
+

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Matrix character mosaic; archived preview, not the active wallpaper. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="2160" height="1440" viewBox="0 0 2160 1440">
+  <defs>
+
+    <radialGradient id="glow" cx="50%" cy="40%" r="80%">
+      <stop offset="0%" stop-color="#00ff9c" stop-opacity="0.10"/>
+      <stop offset="70%" stop-color="#00ff41" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#050805" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="scanlines" width="2" height="4" patternUnits="userSpaceOnUse">
+      <rect width="2" height="2" fill="#000000" fill-opacity="0.18"/>
+    </pattern>
+    <filter id="halo" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6"/>
+    </filter>
+<g id="ganesha">    <text x="1080" y="180" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">                            ｴ52ｸ                            </text>
+    <text x="1080" y="200" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">                            ｳｱｼ5                            </text>
+    <text x="1080" y="220" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">                          ｴｽ    ｸｸ                          </text>
+    <text x="1080" y="240" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">                         8ｺｵ455ｽｵｺ5                         </text>
+    <text x="1080" y="260" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">                       ｴｱ1ｻｺ4ｾ6ｽｺ24ｼｿ                       </text>
+    <text x="1080" y="280" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">                      1ｺｻｲｸｹ5ｳ8142ｸｹｾ1                      </text>
+    <text x="1080" y="300" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">                    ｴ8ｺ4ｸｼ4ｹｾｴｹｼｷｹ2ｲ7ｺ8ｿ                    </text>
+    <text x="1080" y="320" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">                   ｴ2ｼｶｻｶｷ6ｷｷｲｹｾｸｼ91ｱｽｹｷ                    </text>
+    <text x="1080" y="340" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">                   8ｺ7ｲ514ｾｳ6ｶ1ｺｾ5ｵ6ｼｸｹ96                   </text>
+    <text x="1080" y="360" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">      ｴｵ           ｻ0ｿｹｽｳｹｺｺｺ1ｳｺｺｺ 3ｹ95ｹ4         2 ｵｿ 3    </text>
+    <text x="1080" y="380" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">  ｴｻ3ｴｼ20   ｴ5ｳｹｲ1ｺｶｹ1ｸ              ｵ1195333ｼｿ ｱｳ 4 9ｿ9ｳｸ  </text>
+    <text x="1080" y="400" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20"> 2ｲ1ｸ0ｵ76ｸ ｺｵｵｻｺｺｲｺｲｽｸ ｻｺ16  ｾｳ  1ｻ13ｽ70ｸｳｹｲ1ｿｹｺ9ｿｸ2  ｷｸ2   </text>
+    <text x="1080" y="420" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">ｷ   85ｴｺｽ5ｷｶｲ     ｸ8ｵ ｸｾｵ4      ｹｴ0ｱｺ ｺｷｸｼ    2ｽ5ｵ464ｲ4ｲ14  </text>
+    <text x="1080" y="440" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20"> ｻ0ｲ ｸ236ｲ  5     ｵ 6  ｱｺ9       ｷｳｴｲ ｺ  ｵ    ｻｻｲｴｲ ｺｸ      </text>
+    <text x="1080" y="460" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">   ｱｳｺｲ     ｷｿ      6        ｸｵ       ｺ       ｸ     ｻ2ｼｴ    </text>
+    <text x="1080" y="480" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20"> ｽ8ｾｹ ｾ      2ｸ     ｲｿ ｴｿｶ    1   3   3     ｴｽ     ｻｲ4ｸｵｻｸ  </text>
+    <text x="1080" y="500" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">5ｺｾ60ｵ 5       ｼ  ｴｸｶｲ69ｱｲ        5362ｷ   ｴ5ｲ      6 ｺｴ1ｺｻｳ </text>
+    <text x="1080" y="520" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">ｹｲｼｵ  ｴ    ｿｿ  8 ｼ1ｹ1ｷｷｼｺｲ       ｹｲｸ55ｳ7ｿ ｸｴ       ｳ  ｹ3ｹｷｸ </text>
+    <text x="1080" y="540" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">ｷｿ ｴ ｸｷ ｴ0ｺ ｼｼｻ    ｲ3ｼｶｻｹｳ      ｲｲ5ｴｿｶｲ6 ｺｲ ｱｺ     9ｹ  ｲｹｷｵ </text>
+    <text x="1080" y="560" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20"> 4ｷ ｼ1ｾ6ｴｺ  ｼｺｴ2 3 ｹｷｳ3ｶ8ｺ      9ｽ73ｲｾ9   ｿ   ｾ   6ｾ82ｲｼｹｲｼ5</text>
+    <text x="1080" y="580" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20"> 6ｼ46ｳｲｹｲｺ23ｷ ｵｲｳ   ｹｺｹ5ｹｺｺ      92ｲｼｷｲ   ｸ   5ｳｴ5ｲ ｹ 3ｳｸ   </text>
+    <text x="1080" y="600" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20"> 13    ｻ ｺ  ｴｼｲ9ｳ     ｾｶｵ ｹｺｿ     92ｽ     5  ｽｼｿｾ      ｻｲ   </text>
+    <text x="1080" y="620" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">  ｻ        ｴｲ  ｴ6ｸ  ｿ  ｲ33  ｷｺｸｿ   ｸ  ｿ  ｻ3ｸｼｵｻｿ63     7    </text>
+    <text x="1080" y="640" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">  ｹｸ   ｽ9  ｷ  ｴ25ｲｳｵｺｿ ｸ6ｸ ｲ 8ｼｶ  ｴ62ｸ3ｿｳ0ｴｴ8412ｼ9ｿ   ｽｲ    </text>
+    <text x="1080" y="660" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">   ｹｾｿｻ9ｻ9622ｱｿ4ｺｸ     86ｹ 12    9ｴ3     2ｺｼｿｼｼｸ0ｲｹ5ｴｳｲ     </text>
+    <text x="1080" y="680" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">     ｺ2 ｲ2ｵ  4ｻ00      ｲｳ1ｿ  ｺ ｹｵｽｽ      ｹ1ｻ 280 ｾ2 ｴｾ2     </text>
+    <text x="1080" y="700" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">      9ｿ      ｸｵ       ｹｺｺ5ｸ22ｿｿ61ｿ       ｷ94ｲ ｼｻ  ｳｲ ｹｴｿ   </text>
+    <text x="1080" y="720" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">       9ｺｴ2ｿｼｳｲｷ         ｺｹｸｴｿｿｱｽｻ        ｻ9ｹ1ｽ4ｽ66ｻ1ｹｾｲ7   </text>
+    <text x="1080" y="740" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">       ｴ2ｱｼ82ｹｱ2ｷｸ         ｲ8ｺｹ          6ｹｷｳｱｼｺ3ｲｻ ｴ ｵｽｻ   </text>
+    <text x="1080" y="760" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">    ｴ5ｻｲ  ｹ2ｳ0ｺｿ916ｺｸ      ｹ33ｲ       65ｷｷ5ｼｱｲｴｵ5954ｼｲ      </text>
+    <text x="1080" y="780" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">   ｻｴ      ｲ ｺｺｲ22ｳｽ1ｸ1ｸ ｸｼｼｵｿｸｼｼｵ ｻ1ｵ67ｹ71ｾ322ｿ ｺｳ ｹｳｿ     </text>
+    <text x="1080" y="800" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">   6              ｹｺｸｺ3 ｸｼｿｲｵｳｳｲｲｸｼ ｿ6ｹｵｲｺｺｺｹｲｳ       93    </text>
+    <text x="1080" y="820" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">   6               ｴｻｱｶｼｱｵ628ｺｷ1ｲｲｵｳ0ｴｸｴ               ｲ    </text>
+    <text x="1080" y="840" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">   ｳ             ｴ5ｲｻｺｵ 94ｴｻｻ343ｾｻ99ｸ2ｸ ｹｲ133ｳ         4    </text>
+    <text x="1080" y="860" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">    ｻ ｺｿ ｹ3ｼｼｼｼ3ｹ  61ｴ7 ｾｶｾｲ 2ｿ ｹ39ｿｶｹｿ2ｼｿ            ｽ     </text>
+    <text x="1080" y="880" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">     2ｺ01ｵｴｿ   2ｸ80ｻ 1ｲｸ0ｼｲｿ  6 8ｵ39ｿｹ7ｺｿｹｲ3ｸｼｼｵ3   ｴｴ      </text>
+    <text x="1080" y="900" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">      ｹ2ｺｼ6ｿｺｽ2 ｹ ｴｸｻｴ8ｶ5ｹｻ   ｾ  8ｹｸ1ｸ ｺ7ｲｺｼ  ｸｵ  ｿ5ｲ       </text>
+    <text x="1080" y="920" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">      233ｼ ｳｴｴｷｺ4ｱｲｸ306ｹｸ     ｺ   ｵｵ5933ｼｵｶｺｱｼｼ3ｳｺ          </text>
+    <text x="1080" y="940" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">     ｴ68   ｴｵｺ  ｹｺ ｺ431 3ｵｷ 5 5 ｺｻｱ    ｹｺｲｴ5ｺｽ              </text>
+    <text x="1080" y="960" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">   ｴ5ｲ    ｿ52           ｺｲｵｼｹｽｻｻ5ｼ      63ｺ ｱ28ｱｻ           </text>
+    <text x="1080" y="980" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">   ｴ   ｳｸｸｱ195                       ｴ52 ｴ9ｴ ｹｶｸｴ8ｺｿ        </text>
+    <text x="1080" y="1000" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">   6    ｴｴｿ                       ｴｵｴｲ ｴｻｲｹ265ｲ ｱ3 9 ｼ      </text>
+    <text x="1080" y="1020" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">ｴｸｿｾｼ2ｿｸｽｱ62                      9ｺ4ｱ45ｼｼｼｼｻｼｼｼｼｻｹ005      </text>
+    <text x="1080" y="1040" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">ｷ6       ｹｲ                         ｹ3ｳｼｼｸｱｱ332ｼｼｵ1ｻ        </text>
+    <text x="1080" y="1060" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, Noto Sans CJK JP, monospace" font-size="20">ｹｲｹ7ｵ3ｾｳｱｼ2</text>
+    </g>
+  </defs>
+  <rect width="2160" height="1440" fill="#050805"/>
+  <rect width="2160" height="1440" fill="url(#glow)"/>
+  <rect width="2160" height="1440" fill="url(#rain)" opacity="0.15"/>
+  <use href="#ganesha" fill="#00ff41" fill-opacity="0.45" filter="url(#halo)"/>
+  <use href="#ganesha" fill="#00ff9c" fill-opacity="0.95" stroke="#00ff9c" stroke-opacity="0.40" stroke-width="1"/>
+  <rect width="2160" height="1440" fill="url(#scanlines)"/>
+  <text x="1080" y="1330" text-anchor="middle" font-family="Noto Sans Devanagari, sans-serif" font-size="42"
+        fill="#00ff9c" fill-opacity="0.55" letter-spacing="1.5">ॐ गणपतये नमः</text>
+</svg>
+
