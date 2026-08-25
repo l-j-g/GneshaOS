@@ -25,5 +25,7 @@
 
   # Top-level desktop asset: the repository `wallpaper` symlink selects the
   # active preview from `wallpapers/` and Sway applies this generated path.
+  home.file."wallpapers".source = ../wallpapers;
+  home.file."wallpaper".source = ../wallpaper;
   xdg.configFile."sway/generated_background.svg".source = ../wallpaper;
 }

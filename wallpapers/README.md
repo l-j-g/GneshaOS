@@ -4,6 +4,8 @@ The active configuration selects the top-level `wallpaper` link, which points
 to `wallpapers/wallpaper`. That inner link currently selects the first preview;
 change it to any SVG below to try another version.
 
+Home Manager exposes these at `~/wallpapers` and `~/wallpaper` after rebuild.
+
 - `01-braille-mask-katakana.svg` — the last OpenCode version you liked:
   Braille Ganesha mask with katakana/digit Matrix rain clipped inside.
 - `02-braille-direct.svg` — direct Braille rendering with a faint full-screen
