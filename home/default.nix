@@ -23,9 +23,36 @@
   home.homeDirectory = params.userSettings.homeDirectory;
   home.stateVersion = "25.05";
 
-  # Top-level desktop asset: the repository `wallpaper` symlink selects the
-  # active preview from `wallpapers/` and Sway applies this generated path.
-  home.file."wallpapers".source = ../wallpapers;
-  home.file."wallpaper".source = ../wallpaper;
-  xdg.configFile."sway/generated_background.svg".source = ../wallpaper;
+  # Seed a mutable user wallpaper directory once. Existing files are kept so
+  # `cp xyz.jpg ~/wallpapers/wallpaper` remains the simple switching workflow.
+  home.activation.installWallpaperArchive = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    wallpaperDir="${config.home.homeDirectory}/wallpapers"
+    wallpaperFile="$wallpaperDir/wallpaper"
+    legacyWallpaper="${config.home.homeDirectory}/wallpaper"
+
+    # Migrate the old Home Manager-managed symlinks, if present.
+    if [ -L "$legacyWallpaper" ]; then
+      $DRY_RUN_CMD rm "$legacyWallpaper"
+    fi
+    if [ -L "$wallpaperDir" ]; then
+      $DRY_RUN_CMD rm "$wallpaperDir"
+    fi
+    if [ -L "$wallpaperFile" ]; then
+      $DRY_RUN_CMD rm "$wallpaperFile"
+    fi
+
+    $DRY_RUN_CMD mkdir -p "$wallpaperDir"
+    for preview in \
+      ${../wallpapers/01-braille-mask-katakana.svg} \
+      ${../wallpapers/02-braille-direct.svg} \
+      ${../wallpapers/03-matrix-mosaic.svg}; do
+      if [ ! -e "$wallpaperDir/$(basename "$preview")" ]; then
+        $DRY_RUN_CMD cp "$preview" "$wallpaperDir/"
+      fi
+    done
+
+    if [ ! -e "$wallpaperFile" ]; then
+      $DRY_RUN_CMD cp ${../wallpapers/01-braille-mask-katakana.svg} "$wallpaperFile"
+    fi
+  '';
 }

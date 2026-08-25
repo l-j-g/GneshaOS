@@ -1,10 +1,8 @@
 # Archived wallpaper previews
 
-The active configuration selects the top-level `wallpaper` link, which points
-to `wallpapers/wallpaper`. That inner link currently selects the first preview;
-change it to any SVG below to try another version.
-
-Home Manager exposes these at `~/wallpapers` and `~/wallpaper` after rebuild.
+Home Manager seeds these previews into `~/wallpapers` on rebuild. The active
+wallpaper is the mutable file `~/wallpapers/wallpaper`; it is seeded from the
+first preview only when that file does not already exist.
 
 - `01-braille-mask-katakana.svg` — the last OpenCode version you liked:
   Braille Ganesha mask with katakana/digit Matrix rain clipped inside.
@@ -15,16 +13,18 @@ Home Manager exposes these at `~/wallpapers` and `~/wallpaper` after rebuild.
 - `04-glpaper-matrix.glsl` — the live shader experiment. It needs glpaper and
   is not used by Sway.
 
-Current link:
+To change it to any image:
 
-```text
-wallpaper -> wallpapers/wallpaper -> 01-braille-mask-katakana.svg
+```sh
+cp /path/to/xyz.jpg ~/wallpapers/wallpaper
+swaymsg reload
 ```
 
 To preview an SVG temporarily in Sway:
 
 ```sh
-swaymsg 'output * bg /home/lg/.config/nix/wallpapers/01-braille-mask-katakana.svg fill'
+swaymsg 'output * bg /home/lg/wallpapers/wallpaper fill'
 ```
 
-Reloading Sway or rebuilding the configuration restores the active wallpaper.
+Rebuilding only creates missing preview/default files; it preserves an existing
+`~/wallpapers/wallpaper`. Reload Sway after replacing it.

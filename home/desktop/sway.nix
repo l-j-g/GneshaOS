@@ -162,8 +162,8 @@ in
         { command = "dex -a -e SWAY"; }
         { command = "noisetorch -u && noisetorch -i"; always = true; }
         {
-          # Matrix wallpaper (applied on every reload, Manjaro-style).
-          command = "swaymsg \"output * bg ${config.home.homeDirectory}/.config/sway/generated_background.svg fill\"";
+          # User-selected wallpaper (replace ~/wallpapers/wallpaper to switch).
+          command = "swaymsg \"output * bg ${config.home.homeDirectory}/wallpapers/wallpaper fill\"";
           always = true;
         }
       ];
