@@ -17,87 +17,17 @@ let
   wpW = toString params.userSettings.displayWidth;
   wpH = toString params.userSettings.displayHeight;
 
-  # Decode the Braille Ganesha into its individual dots, then replace each dot
-  # with a tiny Matrix glyph. The fixed seed preserves Nix build reproducibility
-  # while varying glyph shape, size, colour, and intensity.
-  matrixGaneshaWallpaper = pkgs.runCommandLocal "matrix-ganesha-wallpaper.svg" {
-    nativeBuildInputs = [ pkgs.perl ];
-    sourceArt = ./ganesha-braille.txt;
-  } ''
-    perl -CSDA -Mutf8 - "$sourceArt" > "$out" <<'PERL'
-    use strict;
-    use warnings;
+  # Use the original Braille Ganesha as an SVG mask. The Matrix rain is clipped
+  # inside it, preserving the figure's proportions while keeping the code look.
+  ganeshaArt = lib.filter (line: line != "") (lib.splitString "\n" (builtins.readFile ./ganesha-braille.txt));
+  artFontPx = 20;
+  artLineH = 20;
+  artStartY = builtins.div (params.userSettings.displayHeight - (builtins.length ganeshaArt) * artLineH) 2;
+  artCenterX = params.userSettings.displayWidth / 2;
 
-    my @code = split //, "0123456789ABCDEF[]{}?/\\\\+-=";
-    my @dot_x = (0, 0, 0, 1, 1, 1, 0, 1);
-    my @dot_y = (0, 1, 2, 0, 1, 2, 3, 3);
-    # Match the original 20px monospace Braille layout: its cells are roughly
-    # 12px wide by 20px tall.  The earlier 18x24 grid widened Ganesha by 50%.
-    my ($cell_w, $cell_h) = (12, 20);
-    my $start_x = (${wpW} - 60 * $cell_w) / 2 + $cell_w / 4;
-    my $start_y = (${wpH} - 45 * $cell_h) / 2 + 7;
-    srand(314159);
-    my $matrix_art = "";
-    my $line = 0;
-    while (my $art_line = <>) {
-      chomp $art_line;
-      next if $art_line eq "";
-      my @cells = split //, $art_line;
-      for my $column (0 .. $#cells) {
-        my $value = ord $cells[$column];
-        next if $value < 0x2800 || $value > 0x28ff;
-        my $bits = $value - 0x2800;
-        for my $dot (0 .. 7) {
-          next unless $bits & (1 << $dot);
-          my $x = $start_x + $column * $cell_w + $dot_x[$dot] * ($cell_w / 2);
-          my $y = $start_y + $line * $cell_h + $dot_y[$dot] * ($cell_h / 4);
-          # Keep glyphs inside the 6x5px Braille-dot grid; larger characters
-          # overlap their neighbours and visually warp the silhouette.
-          my $size = 5 + int(rand() * 3);
-          my $opacity = 0.42 + rand() * 0.52;
-          my $glyph = $code[int(rand() * @code)];
-          my $color = rand() < 0.07 ? "#f0fff2" : (rand() < 0.16 ? "#35ffcf" : "#00ff9c");
-          $matrix_art .= sprintf qq{<text x="%.1f" y="%.1f" font-size="%d" fill="%s" fill-opacity="%.2f">%s</text>\n},
-            $x, $y, $size, $color, $opacity, $glyph;
-        }
-      }
-      $line++;
-    }
-
-    print <<'SVG';
-    <svg xmlns="http://www.w3.org/2000/svg" width="${wpW}" height="${wpH}" viewBox="0 0 ${wpW} ${wpH}">
-      <defs>
-        <radialGradient id="glow" cx="50%" cy="40%" r="80%">
-          <stop offset="0%" stop-color="#00ff9c" stop-opacity="0.10"/>
-          <stop offset="70%" stop-color="#00ff41" stop-opacity="0.03"/>
-          <stop offset="100%" stop-color="#050805" stop-opacity="0"/>
-        </radialGradient>
-        <pattern id="scanlines" width="2" height="4" patternUnits="userSpaceOnUse">
-          <rect width="2" height="2" fill="#000000" fill-opacity="0.18"/>
-        </pattern>
-        <filter id="halo" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="6"/>
-        </filter>
-      </defs>
-      <rect width="${wpW}" height="${wpH}" fill="#050805"/>
-      <rect width="${wpW}" height="${wpH}" fill="url(#glow)"/>
-      <g text-anchor="middle" dominant-baseline="central" font-family="Terminess Nerd Font, monospace" font-weight="bold" filter="url(#halo)" opacity="0.42">
-    SVG
-    print $matrix_art;
-    print <<'SVG';
-      </g>
-      <g text-anchor="middle" dominant-baseline="central" font-family="Terminess Nerd Font, monospace" font-weight="bold">
-    SVG
-    print $matrix_art;
-    print <<'SVG';
-      </g>
-      <rect width="${wpW}" height="${wpH}" fill="url(#scanlines)"/>
-      <text x="${toString (params.userSettings.displayWidth / 2)}" y="${toString (params.userSettings.displayHeight - 110)}" text-anchor="middle" font-family="Terminess Nerd Font, Noto Sans Devanagari, sans-serif" font-size="42"
-            fill="#00ff9c" fill-opacity="0.55" letter-spacing="1.5">ॐ गणपतये नमः</text>
-    </svg>
-    SVG
-    PERL
-  '';
+  renderGanesha = builtins.concatStringsSep "\n" (lib.imap0 (i: line:
+    ''<text x="${toString artCenterX}" y="${toString (artStartY + i * artLineH)}" text-anchor="middle" xml:space="preserve" font-family="Terminess Nerd Font, monospace" font-size="${toString artFontPx}">${line}</text>''
+  ) ganeshaArt);
 in
 {
   # base16 palette — phosphor green on near-black.
@@ -151,8 +81,60 @@ in
     };
   };
 
-  # Generated SVG wallpaper: every active Braille dot becomes a tiny, varied
-  # Matrix glyph, preserving the original artwork's exact geometry.
+  # Generated SVG wallpaper: the original Braille Ganesha masks the Matrix
+  # rain, with a visible green outline and dark corners.
   # Referenced from sway as `output * bg ~/.config/sway/generated_background.svg fill`.
-  xdg.configFile."sway/generated_background.svg".source = matrixGaneshaWallpaper;
+  xdg.configFile."sway/generated_background.svg".text = ''
+    <svg xmlns="http://www.w3.org/2000/svg" width="${wpW}" height="${wpH}" viewBox="0 0 ${wpW} ${wpH}">
+      <defs>
+        <radialGradient id="glow" cx="50%" cy="40%" r="80%">
+          <stop offset="0%" stop-color="#00ff9c" stop-opacity="0.10"/>
+          <stop offset="70%" stop-color="#00ff41" stop-opacity="0.03"/>
+          <stop offset="100%" stop-color="#050805" stop-opacity="0"/>
+        </radialGradient>
+        <pattern id="rain" width="48" height="200" patternUnits="userSpaceOnUse">
+          <g font-family="Terminess Nerd Font, monospace" font-size="18" font-weight="bold">
+            <text x="4"  y="26" fill="#00ff9c" fill-opacity="0.95">ア</text>
+            <text x="4"  y="44" fill="#00ff41" fill-opacity="0.60">7</text>
+            <text x="4"  y="62" fill="#00ff9c" fill-opacity="0.40">ウ</text>
+            <text x="4"  y="80" fill="#35ffcf" fill-opacity="0.25">1</text>
+            <text x="4"  y="98" fill="#00ff41" fill-opacity="0.14">エ</text>
+            <text x="24" y="66" fill="#00ff41" fill-opacity="0.85">キ</text>
+            <text x="24" y="84" fill="#00ff9c" fill-opacity="0.55">3</text>
+            <text x="24" y="102" fill="#00ff41" fill-opacity="0.35">ク</text>
+            <text x="24" y="120" fill="#00ff9c" fill-opacity="0.18">0</text>
+            <text x="24" y="138" fill="#35ffcf" fill-opacity="0.10">ケ</text>
+            <text x="42" y="10" fill="#00ff9c" fill-opacity="0.80">サ</text>
+            <text x="42" y="28" fill="#00ff41" fill-opacity="0.50">5</text>
+            <text x="42" y="46" fill="#35ffcf" fill-opacity="0.30">シ</text>
+            <text x="42" y="64" fill="#00ff41" fill-opacity="0.16">2</text>
+            <text x="42" y="82" fill="#00ff9c" fill-opacity="0.08">ス</text>
+          </g>
+        </pattern>
+        <pattern id="scanlines" width="2" height="4" patternUnits="userSpaceOnUse">
+          <rect width="2" height="2" fill="#000000" fill-opacity="0.18"/>
+        </pattern>
+        <filter id="halo" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="6"/>
+        </filter>
+        <mask id="ganesha">
+          <g fill="#ffffff" stroke="#ffffff" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+            ${renderGanesha}
+          </g>
+        </mask>
+      </defs>
+      <rect width="${wpW}" height="${wpH}" fill="#050805"/>
+      <rect width="${wpW}" height="${wpH}" fill="url(#glow)"/>
+      <g fill="#00ff9c" fill-opacity="0.18" stroke="#00ff9c" stroke-opacity="0.55" stroke-width="3" filter="url(#halo)">
+        ${renderGanesha}
+      </g>
+      <g fill="#00ff9c" fill-opacity="0.10" stroke="#00ff9c" stroke-opacity="0.45" stroke-width="1.5">
+        ${renderGanesha}
+      </g>
+      <rect width="${wpW}" height="${wpH}" fill="url(#rain)" mask="url(#ganesha)"/>
+      <rect width="${wpW}" height="${wpH}" fill="url(#scanlines)"/>
+      <text x="${toString artCenterX}" y="${toString (params.userSettings.displayHeight - 110)}" text-anchor="middle" font-family="Noto Sans Devanagari, sans-serif" font-size="42"
+            fill="#00ff9c" fill-opacity="0.55" letter-spacing="1.5">ॐ गणपतये नमः</text>
+    </svg>
+  '';
 }
