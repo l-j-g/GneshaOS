@@ -136,7 +136,7 @@ in
     };
 
     style = ''
-      * { font-family: "Terminess Nerd Font", monospace; font-size: 13px; min-height: 0; }
+      * { font-family: "Terminess Nerd Font", monospace; min-height: 0; }
 
       window#waybar {
         background: ${v.bg};
