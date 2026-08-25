@@ -50,6 +50,16 @@ in
   services.way-displays = {
     enable = true;
     systemdTarget = sessionTarget;
+    settings = {
+      # The BenQ's auto-DPI scale makes UI text too small in practice.
+      # Keep the high-density laptop and low-density Cinema HD on auto scale.
+      SCALE = [
+        {
+          NAME_DESC = "BenQ RD280UA";
+          SCALE = 2.0;
+        }
+      ];
+    };
   };
 
   # swayr — alt-tab style window switching.
