@@ -44,8 +44,10 @@ in
     pkgs.noto-fonts-color-emoji
     pkgs.liberation_ttf
     pkgs.symbola
-    pkgs.nerd-fonts.symbols-only
-    pkgs.nerd-fonts.fira-code
+    # Install every Nerd Font family exposed by nixpkgs. This intentionally
+    # includes Symbols Only and the patched variants; the collection is kept
+    # as an attrset upstream, so attrValues turns it into the required list.
+    (lib.attrValues pkgs.nerd-fonts)
     pkgs.fira-code-symbols
     pkgs.mplus-outline-fonts.githubRelease
     pkgs.dina-font
