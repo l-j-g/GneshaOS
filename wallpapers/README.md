@@ -2,15 +2,17 @@
 
 Home Manager seeds these previews into `~/wallpapers` on rebuild. The active
 wallpaper is the mutable file `~/wallpapers/wallpaper`; it is seeded from the
-first preview only when that file does not already exist.
+preferred Braille-mask preview only when that file does not already exist.
 
-- `01-braille-mask-katakana.svg` — the last OpenCode version you liked:
-  Braille Ganesha mask with katakana/digit Matrix rain clipped inside.
+- `01-matrix-glow.svg` — the oldest OpenCode version: a quiet Matrix rain
+  field with phosphor glow and the “wake up, Neo...” caption.
 - `02-braille-direct.svg` — direct Braille rendering with a faint full-screen
   Matrix texture.
-- `03-matrix-mosaic.svg` — the converted `ganesha-matrix.txt` character
+- `03-braille-mask-katakana.svg` — the preferred OpenCode version:
+  Braille Ganesha mask with katakana/digit Matrix rain clipped inside.
+- `04-matrix-mosaic.svg` — the converted `ganesha-matrix.txt` character
   mosaic that replaced Braille cells with Matrix characters.
-- `04-glpaper-matrix.glsl` — the live shader experiment. It needs glpaper and
+- `05-glpaper-matrix.glsl` — the live shader experiment. It needs glpaper and
   is not used by Sway.
 
 To change it to any image:
