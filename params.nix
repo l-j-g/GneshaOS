@@ -44,10 +44,10 @@
     keyboardOptions = "ctrl:nocaps";
 
     # Display panel: native resolution in px (drives the generated wallpaper
-    # SVG) and sway scaling factor (2 = 200% HiDPI).
+    # SVG) and sway scaling factor (1 = 100%, 2 = 200% HiDPI).
     displayWidth = 2160;
     displayHeight = 1440;
-    displayScale = "2";
+    displayScale = "1";
 
     # Desktop preferences.
     gapsInner = 5; # sway gaps inner (px)
