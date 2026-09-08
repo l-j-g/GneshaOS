@@ -245,7 +245,12 @@ case "${1:-}" in
     --select)
         [ -n "${2:-}" ] || exit 0
         mkdir -p "$(dirname "$stateFile")"
-        printf '%s\n' "$2" > "$stateFile"
+        # Rofi passes the row's display value to the selection callback. The
+        # picker appends markup swatches after the theme name, so keep only
+        # the first whitespace-delimited field used by theme_row().
+        selectedTheme=${2%%[[:space:]]*}
+        [ -n "$selectedTheme" ] || exit 0
+        printf '%s\n' "$selectedTheme" > "$stateFile"
         ;;
     --terminal)
         [ -n "${2:-}" ] || die "missing preview state file"
