@@ -26,13 +26,18 @@ function rebuild
         return 1
     end
 
+    nh home switch "__FLAKE_PATH__" -c "__HOME_PROFILE__"
+    if test $status -ne 0
+        return 1
+    end
+
     set generations (__nix_system_generations)
     if test -n "$before"; and test (count $generations) -gt 0
         set -l after $generations[-1]
         if test "$before" != "$after"
             nvd diff "$before" "$after"
         else
-            echo "No new system generation; nothing to diff."
+            echo "No new system generation; Home Manager activation completed."
         end
     else
         nvdiff

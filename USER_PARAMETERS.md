@@ -145,8 +145,8 @@ changes.
    nh home switch . -c <user>@<host-directory-name>
    ```
 
-   The bundled `rebuild` helper remains the full system switch;
-   `home-rebuild` is the faster user-only activation.
+   The bundled `rebuild` helper switches both the system and Home Manager
+   layers; `home-rebuild` is the faster user-only activation.
 
 4. Changes to the **display** (resolution/scaling) also affect the generated
    wallpaper and the `scale.sh` reset value — just rebuild and relog (or

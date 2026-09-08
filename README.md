@@ -96,8 +96,10 @@ nixos-rebuild build --flake .#<host-directory-name>
 ```
 
 System changes use `nixos-rebuild`; user-environment changes use the faster
-standalone Home Manager output. The theme picker starts the latter activation
-in the background after a theme is accepted.
+standalone Home Manager output. The bundled `rebuild` helper runs both layers
+in sequence, while `home-rebuild` activates only Home Manager. The theme
+picker starts the latter activation in the background after a theme is
+accepted.
 
 `params.nix` is the tracked consumer/user parameter file — username, display
 resolution/scaling, keyboard layout, timezone, paths and preferences. The

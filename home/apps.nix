@@ -23,6 +23,7 @@ in
       firefox
       imv
       mpv
+      nautilus
       chafa
       librsvg
       fastfetch
