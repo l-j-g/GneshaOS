@@ -15,6 +15,7 @@
   micMute,
   brightnessUp,
   brightnessDown,
+  themePicker,
 }:
 let
   m = mod;
@@ -35,7 +36,7 @@ in
   "${m}+Shift+p" = "exec ${clipboard}";
 
   # Launch // Base16 theme picker (selection is applied on rebuild)
-  "${m}+Shift+t" = "exec theme-picker";
+  "${m}+Shift+t" = "exec ${themePicker}";
 
   # Action // Reload
   "${m}+Shift+c" = "reload";

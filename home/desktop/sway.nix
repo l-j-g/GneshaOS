@@ -44,6 +44,10 @@ let
   # Clipboard picker (rofi + cliphist).
   clipboard = "cliphist list | rofi -dmenu -p \"Select item to copy\" -lines 10 | cliphist decode | wl-copy";
 
+  # Use an absolute path because Sway may be launched before Home Manager's
+  # sessionPath is loaded into its environment.
+  themePicker = "${config.home.homeDirectory}/.config/sway/scripts/theme-picker";
+
   # SwayOSD owns volume/brightness changes and displays the matching OSD.
   volumeUp = "swayosd-client --output-volume raise";
   volumeDown = "swayosd-client --output-volume lower";
@@ -66,6 +70,7 @@ let
       micMute
       brightnessUp
       brightnessDown
+      themePicker
       ;
   };
 in
