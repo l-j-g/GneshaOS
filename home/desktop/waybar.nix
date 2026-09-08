@@ -49,7 +49,7 @@ in
 
       "cpu" = {
         interval = 5;
-        format = "";
+        format = "󰍛";
         states = {
           warning = 70;
           critical = 90;
