@@ -16,6 +16,17 @@ let
     [ "__FLAKE_PATH__" "__HOST_NAME__" "__SYSTEM_BUILD_REF__" ]
     [ flakePath hostName systemBuildRef ]
     (builtins.readFile ./scripts/nix-workflow.fish);
+  themeFishInit = ''
+    # Runtime theme previews update these files without rewriting shell config.
+    set -l gneshaThemeDir "$HOME/.config/gnesha"
+    if test -r "$gneshaThemeDir/eza-colors"
+      set -gx EZA_COLORS (string collect < "$gneshaThemeDir/eza-colors")
+      set -gx LS_COLORS "$EZA_COLORS"
+    end
+    if test -r "$gneshaThemeDir/lf-colors"
+      set -gx LF_COLORS (string collect < "$gneshaThemeDir/lf-colors")
+    end
+  '';
 in
 {
   home.packages = with pkgs; [
@@ -66,7 +77,7 @@ in
       retest-raw = "sudo nixos-rebuild test --flake ${flakeRef}";
       rebuild-boot-raw = "sudo nixos-rebuild boot --flake ${flakeRef}";
     };
-    interactiveShellInit = fishWorkflow;
+    interactiveShellInit = fishWorkflow + "\n" + themeFishInit;
   };
 
   programs.zoxide.enable = true;

@@ -39,10 +39,11 @@ let
   termFloat = "${term} --class floating_shell";
 
   # Launcher (Manjaro: rofi combi = drun + run).
-  menu = "rofi -show combi -combi-modes \"drun,run\" -terminal ${term} -show-icons -lines 10";
+  rofiLauncher = "${config.home.homeDirectory}/.config/sway/scripts/gnesha-rofi";
+  menu = "${rofiLauncher} -show combi -combi-modes \"drun,run\" -terminal ${term} -show-icons -lines 10";
 
   # Clipboard picker (rofi + cliphist).
-  clipboard = "cliphist list | rofi -dmenu -p \"Select item to copy\" -lines 10 | cliphist decode | wl-copy";
+  clipboard = "cliphist list | ${rofiLauncher} -dmenu -p \"Select item to copy\" -lines 10 | cliphist decode | wl-copy";
 
   # Use an absolute path because Sway may be launched before Home Manager's
   # sessionPath is loaded into its environment.

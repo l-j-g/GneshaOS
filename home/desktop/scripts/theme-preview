@@ -1,0 +1,306 @@
+#!/bin/sh
+# Runtime Base16 preview/apply helper used by theme-picker.
+
+set -eu
+
+themeData="${XDG_CONFIG_HOME:-$HOME/.config}/gnesha/theme-data"
+gneshaDir="${XDG_CONFIG_HOME:-$HOME/.config}/gnesha"
+stateFile="${GNESHA_THEME_PREVIEW_STATE:-$gneshaDir/theme-preview.state}"
+
+die() {
+    printf '%s\n' "theme-preview: $*" >&2
+    exit 1
+}
+
+theme_row() {
+    [ -r "$themeData" ] || die "theme catalog is missing; rebuild Home Manager first"
+    row=$(awk -F '\t' -v wanted="$1" '$1 == wanted { print; exit }' "$themeData")
+    [ -n "${row:-}" ] || die "unknown theme: $1"
+    printf '%s\n' "$row"
+}
+
+load_palette() {
+    row=$(theme_row "$1")
+    # Theme names and palette values are restricted to safe hex strings, so
+    # splitting this tab-separated row is unambiguous.
+    oldIFS=$IFS
+    IFS="$(printf '\t')"
+    # shellcheck disable=SC2086
+    set -- $row
+    IFS=$oldIFS
+    themeName=$1
+    base00=$2
+    base01=$3
+    base02=$4
+    base03=$5
+    base04=$6
+    base05=$7
+    base06=$8
+    base07=$9
+    shift 9
+    base08=$1
+    base09=$2
+    base0A=$3
+    base0B=$4
+    base0C=$5
+    base0D=$6
+    base0E=$7
+    base0F=$8
+}
+
+palette_color() {
+    case "$1" in
+        0) printf '%s' "$base00" ;;
+        1) printf '%s' "$base08" ;;
+        2) printf '%s' "$base0B" ;;
+        3) printf '%s' "$base0A" ;;
+        4) printf '%s' "$base0D" ;;
+        5) printf '%s' "$base0E" ;;
+        6) printf '%s' "$base0C" ;;
+        7) printf '%s' "$base05" ;;
+        8) printf '%s' "$base04" ;;
+        9) printf '%s' "$base08" ;;
+        10) printf '%s' "$base0B" ;;
+        11) printf '%s' "$base0A" ;;
+        12) printf '%s' "$base0D" ;;
+        13) printf '%s' "$base0E" ;;
+        14) printf '%s' "$base0C" ;;
+        15) printf '%s' "$base07" ;;
+    esac
+}
+
+base16_color() {
+    case "$1" in
+        0) printf '%s' "$base00" ;;
+        1) printf '%s' "$base01" ;;
+        2) printf '%s' "$base02" ;;
+        3) printf '%s' "$base03" ;;
+        4) printf '%s' "$base04" ;;
+        5) printf '%s' "$base05" ;;
+        6) printf '%s' "$base06" ;;
+        7) printf '%s' "$base07" ;;
+        8) printf '%s' "$base08" ;;
+        9) printf '%s' "$base09" ;;
+        10) printf '%s' "$base0A" ;;
+        11) printf '%s' "$base0B" ;;
+        12) printf '%s' "$base0C" ;;
+        13) printf '%s' "$base0D" ;;
+        14) printf '%s' "$base0E" ;;
+        15) printf '%s' "$base0F" ;;
+    esac
+}
+
+set_terminal_palette() {
+    printf '\033]10;#%s\007' "$base05"
+    printf '\033]11;#%s\007' "$base00"
+    index=0
+    while [ "$index" -le 15 ]; do
+        printf '\033]4;%s;#%s\007' "$index" "$(palette_color "$index")"
+        index=$((index + 1))
+    done
+}
+
+render_terminal() {
+    set_terminal_palette
+    printf '\033[2J\033[H\033[?25l'
+    printf '\033[1;38;5;2m  %s\033[0m\n' "$themeName"
+    printf '\033[38;5;7m  Base16 palette\033[0m\n\n'
+
+    index=0
+    while [ "$index" -le 15 ]; do
+        color=$(base16_color "$index")
+        printf '  \033[48;5;%sm  \033[0m \033[38;5;7mbase%02X\033[0m  #%s\n' "$index" "$index" "$color"
+        index=$((index + 1))
+    done
+
+    printf '\n  \033[38;5;7m┌────────────────────────────────────────────┐\033[0m\n'
+    printf '  \033[38;5;7m│\033[0m \033[38;5;2m$\033[0m eza --icons=auto -la                  \033[38;5;7m│\033[0m\n'
+    printf '  \033[38;5;7m│\033[0m \033[38;5;4mdrwxr-xr-x\033[0m  \033[38;5;6m󰉋\033[0m projects/      \033[38;5;7m│\033[0m\n'
+    printf '  \033[38;5;7m│\033[0m \033[38;5;2m-rwxr-xr-x\033[0m  \033[38;5;3m󰆍\033[0m deploy.sh       \033[38;5;7m│\033[0m\n'
+    printf '  \033[38;5;7m│\033[0m \033[38;5;5mfunction\033[0m greet() { \033[38;5;4mecho\033[0m hello; }  \033[38;5;7m│\033[0m\n'
+    printf '  \033[38;5;7m│\033[0m \033[38;5;1merror:\033[0m  connection refused             \033[38;5;7m│\033[0m\n'
+    printf '  \033[38;5;7m└────────────────────────────────────────────┘\033[0m\n'
+    printf '\n  \033[38;5;8mnormal\033[0m  \033[38;5;9mbright\033[0m  \033[38;5;10maccent\033[0m  \033[38;5;11mwarning\033[0m  \033[38;5;12mlink\033[0m\n'
+}
+
+write_rofi_theme() {
+    cat > "$gneshaDir/rofi-live.rasi" <<EOF
+* {
+    background-color: #${base00}E6;
+    foreground-color: #${base05};
+    text-color: #${base05};
+    border-color: #${base0B};
+    spacing: 2px;
+}
+window {
+    background-color: #${base00}EE;
+    border: 2px;
+    border-color: #${base0B};
+    border-radius: 0px;
+    width: 50%;
+    padding: 12px;
+}
+mainbox { padding: 8px; }
+inputbar {
+    padding: 8px;
+    background-color: #${base01};
+    border-radius: 0px;
+}
+entry { font: "monospace 11"; }
+listview { lines: 10; }
+element { padding: 6px; }
+element selected {
+    background-color: #${base01};
+    text-color: #${base0B};
+}
+EOF
+}
+
+write_kitty_theme() {
+    cat > "$gneshaDir/kitty-live.conf" <<EOF
+background #${base00}
+foreground #${base05}
+selection_background #${base02}
+selection_foreground #${base06}
+color0 #${base00}
+color1 #${base08}
+color2 #${base0B}
+color3 #${base0A}
+color4 #${base0D}
+color5 #${base0E}
+color6 #${base0C}
+color7 #${base05}
+color8 #${base04}
+color9 #${base08}
+color10 #${base0B}
+color11 #${base0A}
+color12 #${base0D}
+color13 #${base0E}
+color14 #${base0C}
+color15 #${base07}
+EOF
+}
+
+write_waybar_theme() {
+    cat > "$gneshaDir/waybar-live.css" <<EOF
+* {
+  font-family: "Terminess Nerd Font", monospace;
+  font-size: __TERMINAL_FONT_SIZE__pt;
+  min-height: 0;
+}
+window#waybar {
+  background: #${base00};
+  color: #${base05};
+  border-bottom: 2px solid #${base0B};
+  border-radius: 0;
+}
+#workspaces button { color: #${base04}; padding: 0 8px; border-radius: 0; border-bottom: 2px solid transparent; }
+#workspaces button.focused { color: #${base0B}; background: #${base00}; border-bottom: 2px solid #${base0B}; }
+#workspaces button:hover { background: #${base01}; color: #${base05}; }
+#mode { background: #${base0B}; color: #${base00}; padding: 0 8px; }
+#window { color: #${base05}; }
+#network, #bluetooth, #battery, #backlight, #pulseaudio, #memory, #cpu, #clock, #tray { padding: 0 6px; }
+#network.disconnected, #bluetooth.disabled { color: #${base0A}; }
+#battery.warning, #cpu.warning, #memory.warning { color: #${base0A}; }
+#battery.critical, #cpu.critical, #memory.critical, #pulseaudio.muted { color: #${base08}; }
+#battery.charging { color: #${base0B}; }
+tooltip { background: #${base01}; border: 1px solid #${base0B}; border-radius: 0; }
+EOF
+}
+
+write_shell_colors() {
+    # Shared by eza/ls and lf. New shells read these files from fish.nix;
+    # existing lf instances retain their terminal palette until restarted.
+    printf '%s\n' "di=38;5;4:ln=38;5;6:ex=38;5;2:*.md=38;5;4:*.nix=38;5;5:*.sh=38;5;3" > "$gneshaDir/eza-colors"
+    cp "$gneshaDir/eza-colors" "$gneshaDir/lf-colors"
+}
+
+apply_runtime() {
+    mkdir -p "$gneshaDir"
+    write_rofi_theme
+    write_kitty_theme
+    write_waybar_theme
+    write_shell_colors
+
+    if command -v kitten >/dev/null 2>&1; then
+        kitten @ --to unix:/tmp/kitty set-colors --all --configured "$gneshaDir/kitty-live.conf" >/dev/null 2>&1 || true
+    fi
+
+    if command -v swaymsg >/dev/null 2>&1; then
+        swaymsg "client.focused #$base0B #$base01 #$base05 #$base0B #$base01" >/dev/null 2>&1 || true
+        swaymsg "client.focused_inactive #$base04 #$base01 #$base05 #$base04 #$base01" >/dev/null 2>&1 || true
+        swaymsg "client.unfocused #$base03 #$base00 #$base04 #$base03 #$base00" >/dev/null 2>&1 || true
+        swaymsg "client.urgent #$base08 #$base08 #$base00 #$base08 #$base08" >/dev/null 2>&1 || true
+    fi
+
+    if command -v pkill >/dev/null 2>&1; then
+        pkill -x waybar >/dev/null 2>&1 || true
+    fi
+    if command -v waybar >/dev/null 2>&1; then
+        waybar -s "$gneshaDir/waybar-live.css" >/dev/null 2>&1 &
+    fi
+}
+
+case "${1:-}" in
+    --select)
+        [ -n "${2:-}" ] || exit 0
+        mkdir -p "$(dirname "$stateFile")"
+        printf '%s\n' "$2" > "$stateFile"
+        ;;
+    --terminal)
+        [ -n "${2:-}" ] || die "missing preview state file"
+        stateFile=$2
+        load_palette "$(sed -n '1p' "$stateFile")"
+        render_terminal
+        tail -n 0 -f "$stateFile" | while IFS= read -r selected; do
+            [ -n "$selected" ] || continue
+            load_palette "$selected"
+            render_terminal
+        done
+        ;;
+    --open)
+        [ -n "${2:-}" ] || die "missing preview state file"
+        stateFile=$2
+        mkdir -p "$(dirname "$stateFile")"
+        kitty --class gnesha-theme-preview --title "Gnesha Theme Preview" "$0" --terminal "$stateFile" >/dev/null 2>&1 &
+        # The rule in sway-extra.conf makes this a floating window. Place it
+        # on the right side of the focused output after Kitty maps it.
+        if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+            outputRect=""
+            attempt=0
+            while [ "$attempt" -lt 20 ]; do
+                if swaymsg -t get_tree 2>/dev/null | jq -e '.. | objects | select(.app_id? == "gnesha-theme-preview")' >/dev/null 2>&1; then
+                    outputRect=$(swaymsg -t get_outputs 2>/dev/null | jq -r '.[] | select(.focused == true) | [.rect.x, .rect.y, .rect.width, .rect.height] | @tsv' | sed -n '1p')
+                    break
+                fi
+                sleep 0.05
+                attempt=$((attempt + 1))
+            done
+            if [ -n "$outputRect" ]; then
+                IFS="$(printf '\t')" read -r outputX outputY outputWidth outputHeight <<EOF
+$outputRect
+EOF
+                previewWidth=720
+                previewHeight=760
+                [ "$previewHeight" -gt "$outputHeight" ] && previewHeight=$((outputHeight - 120))
+                previewX=$((outputX + outputWidth - previewWidth - 40))
+                previewY=$((outputY + 80))
+                [ "$previewX" -lt "$outputX" ] && previewX=$outputX
+                swaymsg "[app_id=\"gnesha-theme-preview\"] resize set $previewWidth $previewHeight, move position $previewX $previewY" >/dev/null 2>&1 || true
+            fi
+        fi
+        ;;
+    --apply)
+        [ -n "${2:-}" ] || die "missing theme name"
+        load_palette "$2"
+        apply_runtime
+        ;;
+    --close)
+        if command -v swaymsg >/dev/null 2>&1; then
+            swaymsg '[app_id="gnesha-theme-preview"] kill' >/dev/null 2>&1 || true
+        fi
+        ;;
+    *)
+        die "usage: theme-preview --select NAME | --terminal STATE | --open STATE | --apply NAME | --close"
+        ;;
+esac

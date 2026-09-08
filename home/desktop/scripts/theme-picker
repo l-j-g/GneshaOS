@@ -1,14 +1,18 @@
 #!/bin/sh
-# Pick a Base16 theme and update the declarative params.nix selection.
-# Run the normal rebuild command afterwards to apply the new scheme.
+# Pick and preview a Base16 theme. Enter applies the runtime preview and
+# writes the declarative params.nix selection; Escape leaves it unchanged.
 
 set -eu
 
-themeCatalog="${XDG_CONFIG_HOME:-$HOME/.config}/gnesha/theme-names"
+configDir="${XDG_CONFIG_HOME:-$HOME/.config}/gnesha"
+themeCatalog="$configDir/theme-names"
+themeData="$configDir/theme-data"
 flakePath="${GNESHA_FLAKE_PATH:-/etc/nixos}"
 paramsFile="$flakePath/params.nix"
+previewScript="${HOME}/.config/sway/scripts/theme-preview"
+rofiLauncher="${HOME}/.config/sway/scripts/gnesha-rofi"
 
-if [ ! -r "$themeCatalog" ]; then
+if [ ! -r "$themeCatalog" ] || [ ! -r "$themeData" ]; then
     notify-send "Theme picker" "Theme catalog is missing; rebuild Home Manager first."
     exit 1
 fi
@@ -18,7 +22,46 @@ if [ ! -f "$paramsFile" ] || [ ! -w "$paramsFile" ]; then
     exit 1
 fi
 
-choice=$(rofi -dmenu -i -p "Theme" < "$themeCatalog" || true)
+currentTheme=$(sed -nE 's/^[[:space:]]*themeName = "([^"]*)";.*/\1/p' "$paramsFile" | sed -n '1p')
+[ -n "$currentTheme" ] || currentTheme=$(sed -n '1p' "$themeCatalog")
+
+previewState=$(mktemp "${TMPDIR:-/tmp}/gnesha-theme-preview.XXXXXX")
+printf '%s\n' "$currentTheme" > "$previewState"
+export GNESHA_THEME_PREVIEW_STATE="$previewState"
+
+cleanup() {
+    "$previewScript" --close >/dev/null 2>&1 || true
+    rm -f "$previewState"
+}
+trap cleanup EXIT HUP INT TERM
+
+"$previewScript" --open "$previewState" >/dev/null 2>&1 &
+
+rows() {
+    while IFS="$(printf '\t')" read -r name base00 base01 base02 base03 base04 base05 base06 base07 base08 base09 base0A base0B base0C base0D base0E base0F; do
+        [ -n "${name:-}" ] || continue
+        swatches=""
+        for color in "$base00" "$base01" "$base02" "$base03" "$base04" "$base05" "$base06" "$base07" "$base08" "$base09" "$base0A" "$base0B" "$base0C" "$base0D" "$base0E" "$base0F"; do
+            swatches="${swatches}<span foreground='#${color}'>●</span>"
+        done
+        printf '%s\0display\037%s  %s\n' "$name" "$name" "$swatches"
+    done < "$themeData"
+}
+
+choice=$(rows | "$rofiLauncher" \
+    -dmenu \
+    -i \
+    -markup-rows \
+    -no-custom \
+    -p "Theme" \
+    -l 14 \
+    -select "$currentTheme" \
+    -location 1 \
+    -xoffset 40 \
+    -yoffset 80 \
+    -theme-str 'window { width: 48%; }' \
+    -on-selection-changed "$previewScript --select {entry}" || true)
+
 [ -n "$choice" ] || exit 0
 
 case "$choice" in
@@ -33,14 +76,14 @@ if ! grep -Eq '^[[:space:]]*themeName = "[^"]*";' "$paramsFile"; then
     exit 1
 fi
 
+"$previewScript" --apply "$choice"
+
 tmpFile=$(mktemp "${TMPDIR:-/tmp}/gnesha-theme.XXXXXX")
 trap 'rm -f "$tmpFile"' EXIT HUP INT TERM
 sed -E "s|^([[:space:]]*themeName = ).*;|\1\"$choice\";|" "$paramsFile" > "$tmpFile"
 
-if cmp -s "$paramsFile" "$tmpFile"; then
-    exit 0
+if ! cmp -s "$paramsFile" "$tmpFile"; then
+    mv "$tmpFile" "$paramsFile"
 fi
 
-mv "$tmpFile" "$paramsFile"
-trap - EXIT HUP INT TERM
-notify-send "Theme selected" "$choice — run rebuild to apply it"
+notify-send "Theme applied" "$choice — runtime preview active; rebuild to make it declarative"

@@ -42,6 +42,31 @@ let
   themes = customThemes // inputs.nix-colors.colorSchemes;
   themeName = params.userSettings.themeName;
   availableThemes = lib.sort builtins.lessThan (builtins.attrNames themes);
+  paletteFields = [
+    "base00"
+    "base01"
+    "base02"
+    "base03"
+    "base04"
+    "base05"
+    "base06"
+    "base07"
+    "base08"
+    "base09"
+    "base0A"
+    "base0B"
+    "base0C"
+    "base0D"
+    "base0E"
+    "base0F"
+  ];
+  stripHash = color: builtins.replaceStrings [ "#" ] [ "" ] color;
+  themeData = lib.concatMapStringsSep "\n" (name:
+    let
+      palette = themes.${name}.palette;
+    in
+    lib.concatStringsSep "\t" ([ name ] ++ map (field: stripHash palette.${field}) paletteFields)
+  ) availableThemes + "\n";
   selectedTheme =
     if builtins.hasAttr themeName themes then
       themes.${themeName}
@@ -58,10 +83,11 @@ in
     author = params.userSettings.userName;
   };
 
-  # The picker reads this declarative catalog and writes only themeName in
-  # params.nix; the selected scheme still requires the normal rebuild flow.
+  # The picker reads these declarative catalogs. It can preview a palette at
+  # runtime, but only writes themeName to params.nix when the user accepts it.
   home.file.".config/gnesha/theme-names".text =
     lib.concatStringsSep "\n" availableThemes + "\n";
+  home.file.".config/gnesha/theme-data".text = themeData;
 
   # Pairing dark GTK theme + dark Papirus icons so GTK apps match the shell.
   # Colloid-Green-Dark: modern dark GTK theme with a green accent.

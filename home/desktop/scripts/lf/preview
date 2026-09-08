@@ -43,7 +43,7 @@ image() {
 mime=$(file --mime-type -b -- "$1")
 case "$mime" in
     text/*|application/json|application/javascript|application/xml)
-        bat \
+        BAT_THEME=ansi bat \
             --paging=never \
             --style=plain \
             --color=always \

@@ -1,0 +1,10 @@
+#!/bin/sh
+# Use the mutable runtime Rofi theme when a theme has been previewed or
+# applied; fall back to the declarative Home Manager theme on a fresh login.
+
+liveTheme="${XDG_CONFIG_HOME:-$HOME/.config}/gnesha/rofi-live.rasi"
+if [ -r "$liveTheme" ]; then
+    exec rofi -theme "$liveTheme" "$@"
+fi
+
+exec rofi "$@"
