@@ -153,7 +153,7 @@ inputbar {
     background-color: #${base01};
     border-radius: 0px;
 }
-entry { font: "monospace 11"; }
+entry { font: "monospace __TERMINAL_FONT_SIZE__"; }
 listview { lines: 10; }
 element { padding: 6px; }
 element selected {
@@ -240,11 +240,10 @@ apply_runtime() {
         swaymsg "client.urgent #$base08 #$base08 #$base00 #$base08 #$base08" >/dev/null 2>&1 || true
     fi
 
-    if command -v pkill >/dev/null 2>&1; then
-        pkill -x waybar >/dev/null 2>&1 || true
-    fi
-    if command -v waybar >/dev/null 2>&1; then
-        waybar -s "$gneshaDir/waybar-live.css" >/dev/null 2>&1 &
+    if command -v systemctl >/dev/null 2>&1; then
+        # Waybar is a Home Manager user service. Restart that one service so
+        # the old bar is stopped before the live stylesheet is loaded.
+        systemctl --user restart waybar.service >/dev/null 2>&1 || true
     fi
 }
 
@@ -264,7 +263,9 @@ case "${1:-}" in
         stateFile=$2
         load_palette "$(sed -n '1p' "$stateFile")"
         render_terminal
-        tail -n 0 -f "$stateFile" | while IFS= read -r selected; do
+        # tail buffers stdout when writing to a pipe; line buffering keeps
+        # every Rofi selection visible to the preview terminal immediately.
+        stdbuf -oL tail -n 0 -f "$stateFile" | while IFS= read -r selected; do
             [ -n "$selected" ] || continue
             load_palette "$selected"
             render_terminal

@@ -10,10 +10,15 @@
 
 let
   v = import ./vars.nix { inherit config pkgs; };
+  sessionTarget = "sway-session.target";
 in
 {
   programs.waybar = {
     enable = true;
+    systemd = {
+      enable = true;
+      targets = [ sessionTarget ];
+    };
     settings.mainBar = {
       layer = "top";
       position = "top";
@@ -196,5 +201,16 @@ in
         border-radius: 0;
       }
     '';
+  };
+
+  # Run Waybar as one managed user service. The live theme helper writes a
+  # mutable stylesheet here and restarts this same service on Apply.
+  home.activation.resetGneshaWaybarLiveStyle = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD install -Dm644 ${config.xdg.configFile."waybar/style.css".source} "$HOME/.config/gnesha/waybar-live.css"
+  '';
+
+  systemd.user.services.waybar.Service = {
+    ExecStart = lib.mkForce "${pkgs.waybar}/bin/waybar -s ${config.home.homeDirectory}/.config/gnesha/waybar-live.css";
+    ExecStartPre = "-${pkgs.procps}/bin/pkill -u %u -x waybar";
   };
 }

@@ -4,6 +4,7 @@
   config,
   pkgs,
   lib,
+  params,
   ...
 }:
 
@@ -35,7 +36,7 @@ let
         background-color: ${v.surface};
         border-radius: 0px;
     }
-    entry { font: "monospace 11"; }
+    entry { font: "monospace ${toString params.userSettings.terminalFontSize}"; }
     listview { lines: 10; }
     element { padding: 6px; }
     element selected {
@@ -78,7 +79,7 @@ in
       };
 
       entry = {
-        font = "monospace 11";
+        font = "monospace ${toString params.userSettings.terminalFontSize}";
       };
 
       listview = {

@@ -161,7 +161,6 @@ in
       startup = [
         { command = "mkdir -p ${u.screenshotDir}"; }
         { command = "xdg-user-dirs-update"; }
-        { command = "waybar"; }
         { command = "wlsunset -l ${toString u.latitude} -L ${toString u.longitude}"; }
         { command = "dex -a -e SWAY"; }
         { command = "noisetorch -u && noisetorch -i"; always = true; }

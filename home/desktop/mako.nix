@@ -4,6 +4,7 @@
   config,
   pkgs,
   lib,
+  params,
   ...
 }:
 
@@ -22,7 +23,7 @@ in
       border-size = 2;
       border-radius = 0;
       padding = "12";
-      font = "monospace 11";
+      font = "monospace ${toString params.userSettings.terminalFontSize}";
     };
     extraConfig = ''
       [urgency=critical]

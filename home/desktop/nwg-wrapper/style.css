@@ -6,5 +6,5 @@ window {
     padding: 16px;
     margin: 20px;
     font-family: monospace;
-    font-size: 13px;
+    font-size: __TERMINAL_FONT_SIZE__pt;
 }

@@ -36,6 +36,10 @@ let
     [ "__TERMINAL_FONT_SIZE__" ]
     [ (toString u.terminalFontSize) ]
     (builtins.readFile ./scripts/theme-preview);
+  nwgWrapperStyle = lib.replaceStrings
+    [ "__TERMINAL_FONT_SIZE__" ]
+    [ (toString u.terminalFontSize) ]
+    (builtins.readFile ./nwg-wrapper/style.css);
 in
 {
   home.sessionPath = [ "$HOME/.config/sway/scripts" ];
@@ -59,6 +63,6 @@ in
       executable = true;
     };
     ".config/nwg-wrapper/help.sh".source = ./nwg-wrapper/help.sh;
-    ".config/nwg-wrapper/style.css".source = ./nwg-wrapper/style.css;
+    ".config/nwg-wrapper/style.css".text = nwgWrapperStyle;
   };
 }
