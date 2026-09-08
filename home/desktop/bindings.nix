@@ -35,7 +35,7 @@ in
   # Launch // Clipboard picker
   "${m}+Shift+p" = "exec ${clipboard}";
 
-  # Launch // Base16 theme picker (selection is applied on rebuild)
+  # Launch // Base16 theme picker (runtime preview + background Home Manager activation)
   "${m}+Shift+t" = "exec ${themePicker}";
 
   # Action // Reload

@@ -84,6 +84,7 @@
     libmtp
     udisks2
     lm_sensors
+    nh
     brightnessctl
     acpi
     powertop

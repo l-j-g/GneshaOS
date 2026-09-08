@@ -143,6 +143,11 @@ secure-boot state, so tampered boot will prompt for the key instead.)
 
     nixos-rebuild switch --flake .#<host-directory-name>
 
+After the system is installed or switched, activate the user environment
+separately:
+
+    nh home switch . -c <user>@<host-directory-name>
+
 (`<host-directory-name>` is the directory name under `hosts/`; the flake
 discovers it automatically. Shared user-facing values come from `params.nix`
 at the repo root, while host-specific overrides may live in the host directory.)

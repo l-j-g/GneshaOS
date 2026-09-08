@@ -36,6 +36,10 @@ let
     [ "__TERMINAL_FONT_SIZE__" ]
     [ (toString u.terminalFontSize) ]
     (builtins.readFile ./scripts/theme-preview);
+  themePickerScript = lib.replaceStrings
+    [ "__HOME_PROFILE__" ]
+    [ "${u.userName}@${params.systemSettings.hostName}" ]
+    (builtins.readFile ./scripts/theme-picker);
   nwgWrapperStyle = lib.replaceStrings
     [ "__TERMINAL_FONT_SIZE__" ]
     [ (toString u.terminalFontSize) ]
@@ -55,7 +59,7 @@ in
       executable = true;
     };
     ".config/sway/scripts/theme-picker" = {
-      source = ./scripts/theme-picker;
+      text = themePickerScript;
       executable = true;
     };
     ".config/sway/scripts/theme-preview" = {

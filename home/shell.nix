@@ -10,11 +10,12 @@ let
   # Rebuild targets — host + flake location come from the top-level params.
   flakePath = params.systemSettings.flakePath;
   hostName = params.systemSettings.hostName;
+  homeProfile = "${params.userSettings.userName}@${hostName}";
   flakeRef = "${flakePath}#${hostName}";
   systemBuildRef = "${flakePath}#nixosConfigurations.${hostName}.config.system.build.toplevel";
   fishWorkflow = lib.replaceStrings
-    [ "__FLAKE_PATH__" "__HOST_NAME__" "__SYSTEM_BUILD_REF__" ]
-    [ flakePath hostName systemBuildRef ]
+    [ "__FLAKE_PATH__" "__HOST_NAME__" "__HOME_PROFILE__" "__SYSTEM_BUILD_REF__" ]
+    [ flakePath hostName homeProfile systemBuildRef ]
     (builtins.readFile ./scripts/nix-workflow.fish);
   themeFishInit = ''
     # Runtime theme previews update these files without rewriting shell config.
@@ -72,6 +73,7 @@ in
       nfcheck = "nixfmt --check";
       nixcheck = "nix flake check --show-trace ${flakePath}";
       nixgc = "sudo nix-collect-garbage -d";
+      home-rebuild-raw = "nh home switch ${flakePath} -c ${homeProfile}";
       # Explicit raw fallbacks for feature parity or troubleshooting.
       rebuild-raw = "sudo nixos-rebuild switch --flake ${flakeRef}";
       retest-raw = "sudo nixos-rebuild test --flake ${flakeRef}";

@@ -46,7 +46,7 @@
         hostType == "directory" && !(nixpkgs.lib.hasPrefix "_" name)
       ) (builtins.attrNames (builtins.readDir ./hosts));
 
-      hostConfiguration = hostName:
+      hostContext = hostName:
         let
           hostPath = ./hosts + "/${hostName}";
           hostParamsPath = hostPath + "/params.nix";
@@ -59,28 +59,57 @@
           };
           username = hostParams.userSettings.userName;
         in
+        {
+          inherit hostName hostPath hostParams username;
+        };
+
+      homeConfiguration = hostName:
+        let
+          context = hostContext hostName;
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+          };
+        in
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          extraSpecialArgs = {
+            inherit inputs;
+            params = context.hostParams;
+          };
+          modules = [ ./home ];
+        };
+
+      hostConfiguration = hostName:
+        let
+          context = hostContext hostName;
+        in
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
-            inherit inputs username hostName;
-            params = hostParams;
+            inherit inputs;
+            inherit (context) username hostName hostParams;
+            params = context.hostParams;
           };
           modules = [
-            hostPath
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.extraSpecialArgs = {
-                inherit inputs;
-                params = hostParams;
-              };
-              home-manager.users.${username} = import ./home;
-            }
+            context.hostPath
           ];
         };
     in
     {
+      # User-level configuration is deliberately separate from the system
+      # output. Desktop/theme changes can use `nh home switch` without
+      # rebuilding the kernel, hardware, and machine services.
+      homeConfigurations = builtins.listToAttrs (
+        map (hostName:
+          let
+            context = hostContext hostName;
+          in
+          {
+            name = "${context.username}@${hostName}";
+            value = homeConfiguration hostName;
+          }) hostNames
+      );
       nixosConfigurations = builtins.listToAttrs (
         map (hostName: {
           name = hostName;

@@ -1,6 +1,7 @@
 #!/bin/sh
-# Pick and preview a Base16 theme. Enter applies the runtime preview and
-# writes the declarative params.nix selection; Escape leaves it unchanged.
+# Pick and preview a Base16 theme. Enter applies the runtime preview, writes
+# the declarative params.nix selection, and activates Home Manager in the
+# background; Escape leaves the configuration unchanged.
 
 set -eu
 
@@ -11,6 +12,7 @@ flakePath="${GNESHA_FLAKE_PATH:-/etc/nixos}"
 paramsFile="$flakePath/params.nix"
 previewScript="${HOME}/.config/sway/scripts/theme-preview"
 rofiLauncher="${HOME}/.config/sway/scripts/gnesha-rofi"
+homeProfile="${GNESHA_HOME_PROFILE:-__HOME_PROFILE__}"
 
 if [ ! -r "$themeCatalog" ] || [ ! -r "$themeData" ]; then
     notify-send "Theme picker" "Theme catalog is missing; rebuild Home Manager first."
@@ -86,4 +88,19 @@ if ! cmp -s "$paramsFile" "$tmpFile"; then
     mv "$tmpFile" "$paramsFile"
 fi
 
-notify-send "Theme applied" "$choice — runtime preview active; rebuild to make it declarative"
+activationLog="$configDir/home-activation.log"
+if command -v nh >/dev/null 2>&1; then
+    # Keep the selector responsive while the standalone Home Manager
+    # activation updates the declarative generation in the background.
+    # shellcheck disable=SC2016
+    nohup sh -c '
+        if nh home switch "$1" -c "$2" --no-nom >"$3" 2>&1; then
+            notify-send "Theme activated" "$2" >/dev/null 2>&1 || true
+        else
+            notify-send "Theme activation failed" "See $3" >/dev/null 2>&1 || true
+        fi
+    ' theme-home-activation "$flakePath" "$homeProfile" "$activationLog" >/dev/null 2>&1 &
+    notify-send "Theme applied" "$choice — Home Manager activation started" >/dev/null 2>&1 || true
+else
+    notify-send "Theme applied" "$choice — runtime preview active; run home-rebuild" >/dev/null 2>&1 || true
+fi

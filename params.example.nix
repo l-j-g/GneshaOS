@@ -9,7 +9,8 @@
 #   1. cp params.example.nix params.nix
 #   2. Edit the values you care about (at minimum userName, gitUserName,
 #      gitUserEmail, timeZone, latitude/longitude, keyboardLayout).
-#   3. nixos-rebuild switch --flake .#<host-directory-name>
+#   3. sudo nixos-rebuild switch --flake .#<host-directory-name>
+#   4. nh home switch . -c <user>@<host-directory-name>
 #
 # Every field below flows into the configs listed next to it. Nothing else in
 # the repo needs editing for a new user — except hosts/<host>/hardware-

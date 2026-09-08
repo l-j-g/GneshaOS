@@ -1,5 +1,5 @@
-# Fish helpers for the NixOS workflow. The three placeholders are substituted
-# by home/shell.nix from params.nix.
+# Fish helpers for the NixOS and Home Manager workflows. The placeholders are
+# substituted by home/shell.nix from params.nix.
 
 function __nix_system_generations
     command ls -dv /nix/var/nix/profiles/system-*-link 2>/dev/null
@@ -37,6 +37,10 @@ function rebuild
     else
         nvdiff
     end
+end
+
+function home-rebuild
+    nh home switch "__FLAKE_PATH__" -c "__HOME_PROFILE__"
 end
 
 function retest

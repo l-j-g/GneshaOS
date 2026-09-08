@@ -41,16 +41,21 @@ cp -r hosts/_template hosts/<host-directory-name>
 # Generate hosts/<host-directory-name>/hardware-configuration.nix and
 # customise hosts/<host-directory-name>/default.nix.
 
-# 4. Build and switch. The flake attribute is the host directory name.
+# 4. Build and switch the system layer. The flake attribute is the host
+#    directory name.
 sudo nixos-rebuild switch --flake .#<host-directory-name>
 
-# Dry-run first if you like:
+# 5. Activate the user layer separately:
+nh home switch . -c <user>@<host-directory-name>
+
+# Dry-run the system if you like:
 nixos-rebuild build --flake .#<host-directory-name>
 ```
 
-That's the whole loop. Edit `params.nix` for shared user preferences, or the
-selected host directory for machine-specific behavior, then rebuild the
-matching `.#<host-directory-name>` output.
+Edit `params.nix` for shared user preferences, or the selected host directory
+for machine-specific behavior. Use the system output for machine changes and
+the standalone Home Manager output for shell, desktop, theme, and user-service
+changes.
 
 > **Fresh install instead?** Follow [`docs/install.md`](docs/install.md) for
 > partitioning, then `nixos-install --flake .#<host-directory-name>`. The parameters
@@ -61,9 +66,10 @@ matching `.#<host-directory-name>` output.
 ## How it works
 
 - `flake.nix` discovers each real directory under `hosts/` and emits one
-  `nixosConfigurations.<directory-name>` output. Directories beginning with
-  `_` are excluded, which keeps `hosts/_template/` available as a copyable
-  starting point.
+  `nixosConfigurations.<directory-name>` plus one
+  `homeConfigurations.<user>@<directory-name>` output. Directories beginning
+  with `_` are excluded, which keeps `hosts/_template/` available as a
+  copyable starting point.
 - For each discovered host, `flake.nix` overlays that directory name into
   `params.systemSettings.hostName` before passing `params` through
   `specialArgs`/`extraSpecialArgs`. This prevents a second host from silently
@@ -125,17 +131,24 @@ matching `.#<host-directory-name>` output.
 ## Applying changes
 
 1. Edit `params.nix` in the repo (on the machine, e.g. `/etc/nixos`).
-2. Rebuild the selected host directory:
+2. Activate the system layer when changing hardware, services, users, or
+   system packages:
 
    ```sh
    sudo nixos-rebuild switch --flake .#<host-directory-name>
    ```
 
-   If you use the bundled shell aliases (`rebuild`, `rebuild-boot`, `nixcheck`,
-   `nixeval` from `home/shell.nix`), the host-specific Home Manager build embeds
-   the selected directory name and flake path.
+3. Activate the user layer for shell, desktop, fonts, themes, and user
+   services:
 
-3. Changes to the **display** (resolution/scaling) also affect the generated
+   ```sh
+   nh home switch . -c <user>@<host-directory-name>
+   ```
+
+   The bundled `rebuild` helper remains the full system switch;
+   `home-rebuild` is the faster user-only activation.
+
+4. Changes to the **display** (resolution/scaling) also affect the generated
    wallpaper and the `scale.sh` reset value — just rebuild and relog (or
    restart sway) to pick them up.
 

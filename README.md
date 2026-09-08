@@ -65,7 +65,7 @@ A declarative NixOS configuration for a [Panasonic Let's Note CF-FV1](https://pa
 
 | Path | Contents |
 | --- | --- |
-| `hosts/` | One directory per NixOS host; real directories become `nixosConfigurations.<name>`, while `_template/` is excluded |
+| `hosts/` | One directory per NixOS host; real directories become `nixosConfigurations.<name>` and `homeConfigurations.<user>@<host>`, while `_template/` is excluded |
 | `hosts/cf-fv1/` | Panasonic CF-FV1 composition, split by responsibility, plus machine-generated `hardware-configuration.nix` |
 | `modules/` | Reusable NixOS modules: `btrfs`, `fonts`, `hardening`, `letsnote` |
 | `home/` | Shared Home Manager environment (apps, desktop, editors, fonts, shell, theme) |
@@ -85,12 +85,19 @@ cp params.example.nix params.nix   # or just edit params.nix directly
 # 2. Add or choose a host. Existing hosts are listed with:
 nix eval .#nixosConfigurations --apply builtins.attrNames
 
-# 3. Build and switch the system
+# 3. Build and switch the system layer
 sudo nixos-rebuild switch --flake .#<host-directory-name>
 
-# Dry-run build
+# 4. Activate the user layer (desktop, shell, theme, and user services)
+nh home switch . -c <user>@<host-directory-name>
+
+# Dry-run system build
 nixos-rebuild build --flake .#<host-directory-name>
 ```
+
+System changes use `nixos-rebuild`; user-environment changes use the faster
+standalone Home Manager output. The theme picker starts the latter activation
+in the background after a theme is accepted.
 
 `params.nix` is the tracked consumer/user parameter file — username, display
 resolution/scaling, keyboard layout, timezone, paths and preferences. The
