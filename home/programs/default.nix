@@ -16,6 +16,9 @@
     ./gpg.nix
   ];
 
+  # Canonical list of standalone applications and support tools. Program
+  # modules below provide configuration for packages that need it; their
+  # primary package is managed by Home Manager.
   home.packages =
     with pkgs;
     [
@@ -37,6 +40,12 @@
       ppsspp
       xdelta
       slack
+      ffmpegthumbnailer
+      less
+      mediainfo
+      poppler-utils
+      tree
+      unzip
     ]
     ++ [
       inputs.mcp-nixos.packages.${pkgs.system}.default
