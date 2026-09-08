@@ -1,8 +1,10 @@
 # Shared palette aliases for the desktop modules.
+# The source of truth for palette values is home/theme.nix; this file only
+# derives convenient CSS/Sway and semantic aliases from config.colorScheme.
 #
 # nix-colors stores colors WITHOUT the leading '#', so this module re-adds it
 # for CSS/Sway/rofi-style contexts, while `colors` exposes the raw hex for
-# apps like foot that want bare RRGGBB.
+# apps like Kitty that want bare RRGGBB.
 { config, pkgs, ... }:
 
 let
@@ -10,7 +12,7 @@ let
   hash = c: "#${c}";
 in
 {
-  # raw palette (no '#') — for foot etc.
+  # raw palette (no '#') — for Kitty etc.
   inherit palette;
 
   # CSS / Sway style (with '#')

@@ -18,7 +18,7 @@ in
   programs.rofi = {
     enable = true;
     package = pkgs.rofi;
-    terminal = "footclient";
+    terminal = "kitty";
     theme = {
       "*" = {
         background-color = mkLiteral "${v.bg}E6";

@@ -94,6 +94,7 @@ matching `.#<host-directory-name>` output.
 | Variable | Type / allowed values | Example | What it does | Used by |
 | --- | --- | --- | --- | --- |
 | `userName` | string (POSIX login name) | `"lg"` | Your login name. Must match the user declared in `hosts/<host>/default.nix` and your `@home` btrfs subvolume (see [Applying changes](#applying-changes)). | `flake.nix` (home-manager user), `home/default.nix`, `hosts/<host>/default.nix` (samba valid/force user, docker extraGroups), `home/theme.nix` |
+| `themeName` | string | `"matrix-green"` | Base16 theme name. Select `matrix-green` or any scheme exposed by nix-colors, such as `dracula`, `nord`, or `gruvbox-dark-medium`. | `home/theme.nix`, `theme-picker` |
 | `gitUserName` | string | `"lg"` | Git identity (commits you make). | `home/editors.nix` (`programs.git`) |
 | `gitUserEmail` | string (email) | `"lg@lgreve.com"` | Git identity email. | `home/editors.nix` |
 | `homeDirectory` | string (absolute path) | `"/home/lg"` | Your home directory. Must match the `@home` subvolume / useradd default. | `home/default.nix` (`home.homeDirectory`) |
@@ -107,14 +108,13 @@ matching `.#<host-directory-name>` output.
 | `displayScale` | **string** (NOT number) | `"2"` | Sway output scaling: `"1"` = 100%, `"2"` = 200% HiDPI. Must be a string (sway accepts fractional too, e.g. `"1.5"`). Also the value `scale.sh default` (Mod+0) resets to. | `home/desktop/sway.nix`, `home/desktop/scripts/scale.sh` |
 | `gapsInner` | int (px) | `5` | Sway gaps inner. | `home/desktop/sway-extra.conf` |
 | `gapsOuter` | int (px) | `5` | Sway gaps outer. | `home/desktop/sway-extra.conf` |
-| `terminalFontSize` | int (pt) | `11` | foot terminal font size. | `home/desktop/foot.nix` |
+| `terminalFontSize` | int (pt) | `11` | Kitty terminal font size. | `home/desktop/kitty.nix` |
 | `screenshotDir` | string (path, `~` ok) | `"~/Pictures/Screenshots"` | Where grimshot saves screenshots (dir is mkdir'd on session start). | `home/desktop/sway.nix` |
 | `screenshotUploadUrl` | string (URL) | `"https://x0.at/"` | Anonymous image host for the screenshot-upload bindings (Shift+Print). Point at your own 0x0-compatible endpoint to change it. | `home/desktop/sway-extra.conf` |
 | `idleDimSec` | int (seconds) | `240` | swayidle: dim after N s idle. | `home/desktop/daemons.nix` |
 | `idleDimPercent` | int (%) | `10` | swayidle: dim brightness level (%). | `home/desktop/daemons.nix` |
-| `idleLockSec` | int (seconds) | `300` | swayidle: lock after N s idle. | `home/desktop/daemons.nix` |
 | `idleOffSec` | int (seconds) | `600` | swayidle: DPMS off after N s idle. | `home/desktop/daemons.nix` |
-| `idleSuspendSec` | int (seconds) | `900` | swayidle: suspend after N s idle (battery only). Sequence: dim → lock → off → suspend. | `home/desktop/daemons.nix` |
+| `idleSuspendSec` | int (seconds) | `900` | swayidle: suspend after N s idle (battery only). Sequence: dim → off → suspend; swaylock runs before sleep. | `home/desktop/daemons.nix` |
 | `backlightDevice` | string (device name) | `"intel_backlight"` | Backlight device. Find yours with `brightnessctl -l` (or look in `/sys/class/backlight/*`). | `home/desktop/waybar.nix`, `home/desktop/daemons.nix` |
  | `autoBrightness` | bool | `true` | When true, enable wluma's adaptive ambient-brightness service; manual changes teach its brightness model. | `home/desktop/daemons.nix` |
 | `alsSensorPath` | string (absolute path) | `"/sys/bus/iio/devices/iio:device4/in_illuminance_raw"` | Ambient-light sensor raw path for automatic brightness (retained for hardware documentation; wluma discovers IIO sensors under `/sys/bus/iio/devices`). | `home/desktop/daemons.nix` |

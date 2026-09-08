@@ -37,6 +37,11 @@
     #   home/theme.nix (colorScheme author).
     userName = "lg";
 
+    # Base16 theme name. Use "matrix-green" for the custom palette or any
+    # scheme name exposed by nix-colors (for example "dracula" or "nord").
+    #   Used by: home/theme.nix and the theme-picker utility.
+    themeName = "matrix-green";
+
     # Git identity for `programs.git` in home/editors.nix.
     gitUserName = "lg";
     gitUserEmail = "lg@lgreve.com";
@@ -75,8 +80,8 @@
     gapsInner = 5;
     gapsOuter = 5;
 
-    # foot terminal font size (pt).
-    #   Used by: home/desktop/foot.nix (font=monospace:size=).
+    # Kitty terminal font size (pt).
+    #   Used by: home/desktop/kitty.nix.
     terminalFontSize = 11;
 
     # Where screenshots are saved (grimshot + mkdir -p on session start).
@@ -90,11 +95,10 @@
     screenshotUploadUrl = "https://x0.at/";
 
     # swayidle timeouts in seconds, and the brightness dim level (%).
-    # Sequence: dim -> lock -> DPMS off -> suspend (battery only).
+    # Sequence: dim -> DPMS off -> suspend (battery only); swaylock runs before sleep.
     #   Used by: home/desktop/daemons.nix (services.swayidle.timeouts).
     idleDimSec = 240;
     idleDimPercent = 10;
-    idleLockSec = 300;
     idleOffSec = 600;
     idleSuspendSec = 900;
 

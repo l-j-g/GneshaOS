@@ -2,18 +2,17 @@
 #   sway.nix        - sway config + startup + modes (sway-extra.conf)
 #   bindings.nix    - sway keybindings (imported by sway.nix)
 #   waybar.nix      - top bar
-#   foot.nix        - terminal
+#   kitty.nix       - terminal
+#   foot.nix        - preserved optional Foot configuration (not imported)
 #   rofi.nix        - launcher
 #   mako.nix        - notifications
 #   swaylock.nix    - lock screen
-#   daemons.nix     - swayidle, swayr, cliphist, foot-server, user services
+#   daemons.nix     - swayidle, swayr, cliphist, user services
 #   scripts.nix     - vendored sway helper scripts + help overlay assets
 #   vars.nix        - shared palette aliases (imported by the others)
 
 {
-  config,
   pkgs,
-  lib,
   ...
 }:
 
@@ -21,7 +20,7 @@
   imports = [
     ./sway.nix
     ./waybar.nix
-    ./foot.nix
+    ./kitty.nix
     ./rofi.nix
     ./mako.nix
     ./swaylock.nix
@@ -47,7 +46,6 @@
   };
 
   home.packages = with pkgs; [
-    foot
     waybar
     mako
     swaylock
@@ -62,8 +60,6 @@
     vlc
     way-displays
     bluetuith
-    networkmanagerapplet
-    blueman
     xdg-desktop-portal-gtk
     xdg-desktop-portal-wlr
 

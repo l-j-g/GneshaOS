@@ -1,5 +1,0 @@
-#!/bin/sh
-
-if [ -n "${UB_SOCKET:-}" ]; then
-    ueberzugpp cmd -s "$UB_SOCKET" -a remove -i PREVIEW
-fi

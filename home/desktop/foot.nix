@@ -1,9 +1,9 @@
-# foot terminal — themed from the shared palette.
+# Foot terminal — preserved as a separate optional module.
+# It is not imported by desktop/default.nix while Kitty is the active terminal.
 
 {
   config,
   pkgs,
-  lib,
   params,
   ...
 }:

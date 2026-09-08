@@ -26,6 +26,9 @@
     # POSIX login name. Threaded into NixOS users, home-manager, samba, docker.
     userName = "lg";
 
+    # Base16 theme name: "matrix-green" or any scheme exposed by nix-colors.
+    themeName = "matrix-green";
+
     # Git identity (commits you make).
     gitUserName = "lg";
     gitUserEmail = "lg@lgreve.com";
@@ -38,31 +41,25 @@
     timeZone = "Australia/Sydney";
     latitude = -33.87;
     longitude = 151.21;
-
     # Keyboard layout (xkb_layout / xkb_options in sway).
     keyboardLayout = "us";
     keyboardOptions = "ctrl:nocaps";
-
     # Display panel: native resolution in px (drives the generated wallpaper
     # SVG) and sway scaling factor (1 = 100%, 2 = 200% HiDPI).
     displayWidth = 2160;
     displayHeight = 1440;
     displayScale = "1";
-
     # Desktop preferences.
     gapsInner = 5; # sway gaps inner (px)
     gapsOuter = 5; # sway gaps outer (px)
-    terminalFontSize = 11; # foot font size (pt)
+    terminalFontSize = 16; # Kitty font size (pt)
     screenshotDir = "~/Pictures/Screenshots"; # where grimshot screenshots land
     screenshotUploadUrl = "https://x0.at/"; # anonymous image host for screenshot upload
-
     # Idle timeouts (seconds) + dim level (%) for swayidle.
     idleDimSec = 240;
     idleDimPercent = 10;
-    idleLockSec = 300;
     idleOffSec = 600;
     idleSuspendSec = 900;
-
     # Hardware device names (OS-specific: check `brightnessctl -l` /
     # `/sys/class/backlight/*` and your IIO sensor under
     # /sys/bus/iio/devices/ on the target machine).
@@ -70,7 +67,6 @@
     # Set true to let the ambient light sensor manage brightness.
     autoBrightness = true;
     alsSensorPath = "/sys/bus/iio/devices/iio:device5/in_illuminance_raw";
-
     # Absolute path to the docker-compose file of the self-hosted media stack
     # (stopped before /media unmounts at shutdown).
     arrComposePath = "/home/lg/src/arr/docker-compose.yml";

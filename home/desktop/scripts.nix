@@ -5,6 +5,7 @@
 # One script is generated from a template so its machine-specific value comes
 # from the top-level params (see params.example.nix):
 #   - scale.sh: the scale "default" resets to (matches sway config)
+#   - theme-picker: selects a Base16 theme by updating params.nix
 
 {
   config,
@@ -17,7 +18,9 @@
 let
   u = params.userSettings;
   # Scripts we install raw (no parameter substitution needed).
-  swayScripts = lib.filterAttrs (name: _: name != "scale.sh") (builtins.readDir ./scripts);
+  swayScripts = lib.filterAttrs
+    (name: _: !builtins.elem name [ "scale.sh" "theme-picker" ])
+    (builtins.readDir ./scripts);
   installScript = name: {
     source = ./scripts/${name};
     executable = true;
@@ -31,6 +34,7 @@ let
 in
 {
   home.sessionPath = [ "$HOME/.config/sway/scripts" ];
+  home.sessionVariables.GNESHA_FLAKE_PATH = params.systemSettings.flakePath;
 
   home.file = (builtins.listToAttrs (map (name: {
     name = ".config/sway/scripts/${name}";
@@ -38,6 +42,10 @@ in
   }) (builtins.attrNames swayScripts))) // {
     ".config/sway/scripts/scale.sh" = {
       text = scaleScript;
+      executable = true;
+    };
+    ".config/sway/scripts/theme-picker" = {
+      source = ./scripts/theme-picker;
       executable = true;
     };
     ".config/nwg-wrapper/help.sh".source = ./nwg-wrapper/help.sh;

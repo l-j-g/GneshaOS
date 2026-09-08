@@ -17,16 +17,22 @@ in
     with pkgs;
     [
       tldr
+      librewolf-bin
       tor-browser
       discord
       firefox
       imv
       mpv
+      chafa
+      librsvg
       fastfetch
       opencode
       codex
       uv
-      ueberzugpp
+      steam
+      ppsspp
+      xdelta
+      slack
     ]
     ++ [
       inputs.mcp-nixos.packages.${pkgs.system}.default
@@ -62,16 +68,11 @@ in
   # Optional local opencode config. Only installed when the file exists next
   # to the repo (it is machine-specific and intentionally not tracked), so a
   # fresh clone evaluates without it. Copy your own into place if you use it.
-  # LF's image layer and wrapper live outside the Nix module so the preview
+  # LF's previewer and wrapper live outside the Nix module so the preview
   # protocol stays readable and independently testable.
   xdg.configFile = (lib.optionalAttrs (builtins.pathExists ../opencode.json) {
     "opencode/opencode.jsonc".source = ../opencode.json;
-  }) // {
-    "lf/cleaner" = {
-      source = ./desktop/scripts/lf/cleaner;
-      executable = true;
-    };
-  };
+  });
   home.file.".local/bin/lf-image" = {
     source = ./desktop/scripts/lf/lf-image;
     executable = true;
@@ -81,10 +82,10 @@ in
   # Open files from nnn with nvim (text) / imv/mpv (media).
   home.sessionVariables = {
     NNN_OPENER = "nnn-opener";
-    # preview-tui falls back to xterm otherwise; use the existing Foot server.
-    NNN_TERMINAL = "${pkgs.foot}/bin/footclient";
-    # Render image previews in Foot (and in tmux when used there).
-    NNN_PREVIEWIMGPROG = "chafa";
+    # preview-tui uses Kitty's split and graphics protocol when these are set.
+    NNN_TERMINAL = "kitty";
+    NNN_PREVIEWIMGPROG = "icat";
+    KITTY_LISTEN_ON = "unix:/tmp/kitty";
   };
 
   services.udiskie = {
@@ -99,7 +100,6 @@ in
     enable = true;
     enableFishIntegration = true;
     extraPackages = with pkgs; [
-      chafa
       ffmpegthumbnailer
       less
       mediainfo
@@ -122,7 +122,6 @@ in
   programs.lf = {
     enable = true;
     previewer.source = lfPreviewer;
-    settings.cleaner = "${config.xdg.configHome}/lf/cleaner";
     commands = {
       # Reset the preview position whenever the selected file changes.
       on-select = "set user_preview_offset 1";

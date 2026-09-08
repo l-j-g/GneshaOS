@@ -30,13 +30,13 @@ let
     ]
     (builtins.readFile ./sway-extra.conf);
 
-  # Terminal (foot socket server -> footclient). Inlined (not $term var):
+  # Terminal. Inlined (not $term var):
   # home-manager's sway module doesn't emit `set $term`/`set $menu` here.
-  term = "footclient";
+  term = "kitty";
   # The default terminal shortcut attaches to one persistent tmux session.
-  # Shift+Mod4+Return remains a plain Foot terminal (see bindings.nix).
-  termCwd = "${term} -D \"$(swaycwd 2>/dev/null || echo $HOME)\" tmux new-session -A -s main";
-  termFloat = "${term} --app-id floating_shell --window-size-chars 82x25";
+  # Shift+Mod4+Return remains a plain Kitty terminal (see bindings.nix).
+  termCwd = "${term} --directory \"$(swaycwd 2>/dev/null || echo $HOME)\" tmux new-session -A -s main";
+  termFloat = "${term} --class floating_shell";
 
   # Launcher (Manjaro: rofi combi = drun + run).
   menu = "rofi -show combi -combi-modes \"drun,run\" -terminal ${term} -show-icons -lines 10";
@@ -156,8 +156,6 @@ in
         { command = "mkdir -p ${u.screenshotDir}"; }
         { command = "xdg-user-dirs-update"; }
         { command = "waybar"; }
-        { command = "nm-applet --indicator"; }
-        { command = "blueman-applet"; }
         { command = "wlsunset -l ${toString u.latitude} -L ${toString u.longitude}"; }
         { command = "dex -a -e SWAY"; }
         { command = "noisetorch -u && noisetorch -i"; always = true; }

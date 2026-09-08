@@ -2,7 +2,6 @@
 # managers. All are tied to the sway session target.
 
 {
-  config,
   pkgs,
   lib,
   params,
@@ -14,7 +13,7 @@ let
   u = params.userSettings;
 in
 {
-  # --- Idle: dim -> lock -> DPMS off -> suspend only on battery.
+  # --- Idle: dim -> DPMS off -> suspend only on battery; lock before sleep.
   # Timeouts and dim level come from the top-level params.
   services.swayidle = {
     enable = true;
@@ -23,10 +22,6 @@ in
         timeout = u.idleDimSec;
         command = "${pkgs.brightnessctl}/bin/brightnessctl -s && ${pkgs.brightnessctl}/bin/brightnessctl set ${toString u.idleDimPercent}";
         resumeCommand = "${pkgs.brightnessctl}/bin/brightnessctl -r";
-      }
-      {
-        timeout = u.idleLockSec;
-        command = "${pkgs.swaylock}/bin/swaylock";
       }
       {
         timeout = u.idleOffSec;
@@ -38,10 +33,11 @@ in
         command = "${pkgs.acpi}/bin/acpi --ac-adapter | grep -q 'on-line' || systemctl suspend";
       }
     ];
-    # attrset form (list form is deprecated in home-manager).
+    # attrset form (list form is deprecated in home-manager). The initial
+    # login screen is provided by greetd/tuigreet; this service only handles
+    # idle and sleep locking inside an already-running Sway session.
     events = {
       before-sleep = "${pkgs.swaylock}/bin/swaylock";
-      lock = "${pkgs.swaylock}/bin/swaylock";
     };
     systemdTargets = [ sessionTarget ];
   };
@@ -51,8 +47,10 @@ in
     enable = true;
     systemdTarget = sessionTarget;
     settings = {
-      # The BenQ's auto-DPI scale makes UI text too small in practice.
-      # Keep the high-density laptop and low-density Cinema HD on auto scale.
+      # Use explicit scales instead of DPI-based auto-scaling.
+      AUTO_SCALE = false;
+
+      # The BenQ's native scale makes UI text too small in practice.
       SCALE = [
         {
           NAME_DESC = "BenQ RD280UA";
@@ -76,37 +74,6 @@ in
     enable = true;
     allowImages = true;
     systemdTargets = [ sessionTarget ];
-  };
-
-  # --- foot server (socket-activated) so footclient shares one instance.
-  systemd.user.sockets.foot-server = {
-    Unit = {
-      Description = "Foot server socket";
-      PartOf = [ "graphical-session.target" ];
-      After = [ "graphical-session.target" ];
-      ConditionEnvironment = "WAYLAND_DISPLAY";
-    };
-    Socket = {
-      ListenStream = "%t/foot.sock";
-    };
-    Install.WantedBy = [ "graphical-session.target" ];
-  };
-
-  systemd.user.services.foot-server = {
-    Unit = {
-      Description = "Foot terminal server mode";
-      Requires = [ "foot-server.socket" ];
-      Documentation = "man:foot(1)";
-      PartOf = [ "graphical-session.target" ];
-      After = [ "graphical-session.target" ];
-      ConditionEnvironment = "WAYLAND_DISPLAY";
-    };
-    Service = {
-      ExecStart = "${pkgs.foot}/bin/foot --server=3";
-      UnsetEnvironment = "LISTEN_PID LISTEN_FDS LISTEN_FDNAMES";
-      NonBlocking = true;
-    };
-    Install.WantedBy = [ "graphical-session.target" ];
   };
 
   # --- Workspace icons in waybar (renames workspaces to app icons).

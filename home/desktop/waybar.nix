@@ -17,7 +17,7 @@ in
     settings.mainBar = {
       layer = "top";
       position = "top";
-      height = 30;
+      height = 45;
       spacing = 12;
       modules-left = [
         "sway/workspaces"
@@ -58,7 +58,9 @@ in
 
       memory = {
         interval = 5;
-        format = "";
+        # Nerd Fonts v3 nf-md-memory; the older nf-md-memory codepoint is not
+        # present in the Terminess Nerd Font build.
+        format = "󰍛";
         states = {
           warning = 70;
           critical = 90;
@@ -80,14 +82,14 @@ in
         tooltip-format-wifi = "{essid} ({signalStrength}%)\\n{ifname} {ipaddr}";
         tooltip-format-ethernet = "{ifname} {ipaddr}";
         tooltip-format-disconnected = "disconnected";
-        on-click = "foot -e nmtui connect";
+        on-click = "kitty nmtui connect";
       };
 
       bluetooth = {
         format = "󰂯";
         format-disabled = "󰂲";
         tooltip-format = "{status}";
-        on-click = "foot -e bluetuith";
+        on-click = "kitty bluetuith";
         on-click-right = "rfkill toggle bluetooth";
       };
 
@@ -136,7 +138,11 @@ in
     };
 
     style = ''
-      * { font-family: "Terminess Nerd Font", monospace; min-height: 0; }
+      * {
+        font-family: "Terminess Nerd Font", monospace;
+        font-size: ${toString params.userSettings.terminalFontSize}pt;
+        min-height: 0;
+      }
 
       window#waybar {
         background: ${v.bg};

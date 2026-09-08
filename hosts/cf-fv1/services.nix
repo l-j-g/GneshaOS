@@ -48,6 +48,11 @@
 
   hardware.bluetooth.enable = true;
 
+  # Enable the NixOS Steam integration (runtime libraries, udev rules, and
+  # the supported launcher setup) for the gaming packages managed in Home
+  # Manager.
+  programs.steam.enable = true;
+
   services.pipewire = {
     enable = true;
     audio.enable = true;
@@ -83,7 +88,6 @@
     acpi
     powertop
     docker-compose
-    ghostty
     libnotify
   ];
 }

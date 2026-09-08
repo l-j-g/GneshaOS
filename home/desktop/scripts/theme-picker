@@ -1,0 +1,46 @@
+#!/bin/sh
+# Pick a Base16 theme and update the declarative params.nix selection.
+# Run the normal rebuild command afterwards to apply the new scheme.
+
+set -eu
+
+themeCatalog="${XDG_CONFIG_HOME:-$HOME/.config}/gnesha/theme-names"
+flakePath="${GNESHA_FLAKE_PATH:-/etc/nixos}"
+paramsFile="$flakePath/params.nix"
+
+if [ ! -r "$themeCatalog" ]; then
+    notify-send "Theme picker" "Theme catalog is missing; rebuild Home Manager first."
+    exit 1
+fi
+
+if [ ! -f "$paramsFile" ] || [ ! -w "$paramsFile" ]; then
+    notify-send "Theme picker" "Cannot write $paramsFile"
+    exit 1
+fi
+
+choice=$(rofi -dmenu -i -p "Theme" < "$themeCatalog" || true)
+[ -n "$choice" ] || exit 0
+
+case "$choice" in
+    *[!A-Za-z0-9._-]*)
+        notify-send "Theme picker" "Invalid theme name: $choice"
+        exit 1
+        ;;
+esac
+
+if ! grep -Eq '^[[:space:]]*themeName = "[^"]*";' "$paramsFile"; then
+    notify-send "Theme picker" "themeName is missing from $paramsFile"
+    exit 1
+fi
+
+tmpFile=$(mktemp "${TMPDIR:-/tmp}/gnesha-theme.XXXXXX")
+trap 'rm -f "$tmpFile"' EXIT HUP INT TERM
+sed -E "s|^([[:space:]]*themeName = ).*;|\1\"$choice\";|" "$paramsFile" > "$tmpFile"
+
+if cmp -s "$paramsFile" "$tmpFile"; then
+    exit 0
+fi
+
+mv "$tmpFile" "$paramsFile"
+trap - EXIT HUP INT TERM
+notify-send "Theme selected" "$choice — run rebuild to apply it"

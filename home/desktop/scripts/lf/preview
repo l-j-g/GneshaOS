@@ -2,31 +2,47 @@
 
 image() {
     file_path="$1"
-    x="$4"
-    y="$5"
     max_width=$(( $2 - 1 ))
     max_height="$3"
+    preview_path="$file_path"
+    temporary_preview=""
 
-    if [ -n "${UB_SOCKET:-}" ]; then
-        ueberzugpp cmd \
-            -s "$UB_SOCKET" \
-            -a add \
-            -i PREVIEW \
-            -x "$x" \
-            -y "$y" \
-            --max-width "$max_width" \
-            --max-height "$max_height" \
-            -f "$file_path"
+    # chafa does not consistently decode SVGs itself; rasterize them with the
+    # same librsvg tool used by nnn's preview-tui plugin.
+    if [ "$(file --mime-type -b -- "$file_path")" = "image/svg+xml" ] && command -v rsvg-convert >/dev/null 2>&1; then
+        temporary_preview="$(mktemp --suffix=.png)"
+        rsvg-convert \
+            -w "$max_width" \
+            -h "$max_height" \
+            -o "$temporary_preview" \
+            -- "$file_path"
+        preview_path="$temporary_preview"
     fi
 
-    # External image layers must not be cached by lf: their position changes
-    # whenever the preview pane is resized or scrolled.
-    exit 1
+    if command -v kitten >/dev/null 2>&1; then
+        kitten icat \
+            --silent \
+            --scale-up \
+            --place "${max_width}x${max_height}@0x0" \
+            --transfer-mode=stream \
+            --stdin=no \
+            -- "$preview_path"
+    elif command -v chafa >/dev/null 2>&1; then
+        chafa \
+            --format symbols \
+            --colors 256 \
+            --size "${max_width}x${max_height}" \
+            -- "$preview_path"
+    else
+        file --brief --dereference -- "$file_path"
+    fi
+
+    [ -z "$temporary_preview" ] || rm -f -- "$temporary_preview"
 }
 
 mime=$(file --mime-type -b -- "$1")
 case "$mime" in
-    text/*|application/json|application/javascript|application/xml|image/svg+xml)
+    text/*|application/json|application/javascript|application/xml)
         bat \
             --paging=never \
             --style=plain \

@@ -21,8 +21,8 @@ let
 in
 {
   # Launch // Terminal
-  "${m}+Return" = "exec ${termCwd}";
-  "${m}+Shift+Return" = "exec ${term}";
+  "${m}+Return" = "exec ${term}";
+  "${m}+Shift+Return" = "exec ${termCwd}";
 
   # Action // Kill focused window
   "${m}+Shift+q" = "kill";
@@ -33,6 +33,9 @@ in
 
   # Launch // Clipboard picker
   "${m}+Shift+p" = "exec ${clipboard}";
+
+  # Launch // Base16 theme picker (selection is applied on rebuild)
+  "${m}+Shift+t" = "exec theme-picker";
 
   # Action // Reload
   "${m}+Shift+c" = "reload";
