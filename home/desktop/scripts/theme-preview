@@ -113,12 +113,19 @@ render_terminal() {
         index=$((index + 1))
     done
 
+    # Keep the right wall at a fixed terminal column. The preview contains
+    # ANSI color sequences and Nerd Font glyphs, so padding each row by hand
+    # does not reliably produce the same visual width.
+    preview_box_line() {
+        printf '  \033[38;5;7m│\033[0m %b\033[48G\033[38;5;7m│\033[0m\n' "$1"
+    }
+
     printf '\n  \033[38;5;7m┌────────────────────────────────────────────┐\033[0m\n'
-    printf '  \033[38;5;7m│\033[0m \033[38;5;2m$\033[0m eza --icons=auto -la                  \033[38;5;7m│\033[0m\n'
-    printf '  \033[38;5;7m│\033[0m \033[38;5;4mdrwxr-xr-x\033[0m  \033[38;5;6m󰉋\033[0m projects/      \033[38;5;7m│\033[0m\n'
-    printf '  \033[38;5;7m│\033[0m \033[38;5;2m-rwxr-xr-x\033[0m  \033[38;5;3m󰆍\033[0m deploy.sh       \033[38;5;7m│\033[0m\n'
-    printf '  \033[38;5;7m│\033[0m \033[38;5;5mfunction\033[0m greet() { \033[38;5;4mecho\033[0m hello; }  \033[38;5;7m│\033[0m\n'
-    printf '  \033[38;5;7m│\033[0m \033[38;5;1merror:\033[0m  connection refused             \033[38;5;7m│\033[0m\n'
+    preview_box_line '\033[38;5;2m$\033[0m eza --icons=auto -la'
+    preview_box_line '\033[38;5;4mdrwxr-xr-x\033[0m  \033[38;5;6m󰉋\033[0m projects/'
+    preview_box_line '\033[38;5;2m-rwxr-xr-x\033[0m  \033[38;5;3m󰆍\033[0m deploy.sh'
+    preview_box_line '\033[38;5;5mfunction\033[0m greet() { \033[38;5;4mecho\033[0m hello; }'
+    preview_box_line '\033[38;5;1merror:\033[0m  connection refused'
     printf '  \033[38;5;7m└────────────────────────────────────────────┘\033[0m\n'
     printf '\n  \033[38;5;8mnormal\033[0m  \033[38;5;9mbright\033[0m  \033[38;5;10maccent\033[0m  \033[38;5;11mwarning\033[0m  \033[38;5;12mlink\033[0m\n'
 }
