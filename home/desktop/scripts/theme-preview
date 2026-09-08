@@ -133,6 +133,7 @@ render_terminal() {
 write_rofi_theme() {
     cat > "$gneshaDir/rofi-live.rasi" <<EOF
 * {
+    font: "monospace __TERMINAL_FONT_SIZE__";
     background-color: #${base00}E6;
     foreground-color: #${base05};
     text-color: #${base05};
@@ -188,6 +189,29 @@ color15 #${base07}
 EOF
 }
 
+write_nvim_theme() {
+    cat > "$gneshaDir/nvim-theme.lua" <<EOF
+return {
+  base00 = "#${base00}",
+  base01 = "#${base01}",
+  base02 = "#${base02}",
+  base03 = "#${base03}",
+  base04 = "#${base04}",
+  base05 = "#${base05}",
+  base06 = "#${base06}",
+  base07 = "#${base07}",
+  base08 = "#${base08}",
+  base09 = "#${base09}",
+  base0A = "#${base0A}",
+  base0B = "#${base0B}",
+  base0C = "#${base0C}",
+  base0D = "#${base0D}",
+  base0E = "#${base0E}",
+  base0F = "#${base0F}",
+}
+EOF
+}
+
 write_waybar_theme() {
     cat > "$gneshaDir/waybar-live.css" <<EOF
 * {
@@ -225,6 +249,7 @@ apply_runtime() {
     mkdir -p "$gneshaDir"
     write_rofi_theme
     write_kitty_theme
+    write_nvim_theme
     write_waybar_theme
     write_shell_colors
 

@@ -8,4 +8,4 @@ vim.diagnostic.config({
   float = { border = "rounded" },
 })
 
-vim.cmd.colorscheme("tokyonight-night")
+require("gnesha.theme").setup()

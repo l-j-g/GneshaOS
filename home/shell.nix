@@ -30,6 +30,8 @@ let
   '';
 in
 {
+  home.sessionVariables.BAT_THEME = "ansi";
+
   home.packages = with pkgs; [
     zoxide
     eza
@@ -67,7 +69,7 @@ in
       lf = "lf-image";
       ls = "eza --icons=auto";
       ll = "eza --icons=auto -la";
-      cat = "bat";
+      cat = "BAT_THEME=ansi bat";
       nixrun = ",";
       nf = "nixfmt";
       nfcheck = "nixfmt --check";

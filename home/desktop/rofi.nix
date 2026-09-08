@@ -16,6 +16,7 @@ let
   inherit (config.lib.formats.rasi) mkLiteral;
   liveThemeText = ''
     * {
+        font: "monospace ${toString params.userSettings.terminalFontSize}";
         background-color: ${v.bg}E6;
         foreground-color: ${v.foreground};
         text-color: ${v.foreground};
@@ -52,6 +53,7 @@ in
     terminal = "kitty";
     theme = {
       "*" = {
+        font = "monospace ${toString params.userSettings.terminalFontSize}";
         background-color = mkLiteral "${v.bg}E6";
         foreground-color = mkLiteral v.foreground;
         text-color = mkLiteral v.foreground;
