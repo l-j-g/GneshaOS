@@ -256,19 +256,32 @@ case "${1:-}" in
         # the first whitespace-delimited field used by theme_row().
         selectedTheme=${2%%[[:space:]]*}
         [ -n "$selectedTheme" ] || exit 0
-        printf '%s\n' "$selectedTheme" > "$stateFile"
+        # Replace the state atomically. The terminal preview may read this
+        # file while Rofi is changing selection, so never expose a partial
+        # line or a truncated file to the reader.
+        stateTmp="$stateFile.$$"
+        trap 'rm -f "$stateTmp"' EXIT HUP INT TERM
+        printf '%s\n' "$selectedTheme" > "$stateTmp"
+        mv -f "$stateTmp" "$stateFile"
+        trap - EXIT HUP INT TERM
         ;;
     --terminal)
         [ -n "${2:-}" ] || die "missing preview state file"
         stateFile=$2
         load_palette "$(sed -n '1p' "$stateFile")"
         render_terminal
-        # tail buffers stdout when writing to a pipe; line buffering keeps
-        # every Rofi selection visible to the preview terminal immediately.
-        stdbuf -oL tail -n 0 -f "$stateFile" | while IFS= read -r selected; do
-            [ -n "$selected" ] || continue
-            load_palette "$selected"
-            render_terminal
+        # Poll the atomically replaced state file instead of tailing it. Rofi
+        # can change selections quickly while paging, and tail -f can miss
+        # events when a file is repeatedly truncated and rewritten.
+        lastTheme=$themeName
+        while :; do
+            selected=$(sed -n '1p' "$stateFile" 2>/dev/null) || selected=""
+            if [ -n "$selected" ] && [ "$selected" != "$lastTheme" ]; then
+                load_palette "$selected"
+                render_terminal
+                lastTheme=$selected
+            fi
+            sleep 0.05
         done
         ;;
     --open)
