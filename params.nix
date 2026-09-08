@@ -48,7 +48,7 @@
     # SVG) and sway scaling factor (1 = 100%, 2 = 200% HiDPI).
     displayWidth = 2160;
     displayHeight = 1440;
-    displayScale = "1";
+    displayScale = "2";
     # Desktop preferences.
     gapsInner = 5; # sway gaps inner (px)
     gapsOuter = 5; # sway gaps outer (px)
