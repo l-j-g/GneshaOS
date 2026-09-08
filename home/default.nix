@@ -12,7 +12,8 @@
     ./shell.nix
     ./editors.nix
     ./neovim.nix
-    ./apps.nix
+    ./programs
+    ./services
     ./theme.nix
     ./desktop
     inputs.nix-index-database.homeModules.nix-index
