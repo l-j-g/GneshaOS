@@ -60,7 +60,7 @@ in
         interval = 5;
         # Nerd Fonts v3 nf-md-memory; the older nf-md-memory codepoint is not
         # present in the Terminess Nerd Font build.
-        format = "󰍛";
+        format = "󰘚";
         states = {
           warning = 70;
           critical = 90;
