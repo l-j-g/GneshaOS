@@ -210,7 +210,6 @@ window#waybar {
 #network.disconnected, #bluetooth.disabled { color: #${base0A}; }
 #battery.warning, #cpu.warning, #memory.warning { color: #${base0A}; }
 #battery.critical, #cpu.critical, #memory.critical, #pulseaudio.muted { color: #${base08}; }
-#battery.charging { color: #${base0B}; }
 tooltip { background: #${base01}; border: 1px solid #${base0B}; border-radius: 0; }
 EOF
 }
