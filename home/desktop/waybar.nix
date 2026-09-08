@@ -185,7 +185,6 @@ in
 
       #battery.warning { color: ${v.warning}; }
       #battery.critical { color: ${v.critical}; }
-      #battery.charging { color: ${v.accent}; }
 
       #pulseaudio.muted { color: ${v.critical}; }
       #cpu.warning, #memory.warning { color: ${v.warning}; }
