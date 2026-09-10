@@ -5,31 +5,32 @@
   pkgs,
   lib,
   params,
+  variables,
   ...
 }:
 
 let
   sessionTarget = "sway-session.target";
-  u = params.userSettings;
+  system = params.systemSettings;
 in
 {
   # --- Idle: dim -> DPMS off -> suspend only on battery; lock before sleep.
-  # Timeouts and dim level come from the top-level params.
+  # Timeouts and dim level come from home/variables.nix.
   services.swayidle = {
     enable = true;
     timeouts = [
       {
-        timeout = u.idleDimSec;
-        command = "${pkgs.brightnessctl}/bin/brightnessctl -s && ${pkgs.brightnessctl}/bin/brightnessctl set ${toString u.idleDimPercent}";
+        timeout = variables.idleDimSec;
+        command = "${pkgs.brightnessctl}/bin/brightnessctl -s && ${pkgs.brightnessctl}/bin/brightnessctl set ${toString variables.idleDimPercent}";
         resumeCommand = "${pkgs.brightnessctl}/bin/brightnessctl -r";
       }
       {
-        timeout = u.idleOffSec;
+        timeout = variables.idleOffSec;
         command = "${pkgs.sway}/bin/swaymsg \"output * power off\"";
         resumeCommand = "${pkgs.sway}/bin/swaymsg \"output * power on\"";
       }
       {
-        timeout = u.idleSuspendSec;
+        timeout = variables.idleSuspendSec;
         command = "${pkgs.acpi}/bin/acpi --ac-adapter | grep -q 'on-line' || systemctl suspend";
       }
     ];
@@ -198,7 +199,7 @@ in
 
   # --- Adaptive ambient brightness. Wluma learns manual adjustments and
   # interpolates the preferred brightness for each ambient-light level.
-  services.wluma = lib.mkIf u.autoBrightness {
+  services.wluma = lib.mkIf variables.autoBrightness {
     enable = true;
     systemd = {
       enable = true;
@@ -219,7 +220,7 @@ in
       output.backlight = [
         {
           name = "eDP-1";
-          path = "/sys/class/backlight/${u.backlightDevice}";
+          path = "/sys/class/backlight/${system.backlightDevice}";
           # Learn from ambient light only; avoid screen-content-driven changes.
           capturer = "none";
         }

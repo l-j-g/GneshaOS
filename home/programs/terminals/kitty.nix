@@ -3,20 +3,20 @@
 {
   config,
   pkgs,
-  params,
+  variables,
   ...
 }:
 
 let
-  v = import ../../desktop/vars.nix { inherit config pkgs; };
+  v = import ../../theme/palette.nix { inherit config pkgs; };
   p = v.palette; # raw hex, no '#'
 in
 {
   programs.kitty = {
     enable = true;
     font = {
-      name = "monospace";
-      size = params.userSettings.terminalFontSize;
+      name = variables.terminalFontFamily;
+      size = variables.terminalFontSize;
     };
     settings = {
       # Allow nnn's preview-tui plugin to create a Kitty split and use icat.

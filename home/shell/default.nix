@@ -16,7 +16,7 @@ let
   fishWorkflow = lib.replaceStrings
     [ "__FLAKE_PATH__" "__HOST_NAME__" "__HOME_PROFILE__" "__SYSTEM_BUILD_REF__" ]
     [ flakePath hostName homeProfile systemBuildRef ]
-    (builtins.readFile ./scripts/nix-workflow.fish);
+    (builtins.readFile ./nix-workflow.fish);
   themeFishInit = ''
     # Runtime theme previews update these files without rewriting shell config.
     set -l gneshaThemeDir "$HOME/.config/gnesha"

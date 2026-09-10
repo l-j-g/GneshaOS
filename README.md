@@ -68,19 +68,20 @@ A declarative NixOS configuration for a [Panasonic Let's Note CF-FV1](https://pa
 | `hosts/` | One directory per NixOS host; real directories become `nixosConfigurations.<name>` and `homeConfigurations.<user>@<host>`, while `_template/` is excluded |
 | `hosts/cf-fv1/` | Panasonic CF-FV1 composition, split by responsibility, plus machine-generated `hardware-configuration.nix` |
 | `modules/` | Reusable NixOS modules: `btrfs`, `fonts`, `hardening`, `letsnote` |
-| `home/` | Shared Home Manager environment (apps, desktop, editors, fonts, shell, theme) |
-| `params.nix` | **Shared consumer/user defaults** — edit this file for common preferences |
-| `params.example.nix` | Documented template / fallback (same values as `params.nix`) |
-| `USER_PARAMETERS.md` | **Full self-service reference** — every variable, allowed values, quickstart |
+| `home/` | Shared Home Manager environment (programs, desktop, editors, shell, theme) |
+| `system-parameters.nix` | Stable machine, account, hardware, and path parameters |
+| `system-parameters.example.nix` | Documented system-parameter template / fallback |
+| `home/variables.nix` | **Editable Home Manager preferences** — theme, gaps, fonts, and desktop behavior |
+| `docs/user-parameters.md` | **Full self-service reference** — every parameter, allowed values, quickstart |
 | `docs/` | Install runbook |
 
 ## Install / usage
 
 ```sh
-# 1. (First time only) personalise the top-level parameters
-cp params.example.nix params.nix   # or just edit params.nix directly
-#    ... change userName, gitUserEmail, timeZone, displayWidth/Height,
-#    displayScale, keyboardLayout ... every user-facing value lives here.
+# 1. (First time only) personalise the stable system parameters
+cp system-parameters.example.nix system-parameters.nix
+#    ... change userName, homeDirectory, timezone, hardware paths, and display
+#    identity. Then tune Home Manager preferences in home/variables.nix.
 
 # 2. Add or choose a host. Existing hosts are listed with:
 nix eval .#nixosConfigurations --apply builtins.attrNames
@@ -101,19 +102,19 @@ in sequence, while `home-rebuild` activates only Home Manager. The theme
 picker starts the latter activation in the background after a theme is
 accepted.
 
-`params.nix` is the tracked consumer/user parameter file — username, display
-resolution/scaling, keyboard layout, timezone, paths and preferences. The
-host directory name is authoritative for the flake output and is overlaid into
-that host's `systemSettings.hostName`; the older value in `params.nix` remains
-as a reference/default for compatibility. [`USER_PARAMETERS.md`](USER_PARAMETERS.md)
+`system-parameters.nix` is the tracked machine parameter file — account
+identity, hardware, stable paths, and host settings. The host directory name is
+authoritative for the flake output and is overlaid into that host's
+`systemSettings.hostName`. [`docs/user-parameters.md`](docs/user-parameters.md)
 is the full self-service reference. To add a machine, copy
 [`hosts/_template/`](hosts/_template/), generate its hardware configuration,
 and add host-specific imports/settings. The flake discovers the new directory
 automatically.
 
-`params.example.nix` is the documented fallback if `params.nix` is missing, so
-a fresh clone still evaluates. Keep both parameter files tracked: Git flakes
-do not include ignored or untracked files.
+`system-parameters.example.nix` is the documented fallback if
+`system-parameters.nix` is missing, so a fresh clone still evaluates. Keep both
+system-parameter files tracked: Git flakes do not include ignored or untracked
+files.
 
 For a from-scratch install, follow [`docs/install.md`](docs/install.md).
 

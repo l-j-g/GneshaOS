@@ -4,12 +4,12 @@
   config,
   pkgs,
   lib,
-  params,
+  variables,
   ...
 }:
 
 let
-  v = import ./vars.nix { inherit config pkgs; };
+  v = import ../theme/palette.nix { inherit config pkgs; };
 in
 {
   services.mako = {
@@ -23,7 +23,7 @@ in
       border-size = 2;
       border-radius = 0;
       padding = "12";
-      font = "monospace ${toString params.userSettings.terminalFontSize}";
+      font = "monospace ${toString variables.terminalFontSize}";
     };
     extraConfig = ''
       [urgency=critical]

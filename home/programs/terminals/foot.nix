@@ -1,21 +1,21 @@
 # Foot terminal — preserved as a separate optional module.
-# It is not imported by desktop/default.nix while Kitty is the active terminal.
+# It is not imported by terminals/default.nix while Kitty is the active terminal.
 
 {
   config,
   pkgs,
-  params,
+  variables,
   ...
 }:
 
 let
-  v = import ../../desktop/vars.nix { inherit config pkgs; };
+  v = import ../../theme/palette.nix { inherit config pkgs; };
   p = v.palette; # raw hex, no '#'
 in
 {
   xdg.configFile."foot/foot.ini".text = ''
     [main]
-    font=monospace:size=${toString params.userSettings.terminalFontSize}
+    font=monospace:size=${toString variables.terminalFontSize}
     pad=8x8
 
     [cursor]

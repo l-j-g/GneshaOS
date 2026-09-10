@@ -16,6 +16,7 @@
     ./lf.nix
     ./tmux.nix
     ./gpg.nix
+    ./ncdu.nix
   ];
 
   # Canonical list of standalone applications and support tools. Program
@@ -45,6 +46,7 @@
       ffmpegthumbnailer
       less
       mediainfo
+      ncdu
       poppler-utils
       tree
       unzip

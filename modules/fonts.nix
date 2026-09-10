@@ -1,9 +1,8 @@
 # Font setup:
-#  - Original Terminus bitmap-derived font for the desktop/terminal stack.
+#  - Terminess (TTF port of Terminus, nerd-patched) for the desktop/terminal
+#    stack. The bitmap Terminus font smears when scaled by GUI applications.
 #  - Original Terminus bitmap font (terminus_font) for the Linux virtual
 #    console, sized up for the 216dpi panel.
-#  - fontconfig rules are expressed as localConf XML (this NixOS version has no
-#    structured-attrset form for fontconfig; XML is the declarative way here).
 
 { config, pkgs, lib, ... }:
 
@@ -49,27 +48,9 @@ in
   ];
 
   fonts.fontconfig = {
-    defaultFonts.monospace = [ "Terminus" ];
-
-    # Terminus is a bitmap-derived font. For crisp pixel-aligned glyphs it
-    # wants no antialiasing, full hinting, no autohint, and no subpixel/LCD
-    # rendering.
-    localConf = ''
-      <?xml version="1.0"?>
-      <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
-      <fontconfig>
-        <match target="font">
-          <test name="family">
-            <string>Terminus</string>
-          </test>
-          <edit name="antialias" mode="assign"><bool>false</bool></edit>
-          <edit name="hinting" mode="assign"><bool>true</bool></edit>
-          <edit name="hintstyle" mode="assign"><const>hintfull</const></edit>
-          <edit name="autohint" mode="assign"><bool>false</bool></edit>
-          <edit name="rgba" mode="assign"><const>none</const></edit>
-        </match>
-      </fontconfig>
-    '';
+    # Use the fixed-width TTF family for the generic monospace alias. Without
+    # this, Fontconfig can fall back to bitmap Terminus instead.
+    defaultFonts.monospace = [ "Terminess Nerd Font Mono" ];
   };
 
   console = {

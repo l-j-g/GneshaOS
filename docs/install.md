@@ -149,7 +149,9 @@ separately:
     nh home switch . -c <user>@<host-directory-name>
 
 (`<host-directory-name>` is the directory name under `hosts/`; the flake
-discovers it automatically. Shared user-facing values come from `params.nix`
+discovers it automatically. Stable machine values come from
+`system-parameters.nix`; editable Home Manager preferences come from
+`home/variables.nix`
 at the repo root, while host-specific overrides may live in the host directory.)
 
 ## Known gotchas hit during install

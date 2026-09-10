@@ -1,5 +1,5 @@
 # Optional overrides for this host. Keep shared defaults in the repository
-# root params.nix and only add values that differ on this machine.
+# root system-parameters.nix and only add values that differ on this machine.
 
 {
   # systemSettings = {
@@ -7,7 +7,6 @@
   # };
 
   # userSettings = {
-  #   timeZone = "Etc/UTC";
-  #   displayScale = "1";
+  #   homeDirectory = "/home/lg";
   # };
 }

@@ -4,19 +4,19 @@
   config,
   pkgs,
   lib,
-  params,
+  variables,
   ...
 }:
 
 let
-  v = import ./vars.nix { inherit config pkgs; };
+  v = import ../theme/palette.nix { inherit config pkgs; };
   # Rofi 2.x rejects inline themes passed as `@theme "<content>"`.
   # Home-manager emits a proper `@theme "custom"` when `theme` is an attrset,
   # writing the content to ~/.local/share/rofi/themes/custom.rasi.
   inherit (config.lib.formats.rasi) mkLiteral;
   liveThemeText = ''
     * {
-        font: "monospace ${toString params.userSettings.terminalFontSize}";
+        font: "monospace ${toString variables.terminalFontSize}";
         background-color: ${v.bg}E6;
         foreground-color: ${v.foreground};
         text-color: ${v.foreground};
@@ -37,7 +37,7 @@ let
         background-color: ${v.surface};
         border-radius: 0px;
     }
-    entry { font: "monospace ${toString params.userSettings.terminalFontSize}"; }
+    entry { font: "monospace ${toString variables.terminalFontSize}"; }
     listview { lines: 10; }
     element { padding: 6px; }
     element selected {
@@ -50,10 +50,10 @@ in
   programs.rofi = {
     enable = true;
     package = pkgs.rofi;
-    terminal = "kitty";
+    terminal = variables.terminal;
     theme = {
       "*" = {
-        font = "monospace ${toString params.userSettings.terminalFontSize}";
+        font = "monospace ${toString variables.terminalFontSize}";
         background-color = mkLiteral "${v.bg}E6";
         foreground-color = mkLiteral v.foreground;
         text-color = mkLiteral v.foreground;
@@ -81,7 +81,7 @@ in
       };
 
       entry = {
-        font = "monospace ${toString params.userSettings.terminalFontSize}";
+        font = "monospace ${toString variables.terminalFontSize}";
       };
 
       listview = {

@@ -5,11 +5,12 @@
   pkgs,
   lib,
   params,
+  variables,
   ...
 }:
 
 let
-  v = import ./vars.nix { inherit config pkgs; };
+  v = import ../theme/palette.nix { inherit config pkgs; };
   sessionTarget = "sway-session.target";
 in
 {
@@ -73,10 +74,10 @@ in
       };
 
       backlight = {
-        device = params.userSettings.backlightDevice;
+        device = params.systemSettings.backlightDevice;
         format = "󰃟";
-        on-scroll-up = "swayosd-client --brightness raise --device ${params.userSettings.backlightDevice}";
-        on-scroll-down = "swayosd-client --brightness lower --device ${params.userSettings.backlightDevice}";
+        on-scroll-up = "swayosd-client --brightness raise --device ${params.systemSettings.backlightDevice}";
+        on-scroll-down = "swayosd-client --brightness lower --device ${params.systemSettings.backlightDevice}";
       };
 
       network = {
@@ -87,14 +88,14 @@ in
         tooltip-format-wifi = "{essid} ({signalStrength}%)\\n{ifname} {ipaddr}";
         tooltip-format-ethernet = "{ifname} {ipaddr}";
         tooltip-format-disconnected = "disconnected";
-        on-click = "kitty nmtui connect";
+        on-click = "${variables.terminal} nmtui connect";
       };
 
       bluetooth = {
         format = "󰂯";
         format-disabled = "󰂲";
         tooltip-format = "{status}";
-        on-click = "kitty bluetuith";
+        on-click = "${variables.terminal} bluetuith";
         on-click-right = "rfkill toggle bluetooth";
       };
 
@@ -145,7 +146,7 @@ in
     style = ''
       * {
         font-family: "Terminess Nerd Font", monospace;
-        font-size: ${toString params.userSettings.terminalFontSize}pt;
+        font-size: ${toString variables.terminalFontSize}pt;
         min-height: 0;
       }
 

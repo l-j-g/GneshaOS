@@ -31,12 +31,16 @@
     let
       system = "x86_64-linux";
 
-      # Shared consumer/user defaults (username, resolution, scaling, paths,
-      # ...). Edit params.nix — see params.example.nix for the fully
+      # Stable machine parameters (hostname, account, hardware, paths, ...).
+      # Edit system-parameters.nix — see system-parameters.example.nix for the
       # documented template. Host identity and optional machine overrides are
       # resolved per directory below. Fall back to the example so a fresh
-      # clone evaluates even before you've written your own params.nix.
-      params = if builtins.pathExists ./params.nix then import ./params.nix else import ./params.example.nix;
+      # clone evaluates even before you've written your own system parameters.
+      systemParameters =
+        if builtins.pathExists ./system-parameters.nix then
+          import ./system-parameters.nix
+        else
+          import ./system-parameters.example.nix;
 
       hostNames = builtins.filter (
         name:
@@ -49,11 +53,11 @@
       hostContext = hostName:
         let
           hostPath = ./hosts + "/${hostName}";
-          hostParamsPath = hostPath + "/params.nix";
+          hostParamsPath = hostPath + "/system-parameters.nix";
           hostOverrides = if builtins.pathExists hostParamsPath then import hostParamsPath else { };
-          # Root params provide shared defaults. A host can override only the
-          # values that differ on that machine in hosts/<name>/params.nix.
-          mergedParams = nixpkgs.lib.recursiveUpdate params hostOverrides;
+          # Root system parameters provide shared defaults. A host can override
+          # only the values that differ on that machine.
+          mergedParams = nixpkgs.lib.recursiveUpdate systemParameters hostOverrides;
           hostParams = mergedParams // {
             systemSettings = mergedParams.systemSettings // { inherit hostName; };
           };

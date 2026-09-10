@@ -5,15 +5,16 @@
   pkgs,
   lib,
   params,
+  variables,
   ...
 }:
 
 let
-  v = import ../vars.nix { inherit config pkgs; };
+  v = import ../../theme/palette.nix { inherit config pkgs; };
   mod = "Mod4";
 
-  u = params.userSettings;
-  screenshotDir = lib.replaceStrings [ "~" ] [ config.home.homeDirectory ] u.screenshotDir;
+  system = params.systemSettings;
+  screenshotDir = lib.replaceStrings [ "~" ] [ config.home.homeDirectory ] variables.screenshotDir;
 
   # sway-extra.conf is static sway syntax, so user-adjustable values inside it
   # (gaps, screenshot upload URL) are filled in via placeholder substitution.
@@ -25,16 +26,16 @@ let
       "__SCREENSHOT_UPLOAD_URL__"
     ]
     [
-      (toString u.gapsInner + "px")
-      (toString u.gapsOuter + "px")
-      (toString u.stackedViewFontSize)
-      u.screenshotUploadUrl
+      (toString variables.gapsInner + "px")
+      (toString variables.gapsOuter + "px")
+      (toString variables.stackedViewFontSize)
+      variables.screenshotUploadUrl
     ]
     (builtins.readFile ./sway-extra.conf);
 
   # Terminal. Inlined (not $term var):
   # home-manager's sway module doesn't emit `set $term`/`set $menu` here.
-  term = "kitty";
+  term = variables.terminal;
   # The default terminal shortcut attaches to one persistent tmux session.
   # Shift+Mod4+Return remains a plain Kitty terminal (see bindings.nix).
   termCwd = "${term} --directory \"$(swaycwd 2>/dev/null || echo $HOME)\" tmux new-session -A -s main";
@@ -56,8 +57,8 @@ let
   volumeDown = "swayosd-client --output-volume lower";
   volumeMute = "swayosd-client --output-volume mute-toggle";
   micMute = "swayosd-client --input-volume mute-toggle";
-  brightnessUp = "swayosd-client --brightness raise --device ${u.backlightDevice}";
-  brightnessDown = "swayosd-client --brightness lower --device ${u.backlightDevice}";
+  brightnessUp = "swayosd-client --brightness raise --device ${system.backlightDevice}";
+  brightnessDown = "swayosd-client --brightness lower --device ${system.backlightDevice}";
 
   keybindings = import ./bindings.nix {
     inherit
@@ -97,12 +98,12 @@ in
       menu = menu;
 
       output = {
-        # Native panel is ${toString u.displayWidth}x${toString u.displayHeight}
-        # @ 14" -> ~216 dpi; scale comes from the top-level params.
+        # Native panel is ${toString system.displayWidth}x${toString system.displayHeight}
+        # @ 14" -> ~216 dpi; scale comes from home/variables.nix.
         # (Wallpaper is applied via swaymsg in `startup` so sway config
         # validation doesn't fail before the SVG exists.)
         "*" = {
-          scale = u.displayScale;
+          scale = variables.displayScale;
         };
       };
 
@@ -155,15 +156,15 @@ in
           natural_scroll = "enabled";
         };
         "type:keyboard" = {
-          xkb_layout = u.keyboardLayout;
-          xkb_options = u.keyboardOptions;
+          xkb_layout = system.keyboardLayout;
+          xkb_options = system.keyboardOptions;
         };
       };
 
       startup = [
-        { command = "mkdir -p ${u.screenshotDir}"; }
+        { command = "mkdir -p ${variables.screenshotDir}"; }
         { command = "xdg-user-dirs-update"; }
-        { command = "wlsunset -l ${toString u.latitude} -L ${toString u.longitude}"; }
+        { command = "wlsunset -l ${toString system.latitude} -L ${toString system.longitude}"; }
         { command = "dex -a -e SWAY"; }
         { command = "noisetorch -u && noisetorch -i"; always = true; }
         {

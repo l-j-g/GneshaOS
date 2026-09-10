@@ -6,7 +6,7 @@
 
   # Local time = system timezone from the top-level params (should match the
   # wlsunset coordinates).
-  time.timeZone = params.userSettings.timeZone;
+  time.timeZone = params.systemSettings.timeZone;
 
   # macOS SMB share for the exFAT media volume.
   # Access is limited to the home LAN; authentication uses Samba's

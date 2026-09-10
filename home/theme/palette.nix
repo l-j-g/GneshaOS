@@ -1,5 +1,5 @@
 # Shared palette aliases for the desktop modules.
-# The source of truth for palette values is home/theme.nix; this file only
+# The source of truth for palette values is home/theme/default.nix; this file only
 # derives convenient CSS/Sway and semantic aliases from config.colorScheme.
 #
 # nix-colors stores colors WITHOUT the leading '#', so this module re-adds it

@@ -3,7 +3,7 @@
 # ~/.config/sway/scripts and are added to PATH.
 #
 # One script is generated from a template so its machine-specific value comes
-# from the top-level params (see params.example.nix):
+# from the stable system parameters and home/variables.nix:
 #   - scale.sh: the scale "default" resets to (matches sway config)
 #   - theme-picker: selects a Base16 theme and previews it live
 #   - theme-preview: applies a selected Base16 palette to the running desktop
@@ -13,11 +13,13 @@
   pkgs,
   lib,
   params,
+  variables,
   ...
 }:
 
 let
-  u = params.userSettings;
+  user = params.userSettings;
+  system = params.systemSettings;
   # Scripts we install raw (no parameter substitution needed).
   swayScripts = lib.filterAttrs
     (name: _: !builtins.elem name [ "scale.sh" "theme-picker" "theme-preview" ])
@@ -30,25 +32,25 @@ let
   # scaling can never diverge from the compositor config.
   scaleScript = lib.replaceStrings
     [ "__DEFAULT_SCALE__" ]
-    [ u.displayScale ]
+    [ variables.displayScale ]
     (builtins.readFile ./scripts/scale.sh);
   themePreviewScript = lib.replaceStrings
     [ "__TERMINAL_FONT_SIZE__" ]
-    [ (toString u.terminalFontSize) ]
+    [ (toString variables.terminalFontSize) ]
     (builtins.readFile ./scripts/theme-preview);
   themePickerScript = lib.replaceStrings
     [ "__HOME_PROFILE__" ]
-    [ "${u.userName}@${params.systemSettings.hostName}" ]
+    [ "${user.userName}@${system.hostName}" ]
     (builtins.readFile ./scripts/theme-picker);
   nwgWrapperStyle = lib.replaceStrings
     [ "__TERMINAL_FONT_SIZE__" ]
-    [ (toString u.terminalFontSize) ]
+    [ (toString variables.terminalFontSize) ]
     (builtins.readFile ./nwg-wrapper/style.css);
 in
 {
   home.sessionPath = [ "$HOME/.config/sway/scripts" ];
-  home.sessionVariables.GNESHA_FLAKE_PATH = params.systemSettings.flakePath;
-  home.sessionVariables.GNESHA_TERMINAL_FONT_SIZE = toString u.terminalFontSize;
+  home.sessionVariables.GNESHA_FLAKE_PATH = system.flakePath;
+  home.sessionVariables.GNESHA_TERMINAL_FONT_SIZE = toString variables.terminalFontSize;
 
   home.file = (builtins.listToAttrs (map (name: {
     name = ".config/sway/scripts/${name}";

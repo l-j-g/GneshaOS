@@ -9,6 +9,7 @@
   pkgs,
   lib,
   params,
+  variables,
   inputs,
   ...
 }:
@@ -40,7 +41,7 @@ let
   };
 
   themes = customThemes // inputs.nix-colors.colorSchemes;
-  themeName = params.userSettings.themeName;
+  themeName = variables.themeName;
   availableThemes = lib.sort builtins.lessThan (builtins.attrNames themes);
   paletteFields = [
     "base00"
@@ -78,13 +79,14 @@ in
 {
   # Base16 palette selected from the custom theme plus nix-colors schemes.
   # Note: nix-colors strips the leading '#' from config.colorScheme.palette;
-  # desktop/vars.nix re-adds it for CSS/Sway/rofi-style consumers.
+  # theme/palette.nix re-adds it for CSS/Sway/rofi-style consumers.
   colorScheme = selectedTheme // {
     author = params.userSettings.userName;
   };
 
   # The picker reads these declarative catalogs. It can preview a palette at
-  # runtime, but only writes themeName to params.nix when the user accepts it.
+  # runtime, but only writes themeName to home/variables.nix when the user
+  # accepts it.
   home.file.".config/gnesha/theme-names".text =
     lib.concatStringsSep "\n" availableThemes + "\n";
   home.file.".config/gnesha/theme-data".text = themeData;
@@ -111,4 +113,6 @@ in
       gtk-application-prefer-dark-theme = true;
     };
   };
+
+  imports = [ ./wallpapers.nix ];
 }

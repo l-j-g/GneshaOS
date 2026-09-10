@@ -1,5 +1,5 @@
 # Fish helpers for the NixOS and Home Manager workflows. The placeholders are
-# substituted by home/shell.nix from params.nix.
+# substituted by home/shell/default.nix from system-parameters.nix.
 
 function __nix_system_generations
     command ls -dv /nix/var/nix/profiles/system-*-link 2>/dev/null

@@ -2,8 +2,9 @@
 #
 # Before building, replace hardware-configuration.nix with the output of
 # nixos-generate-config for that machine and add host-specific modules here.
-# Keep shared consumer/user defaults in the repository-root params.nix; use
-# the optional params.nix beside this file for host-specific overrides.
+# Keep shared stable values in the repository-root system-parameters.nix; use
+# the optional system-parameters.nix beside this file for host-specific
+# overrides.
 {
   hostName,
   ...

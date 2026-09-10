@@ -10,8 +10,13 @@ preferred Braille-mask preview only when that file does not already exist.
   Matrix texture.
 - `03-braille-mask-katakana.svg` — the preferred OpenCode version:
   Braille Ganesha mask with katakana/digit Matrix rain clipped inside.
-- `04-matrix-mosaic.svg` — the converted `ganesha-matrix.txt` character
-  mosaic that replaced Braille cells with Matrix characters.
+- `sources/ganesha-matrix.txt` — the source character used by the converted
+  `04-matrix-mosaic.svg` artwork.
+- `04-matrix-mosaic.svg` — the converted character mosaic from
+  `sources/ganesha-matrix.txt`, replacing Braille cells with Matrix
+  characters.
+- `sources/ganesha-braille.txt` — the source Braille character used by the
+  Braille previews.
 - `05-glpaper-matrix.glsl` — the live shader experiment. It needs glpaper and
   is not used by Sway.
 

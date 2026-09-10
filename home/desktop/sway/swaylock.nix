@@ -8,7 +8,7 @@
 }:
 
 let
-  v = import ../vars.nix { inherit config pkgs; };
+  v = import ../../theme/palette.nix { inherit config pkgs; };
 in
 {
   programs.swaylock = {

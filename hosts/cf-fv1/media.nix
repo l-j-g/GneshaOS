@@ -26,7 +26,7 @@
       Type = "oneshot";
       RemainAfterExit = true;
       ExecStart = "${pkgs.coreutils}/bin/true";
-      ExecStop = "${pkgs.docker}/bin/docker compose -f ${params.userSettings.arrComposePath} down";
+      ExecStop = "${pkgs.docker}/bin/docker compose -f ${params.systemSettings.arrComposePath} down";
       TimeoutStopSec = 60;
     };
   };

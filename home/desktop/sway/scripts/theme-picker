@@ -1,7 +1,7 @@
 #!/bin/sh
 # Pick and preview a Base16 theme. Enter applies the runtime preview, writes
-# the declarative params.nix selection, and activates Home Manager in the
-# background; Escape leaves the configuration unchanged.
+# the declarative home/variables.nix selection, and activates Home Manager in
+# the background; Escape leaves the configuration unchanged.
 
 set -eu
 
@@ -9,7 +9,7 @@ configDir="${XDG_CONFIG_HOME:-$HOME/.config}/gnesha"
 themeCatalog="$configDir/theme-names"
 themeData="$configDir/theme-data"
 flakePath="${GNESHA_FLAKE_PATH:-/etc/nixos}"
-paramsFile="$flakePath/params.nix"
+paramsFile="$flakePath/home/variables.nix"
 previewScript="${HOME}/.config/sway/scripts/theme-preview"
 rofiLauncher="${HOME}/.config/sway/scripts/gnesha-rofi"
 homeProfile="${GNESHA_HOME_PROFILE:-__HOME_PROFILE__}"

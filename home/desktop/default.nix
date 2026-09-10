@@ -3,7 +3,7 @@
 #   rofi.nix        - launcher
 #   mako.nix        - notifications
 #   sway/           - Sway compositor, lock screen, daemons, bindings, scripts
-#   vars.nix        - shared palette aliases (imported by the others)
+#   theme/palette.nix - shared palette aliases (imported by the others)
 # Terminal programs live under programs/terminals.
 
 {

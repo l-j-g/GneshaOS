@@ -3,6 +3,7 @@
   pkgs,
   lib,
   params,
+  variables,
   ...
 }:
 
@@ -31,8 +32,8 @@
     enable = true;
     settings = {
       user = {
-        name = params.userSettings.gitUserName;
-        email = params.userSettings.gitUserEmail;
+        name = variables.gitUserName;
+        email = variables.gitUserEmail;
       };
       init.defaultBranch = "main";
       core.autocrlf = "input";
