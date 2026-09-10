@@ -2,19 +2,11 @@
 # the Sway compositor setup itself.
 
 {
-  config,
   pkgs,
   inputs,
   ...
 }:
 
-let
-  # Keep the package list canonical while allowing configured program modules
-  # to replace their raw package with the resulting configured package.
-  appPkgs = pkgs // {
-    nnn = config.programs.nnn.finalPackage;
-  };
-in
 {
   imports = [
     ./integrations.nix
@@ -25,13 +17,12 @@ in
   ];
 
   # Canonical list of standalone applications and support tools. Program
-  # modules below provide configuration for packages that need it; their
-  # primary package is managed by Home Manager.
+  # modules below provide configuration for packages that need it and manage
+  # their own primary package through Home Manager.
   home.packages =
-    with appPkgs;
+    with pkgs;
     [
       tldr
-      nnn
       librewolf-bin
       tor-browser
       discord
