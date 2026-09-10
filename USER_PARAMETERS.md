@@ -114,6 +114,7 @@ changes.
 | `displayScale` | **string** (NOT number) | `"2"` | Sway output scaling: `"1"` = 100%, `"2"` = 200% HiDPI. Must be a string (sway accepts fractional too, e.g. `"1.5"`). Also the value `scale.sh default` (Mod+0) resets to. | `home/desktop/sway.nix`, `home/desktop/scripts/scale.sh` |
 | `gapsInner` | int (px) | `5` | Sway gaps inner. | `home/desktop/sway-extra.conf` |
 | `gapsOuter` | int (px) | `5` | Sway gaps outer. | `home/desktop/sway-extra.conf` |
+| `stackedViewFontSize` | int (pt) | `14` | Sway title-bar font size in stacked/tabbed layouts. | `home/desktop/sway.nix`, `home/desktop/sway-extra.conf` |
 | `terminalFontSize` | int (pt) | `11` | Kitty terminal font size. | `home/desktop/kitty.nix` |
 | `screenshotDir` | string (path, `~` ok) | `"~/Pictures/Screenshots"` | Where grimshot saves screenshots (dir is mkdir'd on session start). | `home/desktop/sway.nix` |
 | `screenshotUploadUrl` | string (URL) | `"https://x0.at/"` | Anonymous image host for the screenshot-upload bindings (Shift+Print). Point at your own 0x0-compatible endpoint to change it. | `home/desktop/sway-extra.conf` |

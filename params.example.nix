@@ -81,6 +81,10 @@
     gapsInner = 5;
     gapsOuter = 5;
 
+    # Sway title-bar font size in stacked/tabbed layouts (pt).
+    #   Used by: home/desktop/sway.nix and home/desktop/sway-extra.conf.
+    stackedViewFontSize = 14;
+
     # Kitty terminal font size (pt).
     #   Used by: home/desktop/kitty.nix.
     terminalFontSize = 11;

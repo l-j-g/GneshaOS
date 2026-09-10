@@ -21,11 +21,13 @@ let
     [
       "__GAPS_INNER_PX__"
       "__GAPS_OUTER_PX__"
+      "__STACKED_VIEW_FONT_SIZE__"
       "__SCREENSHOT_UPLOAD_URL__"
     ]
     [
       (toString u.gapsInner + "px")
       (toString u.gapsOuter + "px")
+      (toString u.stackedViewFontSize)
       u.screenshotUploadUrl
     ]
     (builtins.readFile ./sway-extra.conf);

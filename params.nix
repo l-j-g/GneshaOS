@@ -52,6 +52,7 @@
     # Desktop preferences.
     gapsInner = 5; # sway gaps inner (px)
     gapsOuter = 5; # sway gaps outer (px)
+    stackedViewFontSize = 14; # Sway stacked/tabbed title bars (pt)
     terminalFontSize = 16; # Kitty font size (pt)
     screenshotDir = "~/Pictures/Screenshots"; # where grimshot screenshots land
     screenshotUploadUrl = "https://x0.at/"; # anonymous image host for screenshot upload
