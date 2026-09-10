@@ -74,6 +74,7 @@ in
     inherit initLua plugins;
 
     extraPackages = with pkgs; [
+      tree-sitter
       nixd
       nixfmt
       shellcheck
