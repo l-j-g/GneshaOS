@@ -9,7 +9,7 @@
 }:
 
 let
-  v = import ./vars.nix { inherit config pkgs; };
+  v = import ../vars.nix { inherit config pkgs; };
   mod = "Mod4";
 
   u = params.userSettings;

@@ -28,7 +28,7 @@
     "opencode/opencode.jsonc".source = ../../opencode.json;
   });
   home.file.".local/bin/lf-image" = {
-    source = ../desktop/scripts/lf/lf-image;
+    source = ./scripts/lf/lf-image;
     executable = true;
   };
   home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];

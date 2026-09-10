@@ -57,12 +57,12 @@
 
     # Your location, decimal degrees, for wlsunset's day/night tint.
     # South/west are negative.
-    #   Used by: home/desktop/sway.nix (startup wlsunset command).
+    #   Used by: home/desktop/sway/sway.nix (startup wlsunset command).
     latitude = -33.87;
     longitude = 151.21;
 
     # Keyboard layout (xkb_layout) and option remaps (xkb_options).
-    #   Used by: home/desktop/sway.nix (input "type:keyboard").
+    #   Used by: home/desktop/sway/sway.nix (input "type:keyboard").
     keyboardLayout = "us";
     keyboardOptions = "ctrl:nocaps";
 
@@ -73,35 +73,35 @@
 
     # Sway output scaling. "2" = 200% (HiDPI), "1" = 100%. Must be a string.
     # Also the value scale.sh resets to (Mod+0 / "default").
-    #   Used by: home/desktop/sway.nix, home/desktop/scripts/scale.sh.
+    #   Used by: home/desktop/sway/sway.nix, home/desktop/sway/scripts/scale.sh.
     displayScale = "2";
 
     # Sway gaps (px).
-    #   Used by: home/desktop/sway-extra.conf (gaps inner/outer).
+    #   Used by: home/desktop/sway/sway-extra.conf (gaps inner/outer).
     gapsInner = 5;
     gapsOuter = 5;
 
     # Sway title-bar font size in stacked/tabbed layouts (pt).
-    #   Used by: home/desktop/sway.nix and home/desktop/sway-extra.conf.
+    #   Used by: home/desktop/sway/sway.nix and home/desktop/sway/sway-extra.conf.
     stackedViewFontSize = 14;
 
     # Kitty terminal font size (pt).
-    #   Used by: home/desktop/kitty.nix.
+    #   Used by: home/programs/terminals/kitty.nix.
     terminalFontSize = 11;
 
     # Where screenshots are saved (grimshot + mkdir -p on session start).
-    #   Used by: home/desktop/sway.nix (startup).
+    #   Used by: home/desktop/sway/sway.nix (startup).
     screenshotDir = "~/Pictures/Screenshots";
 
     # Anonymous image host used by the screenshot-upload bindings
     # (Print+Shift). Leave as-is to keep uploads, or point at your own
     # 0x0-compatible endpoint.
-    #   Used by: home/desktop/sway-extra.conf (set $upload_pipe).
+    #   Used by: home/desktop/sway/sway-extra.conf (set $upload_pipe).
     screenshotUploadUrl = "https://x0.at/";
 
     # swayidle timeouts in seconds, and the brightness dim level (%).
     # Sequence: dim -> DPMS off -> suspend (battery only); swaylock runs before sleep.
-    #   Used by: home/desktop/daemons.nix (services.swayidle.timeouts).
+    #   Used by: home/desktop/sway/daemons.nix (services.swayidle.timeouts).
     idleDimSec = 240;
     idleDimPercent = 10;
     idleOffSec = 600;
@@ -109,7 +109,7 @@
 
     # Backlight device name (check `brightnessctl -l`).
     #   Used by: home/desktop/waybar.nix (backlight module),
-    #   home/desktop/daemons.nix (wluma).
+    #   home/desktop/sway/daemons.nix (wluma).
     backlightDevice = "intel_backlight";
 
     # Set true to let the ambient light sensor manage brightness.

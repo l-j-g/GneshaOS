@@ -9,6 +9,8 @@
 
 {
   imports = [
+    ./nvim
+    ./terminals
     ./integrations.nix
     ./nnn.nix
     ./lf.nix

@@ -3,7 +3,7 @@
 }:
 
 let
-  lfPreviewer = ../desktop/scripts/lf/preview;
+  lfPreviewer = ./scripts/lf/preview;
 in
 {
   programs.lf = {

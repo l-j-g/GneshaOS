@@ -35,7 +35,8 @@ isolated Git worktree.
   declarative and compact; do not embed long shell programs or polling daemons
   in configuration files when an existing package or service provides the
   behavior. If custom code is genuinely required, keep it as a focused,
-  separately testable script under `home/desktop/scripts/` and document why a
+  separately testable script under the owning layer (for example,
+  `home/programs/scripts/` or `home/desktop/sway/scripts/`) and document why a
   packaged alternative was not suitable.
 - Never put passwords, tokens, private keys, or machine secrets in the repo.
 - Do not run `sudo`, `nixos-rebuild switch`, `nixos-rebuild boot`,

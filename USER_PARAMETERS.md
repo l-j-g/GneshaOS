@@ -105,26 +105,26 @@ changes.
 | `gitUserEmail` | string (email) | `"lg@lgreve.com"` | Git identity email. | `home/editors.nix` |
 | `homeDirectory` | string (absolute path) | `"/home/lg"` | Your home directory. Must match the `@home` subvolume / useradd default. | `home/default.nix` (`home.homeDirectory`) |
 | `timeZone` | string (IANA tz name) | `"Australia/Sydney"` | System timezone. | `hosts/<host>/default.nix` (`time.timeZone`) |
-| `latitude` | float, decimal degrees (negative = south) | `-33.87` | Your latitude for wlsunset's day/night tint. | `home/desktop/sway.nix` |
-| `longitude` | float, decimal degrees (negative = west) | `151.21` | Your longitude for wlsunset. | `home/desktop/sway.nix` |
-| `keyboardLayout` | string (xkb layout) | `"us"` | Keyboard layout. | `home/desktop/sway.nix` (input "type:keyboard") |
-| `keyboardOptions` | string (xkb options) | `"ctrl:nocaps"` | Keyboard option remaps; `""` for none. | `home/desktop/sway.nix` |
+| `latitude` | float, decimal degrees (negative = south) | `-33.87` | Your latitude for wlsunset's day/night tint. | `home/desktop/sway/sway.nix` |
+| `longitude` | float, decimal degrees (negative = west) | `151.21` | Your longitude for wlsunset. | `home/desktop/sway/sway.nix` |
+| `keyboardLayout` | string (xkb layout) | `"us"` | Keyboard layout. | `home/desktop/sway/sway.nix` (input "type:keyboard") |
+| `keyboardOptions` | string (xkb options) | `"ctrl:nocaps"` | Keyboard option remaps; `""` for none. | `home/desktop/sway/sway.nix` |
 | `displayWidth` | int (px) | `2160` | Panel native width. Sizes the generated wallpaper SVG. | `home/theme.nix` |
 | `displayHeight` | int (px) | `1440` | Panel native height. Sizes the generated wallpaper SVG. | `home/theme.nix` |
-| `displayScale` | **string** (NOT number) | `"2"` | Sway output scaling: `"1"` = 100%, `"2"` = 200% HiDPI. Must be a string (sway accepts fractional too, e.g. `"1.5"`). Also the value `scale.sh default` (Mod+0) resets to. | `home/desktop/sway.nix`, `home/desktop/scripts/scale.sh` |
-| `gapsInner` | int (px) | `5` | Sway gaps inner. | `home/desktop/sway-extra.conf` |
-| `gapsOuter` | int (px) | `5` | Sway gaps outer. | `home/desktop/sway-extra.conf` |
-| `stackedViewFontSize` | int (pt) | `14` | Sway title-bar font size in stacked/tabbed layouts. | `home/desktop/sway.nix`, `home/desktop/sway-extra.conf` |
-| `terminalFontSize` | int (pt) | `11` | Kitty terminal font size. | `home/desktop/kitty.nix` |
-| `screenshotDir` | string (path, `~` ok) | `"~/Pictures/Screenshots"` | Where grimshot saves screenshots (dir is mkdir'd on session start). | `home/desktop/sway.nix` |
-| `screenshotUploadUrl` | string (URL) | `"https://x0.at/"` | Anonymous image host for the screenshot-upload bindings (Shift+Print). Point at your own 0x0-compatible endpoint to change it. | `home/desktop/sway-extra.conf` |
-| `idleDimSec` | int (seconds) | `240` | swayidle: dim after N s idle. | `home/desktop/daemons.nix` |
-| `idleDimPercent` | int (%) | `10` | swayidle: dim brightness level (%). | `home/desktop/daemons.nix` |
-| `idleOffSec` | int (seconds) | `600` | swayidle: DPMS off after N s idle. | `home/desktop/daemons.nix` |
-| `idleSuspendSec` | int (seconds) | `900` | swayidle: suspend after N s idle (battery only). Sequence: dim → off → suspend; swaylock runs before sleep. | `home/desktop/daemons.nix` |
-| `backlightDevice` | string (device name) | `"intel_backlight"` | Backlight device. Find yours with `brightnessctl -l` (or look in `/sys/class/backlight/*`). | `home/desktop/waybar.nix`, `home/desktop/daemons.nix` |
- | `autoBrightness` | bool | `true` | When true, enable wluma's adaptive ambient-brightness service; manual changes teach its brightness model. | `home/desktop/daemons.nix` |
-| `alsSensorPath` | string (absolute path) | `"/sys/bus/iio/devices/iio:device4/in_illuminance_raw"` | Ambient-light sensor raw path for automatic brightness (retained for hardware documentation; wluma discovers IIO sensors under `/sys/bus/iio/devices`). | `home/desktop/daemons.nix` |
+| `displayScale` | **string** (NOT number) | `"2"` | Sway output scaling: `"1"` = 100%, `"2"` = 200% HiDPI. Must be a string (sway accepts fractional too, e.g. `"1.5"`). Also the value `scale.sh default` (Mod+0) resets to. | `home/desktop/sway/sway.nix`, `home/desktop/sway/scripts/scale.sh` |
+| `gapsInner` | int (px) | `5` | Sway gaps inner. | `home/desktop/sway/sway-extra.conf` |
+| `gapsOuter` | int (px) | `5` | Sway gaps outer. | `home/desktop/sway/sway-extra.conf` |
+| `stackedViewFontSize` | int (pt) | `14` | Sway title-bar font size in stacked/tabbed layouts. | `home/desktop/sway/sway.nix`, `home/desktop/sway/sway-extra.conf` |
+| `terminalFontSize` | int (pt) | `11` | Kitty terminal font size. | `home/programs/terminals/kitty.nix` |
+| `screenshotDir` | string (path, `~` ok) | `"~/Pictures/Screenshots"` | Where grimshot saves screenshots (dir is mkdir'd on session start). | `home/desktop/sway/sway.nix` |
+| `screenshotUploadUrl` | string (URL) | `"https://x0.at/"` | Anonymous image host for the screenshot-upload bindings (Shift+Print). Point at your own 0x0-compatible endpoint to change it. | `home/desktop/sway/sway-extra.conf` |
+| `idleDimSec` | int (seconds) | `240` | swayidle: dim after N s idle. | `home/desktop/sway/daemons.nix` |
+| `idleDimPercent` | int (%) | `10` | swayidle: dim brightness level (%). | `home/desktop/sway/daemons.nix` |
+| `idleOffSec` | int (seconds) | `600` | swayidle: DPMS off after N s idle. | `home/desktop/sway/daemons.nix` |
+| `idleSuspendSec` | int (seconds) | `900` | swayidle: suspend after N s idle (battery only). Sequence: dim → off → suspend; swaylock runs before sleep. | `home/desktop/sway/daemons.nix` |
+| `backlightDevice` | string (device name) | `"intel_backlight"` | Backlight device. Find yours with `brightnessctl -l` (or look in `/sys/class/backlight/*`). | `home/desktop/waybar.nix`, `home/desktop/sway/daemons.nix` |
+| `autoBrightness` | bool | `true` | When true, enable wluma's adaptive ambient-brightness service; manual changes teach its brightness model. | `home/desktop/sway/daemons.nix` |
+| `alsSensorPath` | string (absolute path) | `"/sys/bus/iio/devices/iio:device4/in_illuminance_raw"` | Ambient-light sensor raw path for automatic brightness (retained for hardware documentation; wluma discovers IIO sensors under `/sys/bus/iio/devices`). | `home/desktop/sway/daemons.nix` |
 | `arrComposePath` | string (absolute path) | `"/home/lg/src/arr/docker-compose.yml"` | docker-compose file of the self-hosted *arr media stack (stopped cleanly before `/media` unmounts at shutdown). Point at your compose file or ignore if you don't run the stack. | `hosts/<host>/default.nix` (docker-compose-stop unit) |
 
 ---

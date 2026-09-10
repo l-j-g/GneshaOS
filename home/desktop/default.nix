@@ -1,15 +1,10 @@
 # Desktop compositor stack. Sub-modules, one per concern:
-#   sway.nix        - sway config + startup + modes (sway-extra.conf)
-#   bindings.nix    - sway keybindings (imported by sway.nix)
 #   waybar.nix      - top bar
-#   kitty.nix       - terminal
-#   foot.nix        - preserved optional Foot configuration (not imported)
 #   rofi.nix        - launcher
 #   mako.nix        - notifications
-#   swaylock.nix    - lock screen
-#   daemons.nix     - swayidle, swayr, cliphist, user services
-#   scripts.nix     - vendored sway helper scripts + help overlay assets
+#   sway/           - Sway compositor, lock screen, daemons, bindings, scripts
 #   vars.nix        - shared palette aliases (imported by the others)
+# Terminal programs live under programs/terminals.
 
 {
   pkgs,
@@ -18,14 +13,10 @@
 
 {
   imports = [
-    ./sway.nix
+    ./sway
     ./waybar.nix
-    ./kitty.nix
     ./rofi.nix
     ./mako.nix
-    ./swaylock.nix
-    ./daemons.nix
-    ./scripts.nix
   ];
 
   # Use Home Manager's packaged SwayOSD service for volume/backlight OSDs.

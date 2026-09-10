@@ -8,7 +8,7 @@
 }:
 
 let
-  v = import ./vars.nix { inherit config pkgs; };
+  v = import ../../desktop/vars.nix { inherit config pkgs; };
   p = v.palette; # raw hex, no '#'
 in
 {

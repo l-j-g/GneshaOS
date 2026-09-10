@@ -6,7 +6,7 @@
 }:
 
 let
-  initLua = builtins.readFile ./nvim/init.lua;
+  initLua = builtins.readFile ./init.lua;
   palette = config.colorScheme.palette;
   paletteFields = [
     "base00"
@@ -61,7 +61,7 @@ let
   ];
 in
 {
-  xdg.configFile."nvim/lua/gnesha".source = ./nvim/lua/gnesha;
+  xdg.configFile."nvim/lua/gnesha".source = ./lua/gnesha;
   home.file.".config/gnesha/nvim-default-theme.lua".text = nvimDefaultTheme;
 
   programs.neovim = {
