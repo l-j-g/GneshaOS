@@ -42,6 +42,7 @@ let
     friendly-snippets
     nvim-tree-lua
     nvim-web-devicons
+    which-key-nvim
     telescope-nvim
     telescope-fzf-native-nvim
     plenary-nvim

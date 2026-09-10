@@ -1,4 +1,5 @@
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
+local nixd = require("gnesha.nixd")
 
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup("UserLspAttach", { clear = true }),
@@ -18,9 +19,16 @@ vim.api.nvim_create_autocmd("LspAttach", {
   end,
 })
 
-for _, server in ipairs({ "nixd", "bashls" }) do
-  vim.lsp.config(server, {
-    capabilities = capabilities,
-  })
-  vim.lsp.enable(server)
-end
+vim.lsp.config("nixd", {
+  capabilities = capabilities,
+  settings = {
+    nixd = nixd.settings(),
+  },
+})
+
+vim.lsp.config("bashls", {
+  capabilities = capabilities,
+})
+
+vim.lsp.enable("nixd")
+vim.lsp.enable("bashls")
