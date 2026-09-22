@@ -49,6 +49,12 @@ Use concise imperative commit subjects, for example `Add ncdu defaults` or
 changed, list validation commands and results, link related issues when
 applicable, and include screenshots for visible desktop changes.
 
+After each logical generation of changes is complete and validated, create a
+focused commit and push it to the configured upstream. Include only work for
+that generation; preserve unrelated staged and unstaged changes. Do not
+force-push. If validation or pushing is blocked, report the reason rather than
+claiming the generation is complete.
+
 ## Safety and Configuration
 
 Inspect `git status --short` first and preserve unrelated work. Never commit
