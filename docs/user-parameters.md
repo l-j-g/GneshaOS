@@ -68,7 +68,11 @@ the machine, account, or installation changes.
 | `systemSettings.keyboardOptions` | XKB keyboard option remaps. | `"ctrl:nocaps"` | Sway input |
 | `systemSettings.backlightDevice` | Machine-specific backlight device name. | `"intel_backlight"` | Waybar, SwayOSD, wluma |
 | `systemSettings.alsSensorPath` | Machine-specific ambient-light sensor path. | `"/sys/bus/iio/devices/..."` | hardware documentation |
-| `systemSettings.arrComposePath` | Absolute path to the self-hosted media stack compose file. | `"/home/lg/src/arr/docker-compose.yml"` | media shutdown service |
+| `systemSettings.arrComposePath` | Legacy Compose path; its parent is the runtime directory for the Nix-managed arr stack. | `"/home/lg/src/arr/docker-compose.yml"` | media stack and `arr` wrapper |
+| `systemSettings.mediaMountPoint` | Mount point of the drive used for user media directories. | `"/media"` | Home Manager and media directory setup |
+| `systemSettings.systemProxy.enable` | Enable HTTP/HTTPS proxy settings after starting the local proxy. | `false` | NixOS and desktop proxy settings |
+| `systemSettings.systemProxy.host` / `port` | Address of the local HTTP CONNECT proxy. | `"127.0.0.1"` / `8888` | NixOS and desktop proxy settings |
+| `systemSettings.systemProxy.noProxy` | Comma-separated hosts/domains reached directly. | `"localhost,127.0.0.1,::1,cf-fv1,.local"` | NixOS and desktop proxy settings |
 | `userSettings.userName` | POSIX login name. Must match the host's declared user. | `"lg"` | NixOS and Home Manager |
 | `userSettings.homeDirectory` | User home directory and `@home` volume location. | `"/home/lg"` | Home Manager |
 

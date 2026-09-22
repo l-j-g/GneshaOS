@@ -1,0 +1,8 @@
+# Merge with /home/lg/src/arr/docker-compose.yml; this is not a standalone stack.
+# https://github.com/qdm12/gluetun-wiki/blob/main/setup/options/http-proxy.md
+services:
+  gluetun:
+    environment:
+      HTTPPROXY: "on"
+    ports:
+      - "127.0.0.1:8888:8888/tcp"

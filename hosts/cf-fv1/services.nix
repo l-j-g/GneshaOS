@@ -1,8 +1,20 @@
-{ pkgs, params, ... }:
+{ pkgs, lib, params, ... }:
 
+let
+  proxy = params.systemSettings.systemProxy or { enable = false; };
+  proxyUrl = "http://${proxy.host}:${toString proxy.port}";
+in
 {
   networking.hostName = params.systemSettings.hostName;
   networking.networkmanager.enable = true;
+
+  # Standard proxy environment for applications that support HTTP CONNECT.
+  # The local Gluetun proxy must be started before enabling this configuration.
+  networking.proxy = lib.mkIf proxy.enable {
+    httpProxy = proxyUrl;
+    httpsProxy = proxyUrl;
+    noProxy = proxy.noProxy;
+  };
 
   # Local time = system timezone from the top-level params (should match the
   # wlsunset coordinates).

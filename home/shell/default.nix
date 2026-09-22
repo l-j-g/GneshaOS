@@ -32,6 +32,22 @@ in
 {
   home.sessionVariables.BAT_THEME = "ansi";
 
+  home.file.".local/bin/airvpn-profile" = {
+    source = ./airvpn-profile;
+    executable = true;
+  };
+
+  xdg.configFile."airvpn/proxy.compose.yaml" = lib.mkIf
+    (params.systemSettings.systemProxy.enable or false) {
+      # JSON is valid YAML and keeps the published port in sync with the client.
+      text = builtins.toJSON {
+        services.gluetun = {
+          environment.HTTPPROXY = "on";
+          ports = [ "127.0.0.1:${toString params.systemSettings.systemProxy.port}:8888/tcp" ];
+        };
+      };
+    };
+
   home.packages = with pkgs; [
     zoxide
     eza
@@ -62,6 +78,7 @@ in
       v = "nvim";
       cfn = "cd ~/.config/nix/home/";
       cf = "cd ~/.config";
+      avpn = "airvpn-profile";
     };
     shellAliases = {
       vim = "nvim";

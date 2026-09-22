@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+profile_dir="${AIRVPN_PROFILE_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/airvpn/profiles}"
+compose_file="${AIRVPN_COMPOSE_FILE:-$HOME/src/arr/docker-compose.yml}"
+active_config="${AIRVPN_ACTIVE_CONFIG:-$HOME/src/arr/config/gluetun/wg0.conf}"
+previous_config="$profile_dir/.previous.conf"
+proxy_override="${XDG_CONFIG_HOME:-$HOME/.config}/airvpn/proxy.compose.yaml"
+compose_args=(-f "$compose_file")
+if [ -r "$proxy_override" ]; then
+  compose_args+=(-f "$proxy_override")
+fi
+compose_command=(docker compose "${compose_args[@]}")
+# The NixOS wrapper preserves the arr project, .env, and data directory and
+# already includes the configured proxy. Explicit custom files still win.
+if [ -z "${AIRVPN_COMPOSE_FILE:-}" ] && command -v arr >/dev/null 2>&1; then
+  compose_command=(arr)
+fi
+
+die() {
+  printf 'airvpn-profile: %s\n' "$*" >&2
+  exit 1
+}
+
+list_profiles() {
+  find "$profile_dir" -maxdepth 1 -type f -name '*.conf' ! -name '.*' \
+    -printf '%f\n' | sed 's/\.conf$//' | sort
+}
+
+profile_endpoint() {
+  sed -n 's/^[[:space:]]*Endpoint[[:space:]]*=[[:space:]]*//p' "$1" \
+    | tr -d '\r' \
+    | head -n 1
+}
+
+validate_profile() {
+  local profile="$1"
+  local required
+
+  for required in Interface Address PrivateKey Peer PublicKey PresharedKey Endpoint AllowedIPs; do
+    if ! grep -Eq "^[[:space:]]*(\\[$required\\]|$required[[:space:]]*=)" "$profile"; then
+      die "$(basename "$profile") is missing $required"
+    fi
+  done
+}
+
+current_profile() {
+  local profile
+
+  if [ ! -r "$active_config" ]; then
+    printf 'none\n'
+    return
+  fi
+
+  while IFS= read -r profile; do
+    if cmp -s "$active_config" "$profile_dir/$profile.conf"; then
+      printf '%s\n' "$profile"
+      return
+    fi
+  done < <(list_profiles)
+
+  printf 'custom (%s)\n' "$(profile_endpoint "$active_config")"
+}
+
+restart_vpn_stack() {
+  "${compose_command[@]}" up -d --force-recreate gluetun qbittorrent
+}
+
+wait_for_vpn() {
+  local health
+  local attempt
+
+  for attempt in $(seq 1 60); do
+    health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' gluetun 2>/dev/null || true)"
+    if [ "$health" = healthy ]; then
+      docker inspect --format '{{.State.Running}}' qbittorrent 2>/dev/null | grep -qx true
+      return
+    fi
+    if [ "$health" = unhealthy ] || [ "$health" = exited ] || [ "$health" = dead ]; then
+      return 1
+    fi
+    sleep 1
+  done
+
+  return 1
+}
+
+switch_profile() {
+  local name="$1"
+  local selected
+  local temporary
+
+  case "$name" in
+    *[!a-zA-Z0-9_-]*|'') die "invalid profile name: $name" ;;
+  esac
+
+  selected="$profile_dir/$name.conf"
+  [ -r "$selected" ] || die "unknown profile: $name"
+  if [ "${compose_command[0]}" != arr ]; then
+    [ -f "$compose_file" ] || die "Compose file not found: $compose_file"
+  fi
+  validate_profile "$selected"
+  "${compose_command[@]}" config --quiet
+
+  if [ -r "$active_config" ] && cmp -s "$active_config" "$selected"; then
+    printf 'AirVPN profile %s is already active.\n' "$name"
+    return
+  fi
+
+  install -d -m 700 "$(dirname "$active_config")"
+  if [ -r "$active_config" ]; then
+    install -m 600 "$active_config" "$previous_config"
+  fi
+
+  temporary="$active_config.new.$$"
+  if ! install -m 600 "$selected" "$temporary"; then
+    rm -f -- "$temporary"
+    die "failed to stage $name"
+  fi
+  if ! mv -f "$temporary" "$active_config"; then
+    rm -f -- "$temporary"
+    die "failed to install $name"
+  fi
+
+  printf 'Switching AirVPN to %s (%s)...\n' "$name" "$(profile_endpoint "$selected")"
+  if ! restart_vpn_stack || ! wait_for_vpn; then
+    if [ -r "$previous_config" ]; then
+      printf 'VPN startup failed; restoring the previous profile...\n' >&2
+      install -m 600 "$previous_config" "$active_config"
+      restart_vpn_stack || true
+    fi
+    die "failed to activate $name"
+  fi
+
+  printf 'AirVPN profile %s is active; Gluetun is healthy and qBittorrent is running.\n' "$name"
+}
+
+show_status() {
+  printf 'Profile:  %s\n' "$(current_profile)"
+  if [ -r "$active_config" ]; then
+    printf 'Endpoint: %s\n' "$(profile_endpoint "$active_config")"
+  fi
+  "${compose_command[@]}" ps gluetun qbittorrent
+}
+
+usage() {
+  cat <<'EOF'
+Usage:
+  airvpn-profile                 Interactively select a profile with fzf
+  airvpn-profile list            List saved profiles
+  airvpn-profile current         Show the selected profile
+  airvpn-profile status          Show the profile and container status
+  airvpn-profile use PROFILE     Switch profile and restart the VPN stack
+EOF
+}
+
+command="${1:-}"
+case "$command" in
+  '')
+    command -v fzf >/dev/null 2>&1 || die 'fzf is required for interactive selection'
+    selection="$(list_profiles | fzf --prompt='AirVPN profile> ')" || exit 0
+    [ -n "$selection" ] && switch_profile "$selection"
+    ;;
+  list)
+    list_profiles
+    ;;
+  current)
+    current_profile
+    ;;
+  status)
+    show_status
+    ;;
+  use)
+    [ "$#" -eq 2 ] || die 'use requires exactly one profile name'
+    switch_profile "$2"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

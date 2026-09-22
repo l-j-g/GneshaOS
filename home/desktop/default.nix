@@ -8,9 +8,14 @@
 
 {
   pkgs,
+  lib,
+  params,
   ...
 }:
 
+let
+  proxy = params.systemSettings.systemProxy or { enable = false; };
+in
 {
   imports = [
     ./sway
@@ -21,6 +26,27 @@
 
   # Use Home Manager's packaged SwayOSD service for volume/backlight OSDs.
   services.swayosd.enable = true;
+
+  # Standard desktop proxy settings, also used by browsers in system mode.
+  dconf.settings = {
+    "org/gnome/system/proxy" = {
+      mode = if proxy.enable then "manual" else "none";
+    } // lib.optionalAttrs proxy.enable {
+      use-same-proxy = false;
+      ignore-hosts = map
+        (host: if lib.hasPrefix "." host then "*${host}" else host)
+        (lib.splitString "," proxy.noProxy);
+    };
+  } // lib.optionalAttrs proxy.enable {
+    "org/gnome/system/proxy/http" = {
+      host = proxy.host;
+      port = proxy.port;
+    };
+    "org/gnome/system/proxy/https" = {
+      host = proxy.host;
+      port = proxy.port;
+    };
+  };
 
   # Firefox runs natively on Wayland (not XWayland) so Sway's `scale 2`
   # isn't applied twice -> no blurry/oversized UI.

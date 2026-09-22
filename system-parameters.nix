@@ -32,9 +32,21 @@
     backlightDevice = "intel_backlight";
     alsSensorPath = "/sys/bus/iio/devices/iio:device5/in_illuminance_raw";
 
-    # Absolute path to the docker-compose file for the self-hosted media
-    # stack, which is stopped before /media unmounts at shutdown.
+    # Legacy Compose path: its parent holds the arr .env and config directory.
+    # Nix now generates the stack definition; manage it with the arr command.
     arrComposePath = "/home/lg/src/arr/docker-compose.yml";
+
+    # Mount point of the MooGoo drive used for user media directories.
+    mediaMountPoint = "/media";
+
+    # HTTP/HTTPS proxy for compatible system applications. Start the Gluetun
+    # proxy first (docs/airvpn-proxy.md). Set false to restore direct access.
+    systemProxy = {
+      enable = true;
+      host = "127.0.0.1";
+      port = 8888;
+      noProxy = "localhost,127.0.0.1,::1,cf-fv1,.local";
+    };
   };
 
   userSettings = {
