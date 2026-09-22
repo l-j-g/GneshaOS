@@ -47,8 +47,9 @@
   # to another 0x0-compatible endpoint or leave it unchanged to keep uploads.
   screenshotUploadUrl = "https://x0.at/";
 
-  # Seconds before Sway dims the display, turns it off, and suspends on
-  # battery. The sequence is dim -> off -> suspend; swaylock runs before sleep.
+  # Lock on either power source; suspend remains battery-only.
+  idleLockSec = 300;
+  # Seconds before Sway dims the display, turns it off, and suspends on battery.
   idleDimSec = 240;
   idleOffSec = 600;
   idleSuspendSec = 900;

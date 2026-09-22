@@ -6,6 +6,7 @@
   lib,
   params,
   variables,
+  config,
   ...
 }:
 
@@ -25,6 +26,10 @@ in
         resumeCommand = "${pkgs.brightnessctl}/bin/brightnessctl -r";
       }
       {
+        timeout = variables.idleLockSec;
+        command = "${config.home.profileDirectory}/bin/gnesha-lock";
+      }
+      {
         timeout = variables.idleOffSec;
         command = "${pkgs.sway}/bin/swaymsg \"output * power off\"";
         resumeCommand = "${pkgs.sway}/bin/swaymsg \"output * power on\"";
@@ -38,7 +43,9 @@ in
     # login screen is provided by greetd/tuigreet; this service only handles
     # idle and sleep locking inside an already-running Sway session.
     events = {
-      before-sleep = "${pkgs.swaylock}/bin/swaylock";
+      before-sleep = "${config.home.profileDirectory}/bin/gnesha-lock";
+      lock = "${config.home.profileDirectory}/bin/gnesha-lock";
+      after-resume = "${pkgs.sway}/bin/swaymsg 'output * power on'";
     };
     systemdTargets = [ sessionTarget ];
   };

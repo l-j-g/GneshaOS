@@ -28,6 +28,7 @@
     with pkgs;
     [
       tldr
+      keepassxc
       kdePackages.dolphin
       kdePackages.dolphin-plugins
       tor-browser

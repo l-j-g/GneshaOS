@@ -15,37 +15,26 @@ function nvdiff
 end
 
 function rebuild
-    set -l generations (__nix_system_generations)
-    set -l before ""
-    if test (count $generations) -gt 0
-        set before $generations[-1]
-    end
+    gnesha-rebuild
+end
 
-    nh os switch "__FLAKE_PATH__" -H "__HOST_NAME__"
-    if test $status -ne 0
-        return 1
-    end
-
-    nh home switch "__FLAKE_PATH__" -c "__HOME_PROFILE__"
-    if test $status -ne 0
-        return 1
-    end
-
-    set generations (__nix_system_generations)
-    if test -n "$before"; and test (count $generations) -gt 0
-        set -l after $generations[-1]
-        if test "$before" != "$after"
-            nvd diff "$before" "$after"
-        else
-            echo "No new system generation; Home Manager activation completed."
-        end
-    else
-        nvdiff
+function update-status
+    systemctl status gnesha-nixpkgs-update.service --no-pager
+    if test -L /var/lib/gnesha-update/ready
+        echo "A tested update is ready. Review with update-review; apply with update-apply."
     end
 end
 
+function update-review
+    gnesha-update-apply --review
+end
+
+function update-apply
+    gnesha-update-apply
+end
+
 function home-rebuild
-    nh home switch "__FLAKE_PATH__" -c "__HOME_PROFILE__"
+    nh home switch "__FLAKE_PATH__" -c "__HOME_PROFILE__" -b backup
 end
 
 function retest

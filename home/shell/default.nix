@@ -13,6 +13,24 @@ let
   homeProfile = "${params.userSettings.userName}@${hostName}";
   flakeRef = "${flakePath}#${hostName}";
   systemBuildRef = "${flakePath}#nixosConfigurations.${hostName}.config.system.build.toplevel";
+  rebuild = pkgs.writeShellApplication {
+    name = "gnesha-rebuild";
+    runtimeInputs = [ pkgs.nix pkgs.nh pkgs.jq pkgs.coreutils ];
+    text = ''
+      buildDir=$(mktemp -d -t gnesha-rebuild.XXXXXX)
+      trap 'rm -rf -- "$buildDir"' EXIT
+      # Freeze the input once: neither edits nor the background updater can
+      # change what gets activated between these two builds.
+      snapshot=$(nix flake metadata --json --no-write-lock-file ${lib.escapeShellArg flakePath} | jq -er .path)
+      nix build --out-link "$buildDir/system" --no-write-lock-file \
+        "$snapshot#nixosConfigurations.${hostName}.config.system.build.toplevel"
+      nix build --out-link "$buildDir/home" --no-write-lock-file \
+        "$snapshot#homeConfigurations.\"${homeProfile}\".activationPackage"
+      # nh receives the exact built closures, not a newly evaluated flake.
+      nh os switch "$buildDir/system"
+      nh home switch "$buildDir/home" -b backup
+    '';
+  };
   fishWorkflow = lib.replaceStrings
     [ "__FLAKE_PATH__" "__HOST_NAME__" "__HOME_PROFILE__" "__SYSTEM_BUILD_REF__" ]
     [ flakePath hostName homeProfile systemBuildRef ]
@@ -49,6 +67,8 @@ in
     };
 
   home.packages = with pkgs; [
+    rebuild
+    lazydocker
     zoxide
     eza
     bat
@@ -92,7 +112,7 @@ in
       nfcheck = "nixfmt --check";
       nixcheck = "nix flake check --show-trace ${flakePath}";
       nixgc = "sudo nix-collect-garbage -d";
-      home-rebuild-raw = "nh home switch ${flakePath} -c ${homeProfile}";
+      home-rebuild-raw = "nh home switch ${flakePath} -c ${homeProfile} -b backup";
       # Explicit raw fallbacks for feature parity or troubleshooting.
       rebuild-raw = "sudo nixos-rebuild switch --flake ${flakeRef}";
       retest-raw = "sudo nixos-rebuild test --flake ${flakeRef}";

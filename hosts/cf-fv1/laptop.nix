@@ -31,9 +31,13 @@
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
   services.fwupd.enable = true;
-  # Don't suspend when on AC power: closing the lid while plugged in just
-  # turns off the display instead of sleeping the machine.
-  services.logind.settings.Login.HandleLidSwitchExternalPower = "ignore";
+  # Keep services running on AC, but request a session lock on lid closure.
+  # Sway also handles the lid switch so this works with external displays.
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend";
+    HandleLidSwitchExternalPower = "lock";
+    HandleLidSwitchDocked = "lock";
+  };
   zramSwap.enable = true;
   zramSwap.memoryPercent = 50;
 }

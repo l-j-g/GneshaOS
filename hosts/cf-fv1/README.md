@@ -76,3 +76,29 @@ were checked separately. Live read-only diagnostics passed for all other web
 endpoints and the proxy; SABnzbd's internal port 8080 returned HTTP 200.
 Following activation, run `arr-doctor`, check existing libraries/downloads, and
 test Emby playback. No application-data migration was performed by these checks.
+
+## Session lock and password attempts
+
+`gnesha-lock` shows a simple palette-matched gtklock screen while applications
+keep running; swaylock remains a fallback. Sway locks after five minutes of
+inactivity, on lid close (including AC/docked), and before sleep. On battery,
+lid close suspends; on AC it locks while services continue running. Test manual
+lock and unlock before testing lid close after activation.
+
+Login/tuigreet, sudo, gtklock and swaylock share a per-user failed-password
+tally: five consecutive failures within 15 minutes pause authentication for
+10 minutes. A successful authentication clears the tally. Root is exempt;
+counters in `/run` reset on reboot. If you mistype repeatedly, wait ten minutes.
+An administrator can inspect/reset the tally with the `faillock` utility from
+`linux-pam`. This follows the [Linux-PAM faillock pattern](https://github.com/linux-pam/linux-pam/blob/master/modules/pam_faillock/pam_faillock.8.xml).
+
+Locking requests that KeePassXC lock its open databases over session D-Bus.
+Unlocking the desktop does not unlock the vault. KeePassXC's native quick unlock
+is currently documented for Windows/macOS, not Linux; no master password is
+stored by this configuration. See [KeePassXC quick unlock](https://keepassxc.org/docs/KeePassXC_GettingStarted#_quick_unlock).
+
+PAM lockouts only slow attempts through the running OS. The root partition is
+LUKS-encrypted and has TPM auto-unlock configured; `/media` is plain exFAT.
+Someone removing the drive can read `/media` directly and attack LUKS offline,
+where the encryption passphrase and key derivation settings matter, not PAM.
+This change does not alter disk encryption, key slots, or TPM enrollment.

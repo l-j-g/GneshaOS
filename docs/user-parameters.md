@@ -97,6 +97,7 @@ inline in that file so it remains easy to edit without searching the modules.
 | `screenshotUploadUrl` | 0x0-compatible endpoint for screenshot uploads. | `"https://x0.at/"` | Sway bindings |
 | `idleDimSec` | Seconds before the display dims. | `240` | swayidle |
 | `idleDimPercent` | Brightness percentage used during idle dimming. | `10` | swayidle |
+| `idleLockSec` | Seconds before locking, on battery or AC. | `300` | swayidle / gtklock |
 | `idleOffSec` | Seconds before the display powers off. | `600` | swayidle |
 | `idleSuspendSec` | Seconds before battery-only suspend. | `900` | swayidle |
 | `autoBrightness` | Whether wluma manages ambient brightness automatically. | `true` | wluma |
