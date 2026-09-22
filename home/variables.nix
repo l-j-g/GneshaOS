@@ -9,6 +9,10 @@
   # nix-colors, such as "ayu-dark", "dracula", or "nord".
   themeName = "ayu-dark";
 
+  # Default webpage zoom for Firefox and LibreWolf (1.5 = 150%). Browser UI
+  # scaling and any saved per-site zoom choices remain independent.
+  browserDefaultZoom = 1.5;
+
   # Name and email written into commits made with the configured Git client.
   gitUserName = "lg";
   gitUserEmail = "lg@lgreve.com";

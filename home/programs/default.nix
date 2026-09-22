@@ -11,6 +11,8 @@
   imports = [
     ./nvim
     ./terminals
+    ./browsers.nix
+    ./dolphin.nix
     ./integrations.nix
     ./nnn.nix
     ./lf.nix
@@ -26,10 +28,10 @@
     with pkgs;
     [
       tldr
-      librewolf-bin
+      kdePackages.dolphin
+      kdePackages.dolphin-plugins
       tor-browser
       discord
-      firefox
       imv
       mpv
       nautilus

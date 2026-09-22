@@ -79,7 +79,8 @@ inline in that file so it remains easy to edit without searching the modules.
 
 | Variable | Description | Example | Used by |
 | --- | --- | --- | --- |
-| `themeName` | Base16 theme. Use `"matrix-green"` or a scheme exposed by nix-colors. | `"ayu-dark"` | theme, desktop palette, theme picker |
+| `themeName` | Base16 theme. Use `"matrix-green"` or a scheme exposed by nix-colors. | `"ayu-dark"` | GTK 3/4, Dolphin/Qt, desktop palette, theme picker |
+| `browserDefaultZoom` | Default webpage zoom factor; `1.5` means 150%. Saved per-site zoom and browser UI scale remain independent. | `1.5` | Firefox and LibreWolf |
 | `gitUserName` | Name written into commits made with the configured Git client. | `"lg"` | Git |
 | `gitUserEmail` | Email written into commits made with the configured Git client. | `"lg@lgreve.com"` | Git |
 | `terminal` | Terminal command used by Sway, rofi, and Waybar. | `"kitty"` | terminal integrations |
@@ -120,3 +121,33 @@ the Home Manager activation in the background.
   `/sys/bus/iio/devices/` on the target machine.
 - Never put passwords, tokens, private keys, or other machine secrets in
   either parameter file.
+
+### GTK, Dolphin, and browser settings
+
+GTK 3 uses `adw-gtk3` with Base16 named colors. GTK 4/libadwaita applications
+receive matching CSS variables; their widget layout remains native. The GTK
+light/dark preference follows the palette's background and foreground.
+Dolphin uses the KDE Qt platform plugin, Breeze widgets, and the generated
+`GneshaBase16` color scheme. The palette is also written directly to
+`kdeglobals` so applications can read its color groups under Sway.
+
+After applying Home Manager, log out and back in so Sway, launchers, and
+D-Bus-activated applications inherit the new Qt environment. Reopen GTK apps
+and Dolphin to load their updated stylesheets and settings.
+
+Firefox and LibreWolf apply `browserDefaultZoom` after the selected profile
+initializes. Fully quit the browser before relaunching; opening another window
+of an existing process does not reload AutoConfig. Existing profiles, bookmarks,
+and per-site zoom choices are preserved. The default zoom affects web pages,
+not browser toolbar size. A site's saved zoom takes precedence; use Ctrl+0 to
+reset that site to the default. Profile paths match this installation's XDG
+locations (`~/.config/mozilla/firefox` and `~/.config/librewolf/librewolf`).
+
+The zoom script requires privileged access to Firefox's content-preference
+service, so its package enables unsandboxed AutoConfig for the store-managed
+script. The web-content sandbox remains enabled. Ordinary `user.js` preferences
+cannot set this database-backed default zoom.
+
+References: [adw-gtk3 customization](https://github.com/lassekongo83/adw-gtk3#customization),
+[libadwaita CSS variables](https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/css-variables.html),
+and [Firefox AutoConfig sandbox behavior](https://www.mozilla.org/en-US/firefox/62.0/releasenotes/).

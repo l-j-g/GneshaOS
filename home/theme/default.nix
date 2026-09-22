@@ -1,7 +1,7 @@
-# Matrix-green desktop theme.
+# Shared Base16 desktop theme.
 #
 # One palette (nix-colors "colorscheme", base16 shape) drives every piece of
-# the shell: waybar, Kitty, rofi, mako, swaylock, sway colors, and wallpaper.
+# the desktop: GTK, Dolphin, terminals, waybar, rofi, mako, and Sway.
 # The active wallpaper is selected through the top-level `wallpaper` symlink.
 
 {
@@ -75,6 +75,59 @@ let
       throw ''
         Unknown themeName '${themeName}'. Available themes: ${lib.concatStringsSep ", " availableThemes}
       '';
+  palette = config.colorScheme.palette;
+  brightness = color:
+    let
+      channel = offset: lib.fromHexString (builtins.substring offset 2 color);
+    in
+    299 * channel 0 + 587 * channel 2 + 114 * channel 4;
+  dark = brightness palette.base00 < brightness palette.base05;
+  # adw-gtk3 and libadwaita share these semantic colors. Generate both the
+  # GTK named colors and modern GTK4 CSS variables from the selected Base16.
+  gtkColors = {
+    accent_color = palette.base0D;
+    accent_bg_color = palette.base0D;
+    accent_fg_color = palette.base00;
+    destructive_color = palette.base08;
+    destructive_bg_color = palette.base08;
+    destructive_fg_color = palette.base00;
+    success_color = palette.base0B;
+    success_bg_color = palette.base0B;
+    success_fg_color = palette.base00;
+    warning_color = palette.base0A;
+    warning_bg_color = palette.base0A;
+    warning_fg_color = palette.base00;
+    error_color = palette.base08;
+    error_bg_color = palette.base08;
+    error_fg_color = palette.base00;
+    window_bg_color = palette.base00;
+    window_fg_color = palette.base05;
+    view_bg_color = palette.base00;
+    view_fg_color = palette.base05;
+    headerbar_bg_color = palette.base01;
+    headerbar_fg_color = palette.base05;
+    headerbar_backdrop_color = palette.base01;
+    sidebar_bg_color = palette.base01;
+    sidebar_fg_color = palette.base05;
+    sidebar_backdrop_color = palette.base01;
+    secondary_sidebar_bg_color = palette.base02;
+    secondary_sidebar_fg_color = palette.base05;
+    secondary_sidebar_backdrop_color = palette.base02;
+    card_bg_color = palette.base01;
+    card_fg_color = palette.base05;
+    dialog_bg_color = palette.base01;
+    dialog_fg_color = palette.base05;
+    popover_bg_color = palette.base01;
+    popover_fg_color = palette.base05;
+  };
+  gtkNamedColors = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (name: color: "@define-color ${name} #${color};") gtkColors
+  );
+  gtkCssVariables = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (name: color:
+      "  --${lib.replaceStrings [ "_" ] [ "-" ] name}: #${color};"
+    ) gtkColors
+  );
 in
 {
   # Base16 palette selected from the custom theme plus nix-colors schemes.
@@ -91,26 +144,24 @@ in
     lib.concatStringsSep "\n" availableThemes + "\n";
   home.file.".config/gnesha/theme-data".text = themeData;
 
-  # Pairing dark GTK theme + dark Papirus icons so GTK apps match the shell.
-  # Colloid-Green-Dark: modern dark GTK theme with a green accent.
+  # Use a recolorable base instead of a fixed green theme.
   gtk = {
     enable = true;
+    colorScheme = if dark then "dark" else "light";
     theme = {
-      name = "Colloid-Green-Dark";
-      package = pkgs.colloid-gtk-theme.override {
-        themeVariants = [ "green" ];
-        colorVariants = [ "dark" ];
-      };
+      name = if dark then "adw-gtk3-dark" else "adw-gtk3";
+      package = pkgs.adw-gtk3;
     };
     iconTheme = {
       name = "Papirus-Dark";
       package = pkgs.papirus-icon-theme;
     };
-    # GTK4 apps are rare here (rofi/firefox are GTK3); adopt home-manager's
-    # new default of not applying a separate GTK4 theme.
-    gtk4.theme = lib.mkDefault null;
-    gtk3.extraConfig = {
-      gtk-application-prefer-dark-theme = true;
+    gtk3.extraCss = gtkNamedColors;
+    # Preserve libadwaita's widget styling, including Nautilus, and override
+    # its semantic colors rather than importing a GTK3 stylesheet.
+    gtk4 = {
+      theme = null;
+      extraCss = gtkNamedColors + "\n:root {\n${gtkCssVariables}\n}\n";
     };
   };
 

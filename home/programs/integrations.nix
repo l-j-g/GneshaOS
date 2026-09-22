@@ -14,7 +14,7 @@
   xdg.desktopEntries.hermes-mac = {
     name = "Hermes (MacBook)";
     comment = "Open the Hermes Agent running on the MacBook";
-    exec = "${pkgs.firefox}/bin/firefox --new-window http://127.0.0.1:19119";
+    exec = "${config.programs.firefox.finalPackage}/bin/firefox --new-window http://127.0.0.1:19119";
     terminal = false;
     categories = [ "Network" "Office" ];
   };
