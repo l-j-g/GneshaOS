@@ -127,7 +127,7 @@ content remains preserved; a clean checkout can reproduce the agreed baseline.
 Do not treat this task as permission to publish all currently staged changes.
 
 Status: captured, independently verified, and committed as the agreed baseline.
-Commit(s): pending final ID record; committed separately from later TODO fixes.
+Commit(s): `9be5014` (`Establish reviewed GneshaOS baseline`).
 Changed files: pre-existing operator changes were included as the baseline at
 the user's direction. No runtime activation was performed.
 Base: `main` at `07e5bb37f3b1db29bbe342a2147738c79decb487`.
