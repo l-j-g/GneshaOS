@@ -1,0 +1,920 @@
+# Repository audit and implementation backlog
+
+Audit date: 2026-09-24. Repository: GneshaOS on `ssh nix`,
+`/home/lg/.config/nix`. This is the Linux repository, not the Mac's
+`/Users/lg/.config/nix-darwin-config` workspace.
+
+This document is an implementation handoff. Do not implement the whole list in
+one change. Complete one task, record its evidence, then continue to the next
+independent task. Paths below are relative to the repository root. Search for
+the named symbols rather than relying on line numbers, which will move.
+
+## Current evidence and intended behavior
+
+- The audit covers the current working tree, including pre-existing staged and
+  unstaged changes. `main` was initially at `b985ff3`; this is NOT a clean-HEAD
+  audit. Several findings refer to code that has not yet been committed.
+- The proxy repair already separates `systemSettings.systemProxy` from
+  `systemSettings.dockerProxy`, removes `multi-user.target` from the Compose
+  unit's `after`, restores the real arr data directory, and clears HTTP proxy
+  variables for Docker, the Nix daemon, and `gnesha-rebuild`.
+- Live `/run/current-system` and repository `result` both resolved to
+  `/nix/store/r4hms7j0q6n69kzbyrwka8ikmdmcvxwl-nixos-system-cf-fv1-26.11.20260922.6774f7b`
+  during this audit. There were no failed system units. Recheck these facts
+  before operational work; paths and live state are snapshots, not constants.
+- Host VPN must be OFF by default. `airVpn.enable = true` makes its service
+  available; it must not cause boot-time connection. `airvpn-wg` had no boot
+  target dependency and was inactive. Waybar should start it only on request.
+- Docker Gluetun and qBittorrent keep their own VPN. Ordinary host internet and
+  Nix/Docker bootstrap must not require Gluetun to exist or be healthy.
+- Host profile is a mode-600 copy of `Downloads/nz.conf` at
+  `~/.config/airvpn/host.conf`. Its key currently matches Docker's key. The user
+  explicitly allowed this temporarily and intends to provide another profile.
+- Existing arr runtime state is `/home/lg/src/arr`, including `.env`, `config/`,
+  and `images.lock.json`. No migration to `~/.config/containers/arr` occurred.
+- Ghostfolio's import is commented out in `hosts/cf-fv1/default.nix`. Treat its
+  Compose migration as unfinished. Do not enable it to make documentation true.
+- Prior repair passed flake checks, system build, Home Manager build, Compose
+  startup, and `arr-doctor`. This audit additionally parsed all 55 Nix files,
+  syntax-checked 15 shell scripts plus the Fish workflow, and checked nine
+  relative Markdown links in repository documentation. All passed. These are
+  not proofs of runtime behavior in untested feature combinations.
+
+## Rules for the implementing model
+
+1. Read `AGENTS.md`, `.codex/skills/gneshaos-maintenance/SKILL.md`, and applicable
+   nested instructions. Read the actual files before changing them.
+2. Inspect `git status --short`, `git diff`, and `git diff --cached`. Preserve
+   other work. Do not use `git reset --hard`, `git clean`, or broad staging.
+3. An audit task is not authorization to activate services, change a running
+   VPN, migrate databases, overwrite credentials, or repartition storage.
+   Build and inspect first. Follow existing user authorization and repo rules
+   for any later operational action.
+4. Never print or commit WireGuard keys, `.env` values, database dumps, password
+   hashes, or recovery keys. Compare credentials in memory and report only
+   whether they differ. Do not put runtime secret files in the Nix store.
+5. Do not change `flake.lock` during refactors. Do not hand-edit generated
+   hardware configuration. Do not move or delete runtime data to match a new
+   directory layout. Directory moves require a separate migration plan.
+6. Keep refactors behavior-preserving. Functional changes get separate commits.
+   Do not rename public commands such as `arr`, `rebuild`, or `avpn` casually.
+7. Use the validation recipes below. Mark a task done only after its specific
+   acceptance conditions pass. Write the commit ID and evidence under that task;
+   do not replace incomplete work with a checked box.
+8. Keep this backlog current: distinguish fixed-in-source, built, activated,
+   and verified-live. A successful build is not an activation result.
+
+## Validation recipes
+
+Run from `/home/lg/.config/nix` on the Linux host. Commands below do not activate
+anything. Add `--no-write-lock-file` to evaluation/build commands during a
+refactor so validation cannot silently rewrite the lock file.
+
+```sh
+git diff --check
+nix-instantiate --parse path/to/changed.nix >/dev/null
+bash -n path/to/bash-script
+sh -n path/to/posix-script
+fish --no-execute home/shell/nix-workflow.fish
+nix flake check --show-trace --no-write-lock-file
+nixos-rebuild build --flake .#cf-fv1 --no-write-lock-file
+nix build --no-link --no-write-lock-file '.#homeConfigurations."lg@cf-fv1".activationPackage'
+```
+
+Use only the language checks applicable to changed files. Build NixOS for host
+or system modules, Home Manager for home changes, and both for shared parameter
+changes. Extract generated Compose to a temporary file and run `docker compose
+config --quiet`; never print an interpolated Compose document containing
+secrets. For script regression tests use temporary directories and stub external
+commands. Do not point failure-injection tests at live Docker or systemd.
+
+Suggested implementation order:
+
+1. WORK-01, SEC-01, VPN-01, REC-01.
+2. THEME-01, POWER-01, BUILD-01, BUILD-02, BOOT-01.
+3. STRUCT-01 through STRUCT-07, one independent refactor at a time.
+4. Remaining runtime, feature-matrix, and documentation tasks.
+
+P0 = resolve a concrete privilege/recovery hazard first.
+P1 = correctness, recoverability, or a likely operational failure.
+P2 = maintainability, consistency, and bounded improvements.
+P3 = optional cleanup after correctness work.
+
+## P0/P1: security, recovery, and correctness
+
+### [ ] WORK-01 — Establish an attributable baseline before implementation
+
+Priority: P1. Type: workflow prerequisite. Depends on: none.
+
+Evidence: the repository has dozens of staged and unstaged edits, with some
+files modified in both layers. `modules/ghostfolio.nix` is staged as a new file
+and then substantially rewritten in the working tree. The proxy repair is
+also interleaved with that work.
+
+Implementation:
+1. Inventory changes by concern: proxy repair, terminal/theme, lock behavior,
+   Ghostfolio migration, dependency update, and tooling/docs.
+2. Preserve a private patch/snapshot of both index and working tree. Keep secret
+   files outside it. Do not stash or rearrange changes without understanding
+   their owner and dependencies.
+3. Review the intended baseline with the operator where intent is unclear.
+   Split it into focused commits without including unrelated work.
+4. For later isolated worktrees, ensure the intended uncommitted baseline has
+   actually been carried over; a worktree at old HEAD does not contain it.
+
+Done when: each feature's starting state is identifiable; unrelated staged
+content remains preserved; a clean checkout can reproduce the agreed baseline.
+Do not treat this task as permission to publish all currently staged changes.
+
+### [ ] SEC-01 — Remove passwordless execution of a user-writable VPN profile
+
+Priority: P0. Type: confirmed privilege boundary defect.
+Files: `modules/airvpn-wireguard.nix`, `system-parameters.nix`, VPN docs.
+
+Evidence: `airvpn-wg` runs as root, copies `avpn.configPath` from the user's
+writable home directory, then invokes `wg-quick`. Wheel members may start/stop
+that service with NOPASSWD sudo. The installed wg-quick script accepts
+`PreUp`, `PostUp`, `PreDown`, and `PostDown` and executes hooks via `eval`.
+Therefore write access to the profile plus the toggle can become root command
+execution without a password. Mode 600 does not prevent its owner rewriting it.
+
+Implementation:
+1. Prefer a root-owned runtime profile in a root-owned, non-user-writable parent
+   directory (for example `/etc/airvpn/host.conf`), mode 600. Keep it outside the
+   repository and Nix store. Updating it must be an explicit privileged action.
+2. Validate ownership, mode, regular-file status, and trusted parent directories
+   before startup. Reject untrusted symlink chains and missing/empty profiles.
+3. Quote the configured path with `lib.escapeShellArg`; the current `cp
+   ${avpn.configPath}` is not shell-quoted.
+4. Use a private systemd runtime directory and arrange cleanup of copied
+   credentials on both normal stop and failed startup. Preserve off-at-boot.
+5. If the implementation instead allows user-editable profiles, remove the
+   passwordless root path or design a strict, reviewed parser that excludes all
+   executable hooks. Do not solve this with a grep-only blacklist.
+
+Done when: a disposable test fixture proves an untrusted profile cannot execute
+hooks as root, valid profiles still work, missing profiles fail clearly, and
+no secret enters generated store text. Credential relocation/activation needs
+operator coordination; document the required manual step rather than silently
+changing a path to a file that does not exist.
+
+### [ ] VPN-01 — Replace the temporary shared AirVPN device identity
+
+Priority: P1. Type: unfinished configuration; external profile required.
+Files: `system-parameters.nix`, `docs/airvpn-proxy.md`.
+Depends on: SEC-01's final profile ownership contract.
+
+Implementation:
+1. Obtain the replacement profile path from the operator. Do not generate a
+   random WireGuard key and assume AirVPN will recognize it.
+2. Compare its private-key identity with Docker's profile without displaying
+   either key. Confirm it is a separately registered AirVPN device profile.
+3. Install through the protected path chosen in SEC-01. Preserve the temporary
+   profile as a private rollback copy if needed; do not overwrite Docker's file.
+4. Keep the host service available but not wanted by a boot target. Update the
+   temporary-profile note in the docs only after replacement is verified.
+5. In an authorized connectivity window, verify host tunnel alone, Docker VPN
+   alone, both together, host stop, and Docker restart. Keep an existing SSH
+   session and recovery path open while testing routes.
+
+Done when: device identities differ, both tunnels can coexist, Docker restart
+cannot break direct host networking, and a boot/rebuild leaves host VPN off.
+Until a separate profile arrives, record this task as blocked on that input;
+do not call the temporary shared-key arrangement complete.
+
+### [ ] REC-01 — Correct the installation and snapshot recovery runbook
+
+Priority: P1. Type: confirmed documentation inconsistencies; recovery untested.
+Files: `docs/install.md`, `modules/btrfs.nix`, host hardware file (read-only).
+
+Evidence: the runbook hardcodes `/dev/nvme0n1`, assumes backups already exist,
+and instructs manual UUID changes after generating hardware config. It presents
+`sudo snapper -c root rollback <number>` as data rollback for `/etc`, `/var`, and
+`/home`, but `/home` is a separate subvolume and root is mounted explicitly with
+`subvol=@`. Pre/post examples do not pass the pre-snapshot number to the post
+snapshot. `modules/btrfs.nix` also points to the wrong runbook step number.
+
+Implementation:
+1. Separate install, NixOS-generation rollback, root-data restore, home-data
+   restore, and external-media restore into explicit procedures.
+2. Require target identity (model/serial/size/mounts), current backup proof, and
+   a reviewed destructive command before formatting. Do not add runnable wipe
+   automation. Treat existing device paths as examples, not discovery.
+3. Document copying freshly generated hardware configuration without hand-editing
+   generated UUIDs. Put intentional policy overrides in separate modules.
+4. Validate how Snapper recovery works with the explicit `@`/`@home` layout in
+   a disposable VM or spare filesystem. Do not assume changing the default
+   Btrfs subvolume changes a boot configured with `subvol=@`.
+5. Fix paired snapshots using the returned pre-snapshot number. Explain that
+   snapshots on the same disk are not independent backups and do not cover
+   `/media` or provide automatic database-consistent exports.
+6. Clarify first-login password/SSH setup before losing installer access.
+
+Done when: the runbook describes separately verified recovery for each data
+scope, includes explicit preconditions, and no step claims a root snapshot
+restores the separate home/media filesystems. Never test destructive steps live.
+
+### [ ] THEME-01 — Fix theme-picker cleanup and concurrent activation
+
+Priority: P1. Type: confirmed cleanup defect plus race risk.
+Files: `home/desktop/sway/scripts/theme-picker`, `theme-preview`.
+
+Evidence: `theme-picker` installs `trap cleanup` around line 38, then replaces
+it with a temporary-file-only trap around line 84. Accepting a selection can
+skip closing the preview and deleting its state file. Each selection also
+launches a new background Home Manager activation against a mutable repo and
+writes the same activation log.
+
+Implementation:
+1. Keep one cleanup function. Initialize both temporary paths, remove each if
+   set, close only this invocation's preview, and preserve the exit status.
+2. Create the replacement preferences file beside `home/variables.nix`, preserve
+   its intended mode, then rename it atomically. Do not rely on cross-filesystem
+   `mv` from `/tmp` for atomicity.
+3. Serialize selection writes and Home Manager activation, or coalesce pending
+   changes so the latest accepted selection wins. Coordinate with BUILD-01;
+   do not invent a second incompatible activation lock.
+4. Use a per-run log and report whether persistence/activation succeeded. On
+   failure, make the difference between live preview and persisted selection
+   explicit; do not silently revert a newer selection.
+
+Done when: stubbed tests cover cancel, success, preview failure, activation
+failure, and two rapid invocations; no preview process/state file leaks and an
+older activation cannot overwrite the newer selection.
+
+### [ ] POWER-01 — Make the fan reapply timer actually run again
+
+Priority: P1. Type: confirmed systemd semantic mismatch.
+Files: `modules/letsnote/default.nix`, `modules/letsnote/README.md`.
+
+Evidence: `letsnote-fan-eco` is a oneshot with `RemainAfterExit = true`, while
+`letsnote-fan-eco-reapply` targets that same service at 45 and 180 seconds. The
+installed `systemd.timer` manual says an already-active target service is not
+restarted by a timer. Live service was active/exited since its first boot run.
+The comment says quiet byte `0x05`, while the command sends `0x01`.
+
+Implementation:
+1. Make the repeatable command a oneshot that becomes inactive after completion,
+   or add a separate repeatable service. Preserve the intended boot ordering.
+2. Resolve the 0x05/0x01 discrepancy against the existing verified hardware
+   evidence; do not change an EC value based only on its comment.
+3. Inspect and report the ACPI call result instead of equating a successful
+   write to `/proc/acpi/call` with firmware acceptance.
+4. Update stale panafanpwr/unsupported-model descriptions to match the actual
+   acpi_call implementation, without widening supported hardware claims.
+
+Done when: a harmless stub service demonstrates initial plus scheduled runs,
+unit state no longer prevents repetition, and hardware changes are separately
+reviewed and verified on the correct model.
+
+### [ ] BUILD-01 — Make system/Home Manager activation recoverable and serialized
+
+Priority: P1. Type: reliability gap.
+Files: `home/shell/default.nix` (`gnesha-rebuild`),
+`hosts/cf-fv1/services.nix` (`gnesha-update-apply`), theme picker.
+
+Evidence: rebuild freezes and builds both outputs, but switches NixOS then
+Home Manager without a durable transaction record. Its temporary build links
+are deleted on exit even when the second activation fails. The updater has its
+own flock, while normal rebuild/theme activation do not share that lock.
+
+Implementation:
+1. Record the input snapshot, old/new system and home generations, and activation
+   phase in a private state directory before switching anything.
+2. Use a shared activation lock across rebuild, update-apply, and background
+   theme activation. Keep long background builds outside that lock where safe.
+3. Keep candidate GC roots and logs after failure until the operator resumes or
+   explicitly discards the attempt. Set a bounded retention policy.
+4. Distinguish build failure, system activation failure, and home activation
+   failure in exit messages. Provide an explicit resume/recovery command.
+5. Do not promise atomic two-layer activation or automatically roll back live
+   databases/services. Preserve the current single-source-snapshot behavior.
+
+Done when: injected failures at each phase leave inspectable state, a safe retry
+uses the same validated closures, and concurrent activation attempts cannot
+interleave. Use stubbed `nh`/Nix commands; do not fault-inject on the laptop.
+
+### [ ] BUILD-02 — Tighten background-update apply and stale-candidate behavior
+
+Priority: P1. Type: recovery and concurrency gap.
+Files: `hosts/cf-fv1/services.nix`, `home/shell/nix-workflow.fish`,
+`docs/development.md`.
+
+Evidence: update-apply replaces the repo's `flake.lock` before activation. A
+failed switch leaves the accepted lock and live generations potentially out of
+sync. The source comparison has a gap before lock replacement/activation.
+`update-review` takes the same blocking flock as a potentially six-hour build.
+
+Implementation:
+1. Reuse BUILD-01's transaction state and activation coordination.
+2. Preserve the previous lock content and record whether the candidate lock was
+   accepted and which activation phases completed. Recovery must not overwrite
+   unrelated edits made after failure.
+3. Detect source/lock changes immediately before acceptance and fail clearly.
+   Coordinate cooperating writers and document the remaining external-edit
+   limitation rather than claiming a general filesystem transaction.
+4. Make review/status return useful information promptly during an active build,
+   rather than waiting for the build lock indefinitely.
+5. Explain and test the intentional policy of updating only nixpkgs versus
+   updating compatible Home Manager inputs; do not change policy incidentally.
+
+Done when: stale candidates are rejected, review is responsive, failed apply
+reports the exact lock/live-state relationship, and no unrelated lock edit is
+lost. Include a stubbed concurrent-writer/failure test.
+
+### [ ] BOOT-01 — Replace blanket five-second startup deadlines with scoped limits
+
+Priority: P1. Type: configuration risk requiring runtime measurements.
+Files: `hosts/cf-fv1/boot.nix`, `modules/airvpn-wireguard.nix`, service modules.
+
+Evidence: manager `DefaultTimeoutStartSec = "5s"` affects services without their
+own timeout. Native VPN startup has no explicit timeout. NetworkManager's
+wait-online unit is disabled even though several units want network-online.
+
+Implementation:
+1. Inventory affected units and journal timeouts; do not claim a particular unit
+   failed unless its journal proves it.
+2. Restore a reasonable manager default and retain short deadlines only on
+   services known to tolerate them. Give VPN startup an explicit bounded limit.
+3. Document that ordering after network-online does not itself guarantee a
+   working uplink in this configuration. Add bounded retry/readiness handling
+   only where a service actually needs it.
+4. Measure boot/login time and service readiness before/after. Do not restore
+   the Compose/multi-user.target ordering cycle to speed up login.
+
+Done when: normal slow-network startup is handled, genuinely failed services
+still terminate within known limits, and local login is not unnecessarily
+blocked on optional services.
+
+### [ ] NET-01 — Make network exposure match the documented access boundary
+
+Priority: P1. Type: confirmed broad bindings; intended exposure needs decision.
+Files: `hosts/cf-fv1/media.nix`, `hosts/cf-fv1/services.nix`,
+`modules/hardening.nix`, `docs/user-parameters.md`.
+
+Evidence: most Compose ports use `HOST:CONTAINER` without a bind address;
+Emby uses host networking. Samba's comment says LAN-only but `hosts allow`
+contains `127. 192.` rather than the actual LAN CIDR. Shared hardening opens
+AirVPN port 64480 globally, even though that is a media-specific value.
+
+Implementation:
+1. Inventory listeners and Docker publishing rules read-only. Record which UI
+   needs localhost, LAN, or Tailscale access; ask where existing intent is unclear.
+2. Introduce explicit bind/subnet settings. Do not blindly bind everything to
+   loopback and break remote access, and do not assume the host firewall alone
+   constrains Docker-published ports.
+3. Scope Samba allow rules to the intended networks and use `mediaMountPoint`
+   for its share path instead of hardcoded `/media`.
+4. Move media-specific firewall policy into the owning media module. Distinguish
+   VPN-provider forwarded ports from ports that actually need LAN publication.
+
+Done when: authorized and unauthorized-interface checks match the documented
+matrix, SSH recovery access survives, and all published ports have an owner.
+
+### [ ] AUTH-01 — Verify lock completion and align PAM policy with the active locker
+
+Priority: P1. Type: verification gap and naming/policy inconsistency.
+Files: `home/desktop/sway/swaylock.nix`, `daemons.nix`,
+`hosts/cf-fv1/security.nix`, `hosts/cf-fv1/laptop.nix`.
+
+Evidence: the primary locker is gtklock, but the file and security comments
+still emphasize swaylock. `passwordServices` applies faillock to swaylock but
+intentionally excludes gtklock. The lock helper treats process existence as
+already locked. Sleep/lid paths depend on this helper.
+
+Implementation:
+1. Document the intended gtklock versus fallback authentication policy and
+   confirm that excluding gtklock's faillock rules is intentional.
+2. Verify daemonization/lock-acquisition semantics against the installed locker
+   versions. Do not equate a process name alone with compositor lock success.
+3. Exercise simultaneous idle/lid/sleep requests, failed gtklock startup,
+   fallback startup, bad password, and successful unlock in an authorized local
+   session with a separate recovery console available.
+4. Rename the owning module to `lock.nix` only as a separate, behavior-preserving
+   cleanup after correctness is established. Update imports and comments.
+
+Done when: locking is confirmed before sleep where required, errors are visible,
+policy matches both PAM stacks, and no tested path strands the user at login.
+
+## Structure and refactoring
+
+These tasks are deliberately separate from behavior changes. Do not build a
+large generic framework: extract only responsibilities already present twice or
+large units with clear ownership. Keep `default.nix` files as short import lists.
+
+### [ ] STRUCT-01 — Split the host's mixed services module by responsibility
+
+Priority: P2. Type: structural refactor.
+Files: `hosts/cf-fv1/services.nix`, `hosts/cf-fv1/default.nix`.
+
+Evidence: one 216-line file owns update scripts/timer, proxy environment,
+NetworkManager, Samba, greetd, Bluetooth, audio, Steam, and base packages.
+
+Implementation:
+1. Create focused host files under `hosts/cf-fv1/services/`: `default.nix`,
+   `updates.nix`, `network.nix`, `samba.nix`, and `session.nix` (names may be
+   adjusted if a better existing boundary is found).
+2. Keep workstation package selection in one clearly named host module. Move
+   service-specific tools with their service; do not duplicate packages broadly.
+3. Move definitions unchanged first. Preserve merge priorities, runtime inputs,
+   service names, timer schedules, and imports. Remove the old monolith only
+   after all definitions are reachable through the new default module.
+4. Update host docs with a one-line owner/responsibility map.
+
+Done when: before/after evaluated service, timer, package, proxy, and firewall
+values match; system builds; no functionality is enabled/disabled by the move.
+
+### [ ] STRUCT-02 — Separate arr Compose data, commands, and host integration
+
+Priority: P2. Type: structural refactor.
+Files: `hosts/cf-fv1/media.nix` (317 lines), host docs.
+
+Implementation:
+1. Extract the declarative Compose definition and image metadata into a focused
+   media submodule/file. Keep exact service names, project name, network name,
+   port mappings, and persistent volume paths unchanged.
+2. Extract arr/arr-pin/arr-update/arr-doctor command generation into a commands
+   file. Keep systemd/mount/firewall integration in the host-facing module.
+3. Define an explicit argument/return contract (e.g. Compose file and command
+   packages). Avoid introducing recursive imports or recomputing different
+   versions of the same generated Compose document.
+4. Keep mutable `.env`, image lock, database/config directories, and credentials
+   at their existing runtime paths; Nix file moves are not data migrations.
+
+Done when: normalized generated Compose JSON is identical, command interfaces
+are unchanged, unit dependencies match, and system build passes. Follow-up
+behavioral improvements belong in ARR-01/02 rather than this commit.
+
+### [ ] STRUCT-03 — Give reusable modules typed options and explicit enable flags
+
+Priority: P2. Type: architecture refinement.
+Files: `modules/airvpn-wireguard.nix`, `modules/ghostfolio.nix`,
+`modules/hardening.nix`, `modules/btrfs.nix`, `hosts/cf-fv1/default.nix`.
+
+Evidence: reusable modules directly reach into untyped `params` or `username`;
+Ghostfolio is selected by commenting its import, while Let's Note already uses
+module options and `mkIf`.
+
+Implementation:
+1. Start with AirVPN and Ghostfolio. Add a small namespaced option set for
+   enablement, runtime paths, and genuinely variable service settings.
+2. Separate 'service installed/configured' from 'autostart'. Host VPN's default
+   autostart must remain false. Ghostfolio's default enable must remain false
+   until its migration is explicitly completed.
+3. Map existing machine parameters to options at the host composition layer.
+   Maintain existing public parameter names during a documented transition.
+4. Add conditional assertions for required values and incompatible combinations;
+   do not check secret-file contents during Nix evaluation.
+5. Import optional modules normally and gate behavior via options once the
+   option contract is tested; stop using commented imports as feature switches.
+
+Done when: disabled modules evaluate without unrelated runtime prerequisites,
+enabled modules produce actionable errors for missing settings, and existing
+host behavior is preserved. Use small commits, not an all-module conversion.
+
+### [ ] STRUCT-04 — Define a validated parameter contract and host overlays
+
+Priority: P2. Type: schema/ownership refinement.
+Files: `flake.nix`, both root system-parameter files,
+`hosts/_template/system-parameters.nix`, `home/variables.nix`, parameter docs.
+
+Evidence: raw attrsets are recursively merged without type/range validation;
+all hosts inherit `system = "x86_64-linux"` and the same Home Manager preference
+file. Paths and fields are duplicated between real/example parameters and docs.
+
+Implementation:
+1. Write down which settings are shared defaults, host overrides, user choices,
+   and runtime secrets. Keep secrets out of all Nix attrsets.
+2. Validate required usernames, absolute runtime paths, port ranges, positive
+   display/font values, and idle ordering (`dim < lock < off < suspend`, or an
+   explicitly documented supported ordering).
+3. Support a host system/architecture field only if multi-architecture support
+   is intended. Otherwise assert/document x86_64-linux instead of implying that
+   discovered hosts work on arbitrary hardware.
+4. Provide optional per-host Home Manager preference overrides if the repo is
+   intended for multiple desktops. Preserve current defaults for cf-fv1.
+5. Make docs/examples derive from or be checked against one contract. Do not
+   silently change the tracked status of `system-parameters.nix`.
+
+Done when: a second synthetic host with a different user/path evaluates without
+leaking cf-fv1-specific assumptions, invalid settings fail clearly, and the
+real host still builds. No lock-file update required.
+
+### [ ] STRUCT-05 — Separate shell workflows from shell appearance and aliases
+
+Priority: P2. Type: structural refactor.
+Files: `home/shell/default.nix`, `home/shell/nix-workflow.fish`.
+
+Implementation:
+1. Move Nix build/update command packages and Fish wrappers into a dedicated
+   workflow module; leave prompt, interactive shell integrations, and ordinary
+   aliases in their own small modules.
+2. Extract longer Bash bodies to named source files packaged with explicit
+   runtime dependencies. Pass host/profile/path values as safely quoted inputs
+   or controlled substitutions, not ad hoc shell concatenation.
+3. Make `cfn`/`codex-nix` derive from the configured flake path rather than
+   hardcoded `~/.config/nix`. Preserve `cfn` as navigation unless the operator
+   explicitly requests otherwise; it is not a rebuild command.
+4. Audit which wrappers forward arguments. Either support documented flags or
+   reject unsupported arguments explicitly; do not silently drop `$argv`.
+5. Document build-only versus activation commands side by side, including the
+   destructive meaning of `nixgc = sudo nix-collect-garbage -d`.
+
+Done when: generated helper behavior matches before/after except separately
+specified fixes, shell checks pass, command help is accurate, and home builds.
+
+### [ ] STRUCT-06 — Package desktop scripts explicitly and consolidate integrations
+
+Priority: P2. Type: ownership/refactoring.
+Files: `home/desktop/sway/scripts.nix`, `home/programs/integrations.nix`,
+`home/programs/{lf,nnn,dolphin}.nix`, `home/services/hermes-mac-tunnel.nix`.
+
+Evidence: scripts.nix installs every directory entry except four names,
+regardless of file type. Raw scripts depend on the broad interactive PATH.
+The integrations module mixes Hermes, optional opencode config, LF wrapper,
+and nnn/Kitty environment settings.
+
+Implementation:
+1. Use an explicit script manifest or filter regular files intentionally; do
+   not accidentally install a future README, backup, or subdirectory as a tool.
+2. Package commands with declared runtime dependencies and syntax/lint checks.
+   Preserve compatibility paths used by existing Sway bindings.
+3. Move LF and nnn integration next to their owning program modules. Put Hermes
+   service plus launcher behind one optional integration setting.
+4. Make the Hermes SSH alias/local port/remote port configurable; keep host-key
+   verification and batch authentication enabled. Clarify that a user-level
+   network-online target does not prove the system network is ready.
+5. Review opencode's ignored local file behavior: a Git flake excludes ignored
+   files, so `builtins.pathExists ../../opencode.json` does not implement the
+   promised local override in the normal Git-flake path. Use an explicit safe
+   runtime configuration approach if it can contain credentials.
+
+Done when: each integration has one owner, absent optional files do not break
+fresh-clone evaluation, scripts run with a minimal PATH, and no runtime secret
+is copied into the store.
+
+### [ ] STRUCT-07 — Unify declarative and live theme generation
+
+Priority: P2. Type: structural refinement. Depends on: THEME-01.
+Files: `home/theme/`, `home/programs/dolphin.nix`, terminal modules,
+`home/desktop/sway/scripts/theme-preview`, Waybar/rofi/mako modules.
+
+Evidence: a 356-line shell preview writes app-specific theme files while Nix
+modules independently generate the same families of settings. Dolphin's
+298-line module mixes palette generation, file-manager settings, MIME policy,
+legacy-file cleanup, and application cache refresh.
+
+Implementation:
+1. Inventory each theme consumer and map semantic colors to Base16 inputs.
+2. Create a small shared palette/template contract used by both build-time
+   generation and runtime preview. Keep app adapters separate; do not invent
+   a new theme framework or embed Nix evaluation in rapid selection callbacks.
+3. Split Dolphin color rendering from its preferences/MIME integration. Preserve
+   current color values and default applications in the extraction commit.
+4. Compare preview output with the same theme's activated output for at least
+   two palettes. Remove duplicated mappings only after equivalence is proven.
+5. Keep optional app failures visible in logs without causing unrelated theme
+   consumers to fail. Avoid restarting whole services for every preview if a
+   documented reload path suffices; measure before changing behavior.
+
+Done when: preview and activation agree for tested palettes, one palette edit
+has one authoritative owner, and no terminal/file-manager preference changes
+are hidden inside the refactor.
+
+## Runtime behavior and feature completeness
+
+### [ ] VPN-02 — Derive Docker profile-helper paths from the same runtime contract
+
+Priority: P2. Type: confirmed future-path inconsistency.
+Files: `home/shell/airvpn-profile`, `home/shell/default.nix`, media parameters.
+
+Evidence: the helper uses the managed `arr` command when available, but still
+writes `active_config` under `$HOME/src/arr/config/gluetun/wg0.conf` by default.
+Changing `arrComposePath` can make it edit one profile and restart another stack.
+
+Implementation:
+1. Inject the managed arr runtime directory/profile path from the same parameter
+   used by Compose. Preserve explicit `AIRVPN_*` overrides for custom stacks.
+2. Ensure custom Compose selection also selects a matching active profile path;
+   refuse an ambiguous combination rather than modifying the managed profile.
+3. Serialize profile replacement/recreation, validate rollback health, and
+   report failure if restoring the previous profile does not recover the VPN.
+4. Test using two temporary directories and stubbed Docker/Compose commands.
+
+Done when: selected runtime path, edited profile, and restarted project always
+match; malformed/missing profiles leave existing credentials untouched.
+
+### [ ] VPN-03 — Distinguish service state from actual tunnel health
+
+Priority: P2. Type: status accuracy gap.
+Files: `home/desktop/sway/scripts/vpn-toggle`, `home/desktop/waybar.nix`,
+`modules/airvpn-wireguard.nix`.
+
+Evidence: `vpn-toggle` reports 'AirVPN connected' whenever the oneshot service
+is active, without checking interface presence, handshake, routing, or DNS.
+Missing/disabled service is indistinguishable from an ordinary disconnected VPN.
+
+Implementation:
+1. Represent unavailable, stopped, starting, active-but-unverified, healthy, and
+   failed states without claiming a handshake from systemd state alone.
+2. Add a bounded, non-secret health check appropriate to the installed tools.
+   Prefer least-privilege status access; never expose private keys or grant
+   unrestricted passwordless `wg`/shell commands to render the bar.
+3. Use noninteractive failure handling for Waybar actions (`sudo -n` where
+   appropriate) and display useful errors instead of hanging on a password prompt.
+4. Document that the current host setup routes directly when switched off; do
+   not add a host kill switch without a separate explicit decision.
+
+Done when: simulated missing interface/failed handshake cannot be labeled
+connected, normal manual toggle works, and boot remains disconnected.
+
+### [ ] ARR-01 — Validate runtime image locks and wait for readiness after updates
+
+Priority: P2. Type: runtime validation gaps.
+Files: `hosts/cf-fv1/media.nix` command definitions (or STRUCT-02 outputs).
+
+Evidence: arr-pin returns immediately if `images.lock.json` exists, without
+schema/service coverage validation. The runtime override can retain stale
+service entries. arr-update runs arr-doctor immediately after `up -d`, when
+applications may still be starting.
+
+Implementation:
+1. Validate lock JSON structure, known service names, required coverage, and
+   digest syntax. Define how a newly added/removed service changes the lock.
+2. Reject corrupt locks with a recovery instruction; never silently follow
+   moving tags or overwrite the last good lock on partial pull failure.
+3. Preserve previous image manifests for explicit rollback review. Explain that
+   reverting images does not automatically revert application database schemas.
+4. Add bounded readiness polling with final per-service results after update.
+   Keep ordinary `arr-doctor` useful as an immediate diagnostic snapshot.
+5. Check whether prune/GC policy retains the required rollback images; do not
+   disable maintenance or keep unlimited images without a retention decision.
+
+Done when: malformed/stale locks, partial pull failure, slow healthy startup,
+and permanently unhealthy startup have deterministic tested outcomes using
+fixtures/stubs; normal startup preserves pinned images and application data.
+
+### [ ] ARR-02 — Remove remaining mount and WireGuard address assumptions
+
+Priority: P2. Type: portability/configuration consistency.
+Files: media module, `modules/hardening.nix`, parameter files, media docs.
+
+Evidence: Compose hardcodes `WIREGUARD_ADDRESSES=10.164.61.233/32`, VPN port
+64480 appears in multiple places, and service dependencies hardcode `media.mount`
+while `mediaMountPoint` is advertised as configurable. Directory creation uses
+an unescaped concatenated ExecStart argument string.
+
+Implementation:
+1. Define one owner for nonsecret provider port settings. Ensure the WireGuard
+   address cannot disagree with the selected profile; prefer the profile's
+   supported runtime configuration path over duplicating its value in Nix.
+2. Derive mount dependencies correctly for the configured path or use a tested
+   `RequiresMountsFor` arrangement plus a real mountpoint check. Do not merely
+   rename `media.mount` by replacing slashes with dashes.
+3. Quote directory arguments and verify ownership/permissions before starting
+   applications. Preserve the protection against writes under an absent mount.
+4. Use a synthetic mount path containing a space to test command generation.
+
+Done when: alternate mount paths evaluate correctly, missing mounts prevent
+startup, selected profile/address agree, and cf-fv1 data paths remain unchanged.
+
+### [ ] GF-01 — Define the disabled Ghostfolio migration as an explicit feature
+
+Priority: P1. Type: unfinished migration, not an active-service regression.
+Files: `modules/ghostfolio.nix`, host imports, host README, parameter docs.
+Depends on: STRUCT-03 for the final feature flag, or a minimal equivalent.
+
+Implementation:
+1. Mark docs as proposed/disabled until runtime migration evidence exists.
+2. Parameterize the hardcoded secrets path and runtime directory. Keep secrets
+   loaded at runtime. Ensure enablement has actionable preflight checks for
+   credentials, imported data, PostgreSQL major version, and network prerequisites.
+3. Record the source service/database and export method before changing it.
+   Test restore on a disposable database with the intended version.
+4. Specify cutover, validation, and rollback steps. Do not enable the module,
+   delete the old database, or create an empty replacement as part of this audit.
+
+Done when: the disabled state evaluates cleanly, a dry-run preflight explains
+missing prerequisites, docs match reality, and actual migration remains gated
+on an approved, tested data plan.
+
+### [ ] GF-02 — Bound and make Ghostfolio import/update retries safe
+
+Priority: P1 before enabling Ghostfolio. Type: confirmed migration risks.
+Files: `modules/ghostfolio.nix`.
+
+Evidence: the wrapper's PostgreSQL wait loop has no internal deadline (manual
+CLI calls can wait indefinitely). Import uses ON_ERROR_STOP but lacks an explicit
+recovery protocol after a partially applied dump. A marker is written only
+at the end. Images use moving tags with `pull_policy = "missing"`.
+
+Implementation:
+1. Add bounded readiness waits that include useful service status on timeout.
+2. Define importing/success/failure state and refuse blind reruns into a partly
+   imported database. Use a transaction only if the actual dump is compatible;
+   otherwise restore into a fresh disposable target and use an explicit cutover.
+3. Pin resolved image digests and update them deliberately, including PostgreSQL
+   major-version migration handling. Do not share image-lock code with arr
+   until a real common contract exists.
+4. Test interruption before import, mid-import, after import before marker,
+   missing credentials, unavailable registry, and retry.
+
+Done when: no retry silently corrupts/duplicates data, commands terminate within
+known bounds, and recreating a stack uses the reviewed image versions.
+
+### [ ] TERM-01 — Make Ghostty font-size transitions respect the configured default
+
+Priority: P2. Type: confirmed preference inconsistency.
+Files: `home/programs/terminals/ghostty.nix`,
+`home/desktop/sway/scripts/ghostty-font-size-notify`, `home/variables.nix`.
+
+Evidence: `font-size` comes from `variables.terminalFontSize`, but the key-table
+state machine assumes the default is 16: its root moves to 14/18, and transitions
+return to an unnamed state at 16. Choosing another default breaks that model.
+
+Implementation:
+1. Define the supported bitmap size sequence once. Generate transitions around
+   the actual configured default, or reject unsupported defaults clearly.
+2. Ensure Ctrl+0 resets both font size and active key-table state. Keep reporting
+   code on the same size/default contract.
+3. Do not remove Kitty solely because Ghostty is the main terminal; nnn/theme
+   integrations still use Kitty intentionally. Document that dependency.
+
+Done when: defaults 14, 16, and 20 (or explicitly supported alternatives), min/max
+bounds, increase/decrease, and reset produce the correct generated bindings.
+
+### [ ] DESKTOP-01 — Correct helper exit reporting and session scoping
+
+Priority: P2. Type: confirmed minor defects plus bounded robustness work.
+Files: `home/desktop/sway/scripts/recorder.sh`, `sway-help`,
+`home/desktop/sway/daemons.nix`, theme/Kitty integrations.
+
+Evidence: recorder says 'Starting in 3...' but sleeps one second, announces
+'Saved' regardless of wf-recorder exit status, and uses unscoped process-name
+matching. Kitty remote-control socket is fixed at `/tmp/kitty`. Calcurse's
+ExecStartPre removes lock files without verifying their owner process.
+
+Implementation:
+1. Make recorder timing/text agree and announce success only after a successful
+   recording and an existing output. Report cancel/failure accurately.
+2. Track this session's recorder/overlay where practical instead of signaling
+   every matching process. Handle two simultaneous invocations deterministically.
+3. Move per-user/session sockets and lock files to a suitable runtime directory;
+   update all consumers together. Preserve required Kitty integrations.
+4. Check whether Calcurse lock cleanup can remove a live instance's lock; replace
+   unconditional deletion with supported ownership/staleness handling if needed.
+
+Done when: cancellation, failed recorder startup, concurrent sessions, and stale
+versus live lock fixtures behave correctly without disturbing other processes.
+
+## Validation coverage, documentation, and repository hygiene
+
+### [ ] CHECK-01 — Add focused flake checks for Home Manager and feature combinations
+
+Priority: P2. Type: validation coverage gap.
+Files: `flake.nix`, a small new `checks/` area, `docs/development.md`.
+
+Evidence: the flake exports custom `homeConfigurations` and `nixosConfigurations`
+but no explicit `checks` output. Passing flake check alone does not guarantee
+that all Home Manager outputs, dormant modules, or runtime scripts were built.
+
+Implementation:
+1. Add targeted checks for source-script syntax/lint, important generated files,
+   and Home Manager derivation evaluation/build as appropriate to CI cost.
+2. Exercise host VPN configured but not autostarted, host HTTP proxy disabled,
+   Docker proxy on/off, and Ghostfolio disabled/enabled with synthetic nonsecret
+   parameter fixtures. Do not require real secret files at evaluation time.
+3. Assert there is no Compose/multi-user.target cycle and bootstrap services do
+   not inherit HTTP proxy dependencies. Validate generated Compose quietly.
+4. Test failure-prone helper behavior with stubs for Docker, systemctl, Nix, and
+   nh. Add regressions for actual bugs from this backlog, not tests that merely
+   repeat every assignment in a Nix file.
+
+Done when: checks detect deliberately introduced versions of the repaired
+proxy/order/path defects in fixtures, run without live service changes, and
+clearly distinguish cheap evaluation from full system/home builds.
+
+### [ ] CHECK-02 — Make formatting and routine verification reproducible
+
+Priority: P2. Type: developer workflow improvement.
+Files: `flake.nix`, `docs/development.md`, optional CI configuration.
+
+Implementation:
+1. Provide a formatter and a small documented check command using the repo's
+   pinned tooling. Avoid requiring an unrelated system-global toolchain.
+2. Decide whether CI is wanted; if so use Linux for Linux builds and avoid
+   credentials, deployment, and mutable runtime data in CI.
+3. Run only formatting/lint first, then evaluation, then expensive builds.
+   Report skipped checks honestly. Cache without loosening trust policy.
+4. Format only touched files initially; put any repository-wide formatting in
+   its own commit after WORK-01 so it does not bury functional changes.
+
+Done when: a fresh checkout can run the documented checks, formatter output is
+stable, and failure messages identify the file/check rather than a generic build
+failure. Do not add a heavyweight test framework for simple Nix syntax checks.
+
+### [ ] DOC-01 — Reconcile docs with active features and command semantics
+
+Priority: P2. Type: confirmed stale descriptions.
+Files: `README.md`, `docs/{README,user-parameters,development}.md`,
+`hosts/cf-fv1/README.md`, `modules/letsnote/README.md`, source comments.
+
+Implementation:
+1. Correct Ghostfolio's 'now runs' wording while it is disabled. Separate active
+   stack documentation from a proposed migration procedure.
+2. Update docs index wording for independent host VPN/Docker proxy controls.
+   Explain `airVpn.enable` versus off-at-boot and ordinary direct host traffic.
+3. Update current terminal examples (Ghostty, with intentional Kitty support),
+   `pubkey` versus the stale `key` comment, and current fan-control implementation.
+4. Explain `cfn` navigation, `nixbuild` build-only, `retest` temporary activation,
+   `rebuild` two-layer activation, and `rebuild-boot` next-boot-only behavior.
+5. Distinguish arrComposePath's parent runtime directory from the generated
+   `/etc/arr/compose.json`; don't tell users editing a legacy Compose file changes
+   the managed stack.
+6. Keep one canonical operational procedure per topic and link to it from
+   indexes. Remove duplicate instructions only after checking their details.
+
+Done when: documentation agrees with evaluated options and installed helper
+interfaces, examples use existing paths/commands, and relative links pass.
+
+### [ ] DOC-02 — Document independent backups and restore drills for stateful apps
+
+Priority: P2. Type: missing operational procedure.
+Files: media/Ghostfolio docs, `docs/install.md`, optional `docs/recovery.md`.
+
+Implementation:
+1. Inventory arr config databases, media files, Ghostfolio database, runtime
+   credentials, image locks, and Nix/Home Manager generation references.
+2. For each, document ownership, location, consistency requirements, and restore
+   procedure. Separate Nix generation rollback from application data rollback.
+3. Define an operator-selected off-disk backup destination and retention policy;
+   do not invent credentials, subscribe to storage, or start transfers.
+4. Run an authorized restore drill into temporary/disposable paths and record
+   evidence before proposing any production migration or deletion.
+
+Done when: the user can identify what a snapshot does and does not cover, and
+at least one safe restore drill proves the documented application-data path.
+Automated backup scheduling is a separate change after destination approval.
+
+### [ ] HYGIENE-01 — Remove tracked scratch output and clarify local-only inputs
+
+Priority: P3. Type: repository hygiene.
+Files: `.gitignore`, tracked `nvim.log`, `home/programs/integrations.nix`, docs.
+
+Evidence: `nvim.log` is tracked; `opencode.json` is ignored but optionally imported
+by Nix; only the exact `result` build symlink is ignored. Stable machine
+parameters are intentionally tracked and must not be accidentally hidden.
+
+Implementation:
+1. Review `nvim.log` for any information requiring private handling, then remove
+   the generated artifact from version control and add a precise ignore pattern.
+   Do not publish its contents as part of the cleanup.
+2. Ignore actual generated build-link variants if used, without broad patterns
+   that hide source files. Document the intended place for local scratch files.
+3. Resolve ignored-config behavior through STRUCT-06. Do not solve it by adding
+   credential-bearing config to Git or changing all evaluations to `path:`.
+4. If a secret is discovered in history, stop and report privately; remediation
+   requires credential rotation and a separately reviewed history policy.
+
+Done when: generated artifacts stay out of commits and fresh-clone/runtime
+configuration behavior matches the docs. No unrelated file deletion.
+
+### [ ] HYGIENE-02 — Make vendored skill provenance and precedence explicit
+
+Priority: P3. Type: tooling/documentation ownership.
+Files: `skills/nixos-managing/`, `.codex/skills/`, `.codex/agents/`,
+`AGENTS.md`, `docs/development.md`.
+
+Evidence: the broad `skills/` directory was untracked at audit time while
+AGENTS.md references it. Local maintenance instructions overlap upstream skill
+instructions. Worker configuration forbids pushing while root repository policy
+asks for a push after a validated generation; these apply to different roles.
+
+Implementation:
+1. Decide whether the supplemental skill is vendored or external. If vendored,
+   record upstream source, revision, license, and local modifications. If
+   external, document setup and handle absence without pretending it exists.
+2. Keep repository safety/validation rules authoritative; link to them instead
+   of copying long lists into every agent/skill file.
+3. State explicitly that worker agents return changes for integration and do not
+   push, while the integrating agent follows the repository publication policy.
+4. Check referenced files exist in a fresh checkout and instructions do not
+   accidentally authorize privileged actions beyond the user's request.
+
+Done when: a less capable agent can find the correct instructions, understand
+role boundaries, and work from a clean checkout without untracked dependencies.
+
+## Completion record template
+
+Append under each completed task:
+
+```text
+Status: fixed-in-source / built / activated / verified-live / blocked
+Commit(s):
+Changed files:
+Checks run and exact outcomes:
+Operational checks not run and why:
+Remaining prerequisites or operator action:
+```
+
+Do not mark all tasks complete merely because `nix flake check` passes.
