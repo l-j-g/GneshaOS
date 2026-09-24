@@ -202,7 +202,7 @@ operator coordination; document the required manual step rather than silently
 changing a path to a file that does not exist.
 
 Status: fixed-in-source, built, and fixture-verified; not activated or verified-live.
-Commit(s): pending; commit ID will be recorded in the follow-up task-record commit.
+Commit(s): `0207e73` (`Protect the host AirVPN profile`).
 Changed files: `modules/airvpn-wireguard.nix`, `system-parameters.nix`,
 `system-parameters.example.nix`, `docs/airvpn-proxy.md`, and
 `docs/user-parameters.md`.
