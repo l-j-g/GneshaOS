@@ -91,7 +91,12 @@ function nixparse
     and echo "OK: $argv[1]"
 end
 
-function codex-nix
-    cd ~/.config/nix; or return 1
-    codex
+function codex-nix --description "Start Codex safely in the GneshaOS repository"
+    set -l repo "$HOME/.config/nix"
+    if not test -d "$repo"
+        echo "GneshaOS repository not found: $repo" >&2
+        return 1
+    end
+
+    command codex --cd "$repo" --sandbox workspace-write --ask-for-approval never $argv
 end

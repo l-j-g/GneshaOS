@@ -102,7 +102,7 @@ P3 = optional cleanup after correctness work.
 
 ## P0/P1: security, recovery, and correctness
 
-### [ ] WORK-01 — Establish an attributable baseline before implementation
+### [x] WORK-01 — Establish an attributable baseline before implementation
 
 Priority: P1. Type: workflow prerequisite. Depends on: none.
 
@@ -125,6 +125,49 @@ Implementation:
 Done when: each feature's starting state is identifiable; unrelated staged
 content remains preserved; a clean checkout can reproduce the agreed baseline.
 Do not treat this task as permission to publish all currently staged changes.
+
+Status: captured, independently verified, and committed as the agreed baseline.
+Commit(s): pending final ID record; committed separately from later TODO fixes.
+Changed files: pre-existing operator changes were included as the baseline at
+the user's direction. No runtime activation was performed.
+Base: `main` at `07e5bb37f3b1db29bbe342a2147738c79decb487`.
+Concern inventory from captured index and worktree patches:
+- Proxy/arr repair: `docs/airvpn-proxy.*`, `hosts/cf-fv1/{services,media}.nix`,
+  `modules/airvpn-wireguard.nix`, `system-parameters*.nix`, `docs/user-parameters.md`.
+- Terminal/theme: `home/desktop/`, `home/programs/terminals/`,
+  `home/programs/{default,nnn}.nix`, `home/variables.nix`, `modules/fonts.nix`.
+- Ghostfolio migration: `modules/ghostfolio.nix`,
+  `hosts/cf-fv1/{default,services}.nix`.
+- Tooling/docs: `AGENTS.md`, `.codex/`, `README.md`, `docs/`, host docs,
+  and `skills/nixos-managing/` (untracked at capture time).
+- Dependency update: `flake.lock` has changes in both layers and remains
+  preserved and separate.
+- Lock/session behavior: `home/desktop/sway/`, `modules/hardening.nix`, and
+  overlapping helper edits in `home/shell/default.nix` and `home/variables.nix`.
+The eleven files changed in both index and worktree are enumerated in
+`/tmp/gneshaos-status-baseline.txt`; their two layers are preserved separately.
+Evidence: restrictive snapshots in `/tmp/gneshaos-index-baseline.patch`,
+`/tmp/gneshaos-worktree-baseline.patch`, and
+`/tmp/gneshaos-untracked-baseline.tar.gz`. SHA-256: index
+`4af59ba2a61919521443547d8b0ff61f81b79cf9298d82ffaa710f1f302858af`, worktree
+`0d0a314ac658b0b483f1b6d36ab5a513fb221a7ad0f5b916f6a6c385fd15ed2d`, status
+`5114ca7abe2e89f27fd4a270c83240ac5297c529c1ed4c3204bc0498d65136b8`, and
+untracked archive `234c623434384bc80ebb8e30a9e99f055fb9460f2e54e4751b9bddde50b940e5`.
+Reconstruction order is index patch, worktree patch, then untracked archive.
+The reviewer replayed both patches from the base and confirmed the tracked tree
+and untracked archive match the captured state before this TODO update. The
+snapshots are temporary `/tmp` files and must be retained privately while this
+baseline is needed. Existing staged and unstaged content remains unchanged.
+Checks run and exact outcomes: 23 changed Nix files parsed; Fish and three
+changed shell scripts passed syntax checks; `git diff --check` and
+`git diff --cached --check` passed; `nix flake check --show-trace
+--no-write-lock-file`, `nixos-rebuild build --flake .#cf-fv1
+--no-write-lock-file`, and the Home Manager activation-package build all
+passed. Independent review found no credentials or runtime data to exclude.
+Operational checks not run and why: no activation was requested; known VPN
+profile privilege issue is the next task, SEC-01.
+Remaining prerequisites or operator action: none. Retain the temporary snapshot
+files only as needed; all baseline content is now committed as requested.
 
 ### [ ] SEC-01 — Remove passwordless execution of a user-writable VPN profile
 

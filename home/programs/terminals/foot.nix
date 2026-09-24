@@ -1,5 +1,5 @@
 # Foot terminal — preserved as a separate optional module.
-# It is not imported by terminals/default.nix while Kitty is the active terminal.
+# It is not imported by terminals/default.nix while Ghostty is the active terminal.
 
 {
   config,

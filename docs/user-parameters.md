@@ -68,11 +68,16 @@ the machine, account, or installation changes.
 | `systemSettings.keyboardOptions` | XKB keyboard option remaps. | `"ctrl:nocaps"` | Sway input |
 | `systemSettings.backlightDevice` | Machine-specific backlight device name. | `"intel_backlight"` | Waybar, SwayOSD, wluma |
 | `systemSettings.alsSensorPath` | Machine-specific ambient-light sensor path. | `"/sys/bus/iio/devices/..."` | hardware documentation |
-| `systemSettings.arrComposePath` | Legacy Compose path; its parent is the runtime directory for the Nix-managed arr stack. | `"/home/lg/src/arr/docker-compose.yml"` | media stack and `arr` wrapper |
+| `systemSettings.containersDirectory` | Runtime directory for Compose project state, credentials, and bind-mounted data. | `"/home/lg/.config/containers"` | media and Ghostfolio Compose stacks |
+| `systemSettings.arrComposePath` | Legacy Compose path; its parent must contain the existing runtime .env and config directory. | `"/home/lg/.config/containers/arr/compose.yml"` | media stack and `arr` wrapper |
+| `systemSettings.ghostfolioPostgresMajor` | PostgreSQL container major version; match the existing server before importing its dump. | `"17"` | Ghostfolio Compose stack |
 | `systemSettings.mediaMountPoint` | Mount point of the drive used for user media directories. | `"/media"` | Home Manager and media directory setup |
-| `systemSettings.systemProxy.enable` | Enable HTTP/HTTPS proxy settings after starting the local proxy. | `false` | NixOS and desktop proxy settings |
+| `systemSettings.airVpn.enable` | Whether the system-wide AirVPN WireGuard tunnel is configured. | `false` | system AirVPN module |
+| `systemSettings.dockerProxy.enable` / `port` / `noProxy` | Enable the Docker Gluetun HTTP proxy independently of host proxy settings. | `true` / `8888` / `"localhost,127.0.0.1,::1"` | media, Ghostfolio, legacy Compose override |
+| `systemSettings.systemProxy.enable` | Enable an independent host HTTP proxy; leave disabled for native WireGuard. | `false` | NixOS and desktop proxy settings |
 | `systemSettings.systemProxy.host` / `port` | Address of the local HTTP CONNECT proxy. | `"127.0.0.1"` / `8888` | NixOS and desktop proxy settings |
 | `systemSettings.systemProxy.noProxy` | Comma-separated hosts/domains reached directly. | `"localhost,127.0.0.1,::1,cf-fv1,.local"` | NixOS and desktop proxy settings |
+| `systemSettings.airVpn.configPath` | Local path to the WireGuard `.conf` profile. Keep it outside the repo; keys must never be committed. | `"/home/lg/.config/airvpn/host.conf"` | system AirVPN module |
 | `userSettings.userName` | POSIX login name. Must match the host's declared user. | `"lg"` | NixOS and Home Manager |
 | `userSettings.homeDirectory` | User home directory and `@home` volume location. | `"/home/lg"` | Home Manager |
 
@@ -90,10 +95,10 @@ inline in that file so it remains easy to edit without searching the modules.
 | `terminal` | Terminal command used by Sway, rofi, and Waybar. | `"kitty"` | terminal integrations |
 | `displayScale` | Sway output scale. Use `"1"` for 100%, `"2"` for 200%, or a fractional value. | `"2"` | Sway and scale helper |
 | `gapsInner` / `gapsOuter` | Inner and outer Sway window gaps, in pixels. | `5` | Sway |
-| `terminalFontFamily` | Fixed-width TTF family used by Kitty. | `"Terminess Nerd Font Mono"` | Kitty |
+| `terminalFontFamily` | Font family used by Kitty; `monospace` resolves to bitmap Terminus. | `"monospace"` | Kitty |
 | `stackedViewFontSize` | Sway stacked/tabbed title size, in points. | `14` | Sway |
 | `terminalFontSize` | Shared terminal/UI font size, in points. | `16` | Kitty, Foot, Waybar, rofi, mako |
-| `screenshotDir` | Directory where grimshot saves screenshots. `~` is expanded. | `"~/Pictures/Screenshots"` | Sway |
+| `screenshotDir` | Directory where grimshot saves screenshots. | `"/media/Pictures/Screenshots"` | Sway |
 | `screenshotUploadUrl` | 0x0-compatible endpoint for screenshot uploads. | `"https://x0.at/"` | Sway bindings |
 | `idleDimSec` | Seconds before the display dims. | `240` | swayidle |
 | `idleDimPercent` | Brightness percentage used during idle dimming. | `10` | swayidle |

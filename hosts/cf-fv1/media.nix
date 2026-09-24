@@ -14,7 +14,7 @@ let
   ];
   # Keep Compose project identity, runtime .env, and mutable application data.
   arrDirectory = builtins.dirOf params.systemSettings.arrComposePath;
-  proxy = params.systemSettings.systemProxy or { enable = false; };
+  proxy = params.systemSettings.dockerProxy or { enable = false; };
   appEnvironment = [ "PUID=\${PUID}" "PGID=\${PGID}" "TZ=\${TZ}" ];
   app = name: {
     image = "lscr.io/linuxserver/${name}:latest";
@@ -220,7 +220,16 @@ let
     name = "arr";
     runtimeInputs = [ pkgs.docker ];
     text = ''
-      case "''${1:-}" in up|create|run|pull) ${arrPin}/bin/arr-pin ;; esac
+      case "''${1:-}" in
+        up|create|run|pull)
+          if [ ! -r ${lib.escapeShellArg "${arrDirectory}/.env"} ] ||
+             [ ! -d ${lib.escapeShellArg "${arrDirectory}/config"} ]; then
+            echo "arr: runtime .env or config/ is missing in ${arrDirectory}; restore the existing data or correct systemSettings.arrComposePath before starting." >&2
+            exit 1
+          fi
+          ${arrPin}/bin/arr-pin
+          ;;
+      esac
       overrides=()
       if [ -f ${lib.escapeShellArg imageLock} ]; then
         overrides=(-f ${lib.escapeShellArg imageLock})
@@ -246,7 +255,7 @@ in
   # Docker must be able to pull the containers that provide the local proxy
   # even when that proxy is stopped. This only bypasses the proxy for daemon
   # registry traffic; qBittorrent still shares Gluetun's VPN namespace.
-  systemd.services.docker.serviceConfig.UnsetEnvironment = lib.optionals proxy.enable [
+  systemd.services.docker.serviceConfig.UnsetEnvironment = [
     "http_proxy" "https_proxy" "all_proxy"
     "HTTP_PROXY" "HTTPS_PROXY" "ALL_PROXY"
   ];
@@ -261,14 +270,12 @@ in
   systemd.services.docker-compose = {
     description = "Start and stop Docker *arr stack";
     wantedBy = [ "multi-user.target" ];
-    # Start after multi-user.target so boot/login does not wait for image pulls
-    # or container startup. These orderings still make systemd stop this unit
-    # before either dependency is torn down.
+    # Follow concrete dependencies, not multi-user.target: dependent stacks
+    # are ordered before that target and would otherwise create a cycle.
     after = [
       "docker.service"
       "media-directory-setup.service"
       "media.mount"
-      "multi-user.target"
     ];
     before = [ "shutdown.target" ];
     requires = [

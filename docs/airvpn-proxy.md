@@ -1,76 +1,65 @@
-# AirVPN local proxy
+# Independent host and Docker VPNs
 
-Use the existing Gluetun container's built-in HTTP proxy. The Compose override
-next to this document enables it and publishes port 8888 on loopback only.
-NixOS sets the standard HTTP/HTTPS proxy environment and Home Manager sets the
-desktop proxy to this address, controlled by `systemSettings.systemProxy`.
-Compatible apps send requests through the existing Gluetun VPN connection;
-qBittorrent keeps sharing Gluetun's network namespace. Both use the same VPN
-server and are interrupted when that container restarts.
+The host and Docker have separate controls:
 
-The Nix-managed stack in `hosts/cf-fv1/media.nix` includes this proxy when
-`systemSettings.systemProxy.enable` is true. After activation, use `arr` to
-manage it; no separate override is needed. See the [media stack notes](../hosts/cf-fv1/README.md).
-The instructions below apply to the legacy Compose file before migration or
-when explicitly selecting it with `AIRVPN_COMPOSE_FILE`.
+- `systemSettings.airVpn` configures the native host WireGuard service.
+  It starts only on demand from the Waybar toggle or `systemctl start airvpn-wg`.
+  It does not depend on Docker. Use a separate AirVPN device profile outside
+  the repository, for example `~/.config/airvpn/host.conf` (mode 600).
+  Do not reuse Docker's WireGuard device key for simultaneous tunnels.
+- `systemSettings.dockerProxy` enables Gluetun's HTTP CONNECT proxy and its
+  loopback port (default 8888). Container clients on `arr_default` use
+  `http://gluetun:8888`. qBittorrent shares Gluetun's VPN network namespace.
+- `systemSettings.systemProxy` controls optional host HTTP/HTTPS and desktop
+  proxy settings. Leave it disabled when using native host WireGuard.
+  Pointing it at Gluetun makes proxy-aware host applications depend on Docker.
 
-Apply the override to the existing stack:
+Docker registry pulls and Nix daemon downloads explicitly discard HTTP proxy
+variables. They use host routing, including the native VPN when it is active.
+The `rebuild` helper also clears stale proxy variables inherited from a login
+session, so it can recover the system while Gluetun is stopped.
 
-```sh
-docker compose \
-  -f /home/lg/src/arr/docker-compose.yml \
-  -f /home/lg/.config/nix/docs/airvpn-proxy.compose.yaml \
-  up -d --force-recreate gluetun qbittorrent
-```
+The host service is configured with a private copy of `Downloads/nz.conf` at
+`~/.config/airvpn/host.conf`, and starts only on demand. This temporary profile
+shares Docker's device key; replace it with a separate AirVPN device profile
+for concurrent use. With the host tunnel stopped and host HTTP proxy disabled,
+host internet access uses the direct network. Docker keeps its own VPN.
 
-This restarts qBittorrent too, because it shares Gluetun's network namespace.
-Keep both `-f` arguments when recreating these services; using only the base
-file removes the proxy configuration. Home Manager installs the override at
-`~/.config/airvpn/proxy.compose.yaml`; the updated `avpn` profile helper includes
-it automatically when present.
+## Runtime data
 
-Run the verification commands below **before activating** the proxy settings.
-Once the proxy works, activate both configurations from this repository:
+`systemSettings.arrComposePath` selects the existing runtime directory through
+its parent. On this machine that remains `/home/lg/src/arr`, containing `.env`
+and `config/`. The managed definition is `/etc/arr/compose.json`. Do not change
+the runtime path without first migrating and checking the actual data.
 
-```sh
-sudo nixos-rebuild switch --flake /home/lg/.config/nix#cf-fv1
-nh home switch /home/lg/.config/nix -c lg@cf-fv1
-```
+Use `arr up -d`, `arr ps`, and `arr-doctor` for the managed stack. Normal startup
+uses pinned images and preserves application data. The legacy custom Compose
+path used by `AIRVPN_COMPOSE_FILE` can include the optional proxy override at
+`~/.config/airvpn/proxy.compose.yaml`, controlled by `dockerProxy`.
 
-Log out and back in so applications inherit the new environment. In Firefox
-and LibreWolf, select **Use system proxy settings** in Network Settings if an
-old manual setting overrides the system configuration. A proxy-aware terminal
-request such as `curl --max-time 30 https://airvpn.org/` should then work without
-an explicit `--proxy` argument.
-
-In your application's manual proxy settings, use HTTP proxy host `127.0.0.1`
-and port `8888`, including for HTTPS traffic. This is an HTTP CONNECT proxy,
-not a SOCKS proxy. No proxy username or password is configured; it is available
-only to clients on this computer. Do not enable fallback to a direct connection
-if you want the application to fail when the proxy is unavailable.
-
-Verify that the VPN is healthy and that a request can pass through the proxy:
+## Verification
 
 ```sh
-docker inspect --format '{{.State.Health.Status}}' gluetun
-curl --noproxy '' --proxy http://127.0.0.1:8888 --max-time 30 https://airvpn.org/
+arr-doctor
+curl --noproxy '*' --fail --max-time 20 https://cache.nixos.org/nix-cache-info
+curl --noproxy '' --proxy http://127.0.0.1:8888 --fail --max-time 20 https://cache.nixos.org/nix-cache-info
+systemctl show nix-daemon docker -p UnsetEnvironment
 ```
 
-In a browser using the proxy, visit <https://ipleak.net/> and check that its
-reported public IP belongs to the VPN. Browser features such as WebRTC and
-application-specific DNS behavior need separate checking; an HTTP proxy does
-not tunnel all computer traffic.
+After applying both NixOS and Home Manager configurations, log out and back in
+so applications drop the old host proxy environment. In Firefox and LibreWolf,
+use system proxy settings instead of an old manual `127.0.0.1:8888` setting.
+For an existing Fish shell, clear the obsolete settings immediately with:
 
-To disable system proxy use, set `systemSettings.systemProxy.enable = false`,
-activate both configurations again, and log out and back in. If the proxy is
-down, run rebuild commands with proxy variables removed using
-`env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u all_proxy -u ALL_PROXY`
-before the command. Disabling client settings does not stop the torrent VPN.
+```fish
+set -e http_proxy https_proxy all_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY
+```
 
-If Gluetun is unhealthy, inspect `docker logs --tail 80 gluetun` locally before
-changing VPN settings. Do not share private keys or credentials from logs or
-profiles. The override enables the proxy; it cannot repair invalid VPN credentials
-or an unreachable VPN endpoint.
+Before activation, a broken proxy can be bypassed for a build command with:
 
-Sources: [Gluetun HTTP proxy options](https://github.com/qdm12/gluetun-wiki/blob/main/setup/options/http-proxy.md)
-and [WireGuard configuration-file support](https://github.com/qdm12/gluetun-wiki/blob/main/setup/options/wireguard.md).
+```sh
+env -u http_proxy -u https_proxy -u all_proxy -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY nixos-rebuild build --flake /home/lg/.config/nix#cf-fv1
+```
+
+This changes only the client process; an already running Nix daemon keeps its
+old environment until the corrected system configuration is activated.

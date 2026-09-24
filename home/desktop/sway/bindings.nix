@@ -138,6 +138,13 @@ in
   "Mod1+minus" = "exec scale.sh down";
   "${m}+equal" = "exec scale.sh default";
 
+  # Ghostty handles the font-size change natively; release bindings only
+  # display the resulting size without stealing the key from the terminal.
+  "--release Ctrl+equal" = "exec ghostty-font-size-notify up";
+  "--release Ctrl+plus" = "exec ghostty-font-size-notify up";
+  "--release Ctrl+minus" = "exec ghostty-font-size-notify down";
+  "--release Ctrl+0" = "exec ghostty-font-size-notify reset";
+
   # Floating / focus
   "${m}+Shift+Space" = "floating toggle";
   "${m}+Space" = "focus mode_toggle";

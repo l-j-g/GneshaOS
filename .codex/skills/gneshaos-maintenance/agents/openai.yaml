@@ -1,0 +1,4 @@
+interface:
+  display_name: "GneshaOS Maintenance"
+  short_description: "Safely audit, edit, and validate GneshaOS"
+  default_prompt: "Use $gneshaos-maintenance to make and validate a safe GneshaOS configuration change."

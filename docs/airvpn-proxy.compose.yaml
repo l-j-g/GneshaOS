@@ -1,4 +1,4 @@
-# Merge with /home/lg/src/arr/docker-compose.yml; this is not a standalone stack.
+# Merge with /home/lg/.config/containers/arr/docker-compose.yml; not standalone.
 # https://github.com/qdm12/gluetun-wiki/blob/main/setup/options/http-proxy.md
 services:
   gluetun:

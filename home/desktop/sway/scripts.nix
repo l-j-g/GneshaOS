@@ -7,6 +7,7 @@
 #   - scale.sh: the scale "default" resets to (matches sway config)
 #   - theme-picker: selects a Base16 theme and previews it live
 #   - theme-preview: applies a selected Base16 palette to the running desktop
+#   - ghostty-font-size-notify: reports native Ghostty font-size changes
 
 {
   config,
@@ -22,7 +23,7 @@ let
   system = params.systemSettings;
   # Scripts we install raw (no parameter substitution needed).
   swayScripts = lib.filterAttrs
-    (name: _: !builtins.elem name [ "scale.sh" "theme-picker" "theme-preview" ])
+    (name: _: !builtins.elem name [ "scale.sh" "theme-picker" "theme-preview" "ghostty-font-size-notify" ])
     (builtins.readDir ./scripts);
   installScript = name: {
     source = ./scripts/${name};
@@ -42,6 +43,10 @@ let
     [ "__HOME_PROFILE__" ]
     [ "${user.userName}@${system.hostName}" ]
     (builtins.readFile ./scripts/theme-picker);
+  ghosttyFontSizeNotifyScript = lib.replaceStrings
+    [ "__DEFAULT_FONT_SIZE__" ]
+    [ (toString variables.terminalFontSize) ]
+    (builtins.readFile ./scripts/ghostty-font-size-notify);
   nwgWrapperStyle = lib.replaceStrings
     [ "__TERMINAL_FONT_SIZE__" ]
     [ (toString variables.terminalFontSize) ]
@@ -66,6 +71,10 @@ in
     };
     ".config/sway/scripts/theme-preview" = {
       text = themePreviewScript;
+      executable = true;
+    };
+    ".config/sway/scripts/ghostty-font-size-notify" = {
+      text = ghosttyFontSizeNotifyScript;
       executable = true;
     };
     ".config/nwg-wrapper/help.sh".source = ./nwg-wrapper/help.sh;

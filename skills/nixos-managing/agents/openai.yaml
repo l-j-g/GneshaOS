@@ -1,0 +1,4 @@
+interface:
+  display_name: "NixOS Management"
+  short_description: "NixOS flakes, modules, services, and operations"
+  default_prompt: "Use $nixos-managing for NixOS management guidance, while following this repository's AGENTS.md and maintenance skill first."

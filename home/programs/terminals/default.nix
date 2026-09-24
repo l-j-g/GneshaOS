@@ -1,9 +1,10 @@
 # Terminal programs and their configuration.
-# Kitty is the active terminal; Foot remains available as an optional module
-# but is not imported by this default layer.
+# Ghostty is the active terminal; Kitty remains enabled for nnn/theme-preview
+# integrations, and Foot remains available as an optional module.
 
 {
   imports = [
+    ./ghostty.nix
     ./kitty.nix
   ];
 }

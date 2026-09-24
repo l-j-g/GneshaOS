@@ -15,6 +15,13 @@ let
 
   system = params.systemSettings;
   screenshotDir = lib.replaceStrings [ "~" ] [ config.home.homeDirectory ] variables.screenshotDir;
+  mediaMountPoint = system.mediaMountPoint;
+  mediaDirectories = {
+    download = "${mediaMountPoint}/downloads";
+    music = "${mediaMountPoint}/music";
+    pictures = "${mediaMountPoint}/Pictures";
+    videos = "${mediaMountPoint}/Videos";
+  };
 
   # sway-extra.conf is static sway syntax, so user-adjustable values inside it
   # (gaps, screenshot upload URL) are filled in via placeholder substitution.
@@ -37,9 +44,16 @@ let
   # home-manager's sway module doesn't emit `set $term`/`set $menu` here.
   term = variables.terminal;
   # The default terminal shortcut attaches to one persistent tmux session.
-  # Shift+Mod4+Return remains a plain Kitty terminal (see bindings.nix).
-  termCwd = "${term} --directory \"$(swaycwd 2>/dev/null || echo $HOME)\" tmux new-session -A -s main";
-  termFloat = "${term} --class floating_shell";
+  termCwd =
+    if term == "ghostty" then
+      "${term} --working-directory \"$(swaycwd 2>/dev/null || echo $HOME)\" -e tmux new-session -A -s main"
+    else
+      "${term} --directory \"$(swaycwd 2>/dev/null || echo $HOME)\" tmux new-session -A -s main";
+  termFloat =
+    if term == "ghostty" then
+      "${term} --class floating_shell -e"
+    else
+      "${term} --class floating_shell";
 
   # Launcher (Manjaro: rofi combi = drun + run).
   rofiLauncher = "${config.home.homeDirectory}/.config/sway/scripts/gnesha-rofi";
@@ -81,11 +95,29 @@ in
 {
   xdg.userDirs = {
     enable = true;
-    createDirectories = true;
+    # The NixOS media-directory-setup service creates these after the drive
+    # is mounted, avoiding accidental creation on the root filesystem.
+    createDirectories = false;
     setSessionVariables = true;
+    inherit (mediaDirectories)
+      download
+      music
+      pictures
+      videos
+      ;
     extraConfig = {
       SCREENSHOTS = screenshotDir;
     };
+  };
+
+  # Keep the conventional paths usable while the directory contents live on
+  # MooGoo. The links themselves live on the btrfs home volume; exFAT only
+  # stores the target contents.
+  home.file = {
+    "Downloads".source = config.lib.file.mkOutOfStoreSymlink mediaDirectories.download;
+    "Music".source = config.lib.file.mkOutOfStoreSymlink mediaDirectories.music;
+    "Pictures".source = config.lib.file.mkOutOfStoreSymlink mediaDirectories.pictures;
+    "Videos".source = config.lib.file.mkOutOfStoreSymlink mediaDirectories.videos;
   };
 
   wayland.windowManager.sway = {
@@ -162,7 +194,6 @@ in
       };
 
       startup = [
-        { command = "mkdir -p ${variables.screenshotDir}"; }
         { command = "xdg-user-dirs-update"; }
         { command = "wlsunset -l ${toString system.latitude} -L ${toString system.longitude}"; }
         { command = "dex -a -e SWAY"; }

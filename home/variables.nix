@@ -7,7 +7,7 @@
 {
   # Base16 theme name. Use "matrix-green" or any scheme exposed by
   # nix-colors, such as "ayu-dark", "dracula", or "nord".
-  themeName = "ayu-dark";
+  themeName = "ashes";
 
   # Default webpage zoom for Firefox and LibreWolf (1.5 = 150%). Browser UI
   # scaling and any saved per-site zoom choices remain independent.
@@ -17,9 +17,12 @@
   gitUserName = "lg";
   gitUserEmail = "lg@lgreve.com";
 
+  # Public PGP key file shown by the `key` shell command.
+  publicKeyFile = "/home/lg/public-key.asc";
+
   # Terminal command used by Sway, rofi, and Waybar. Change this only when the
   # matching terminal program is enabled under home/programs/terminals/.
-  terminal = "kitty";
+  terminal = "ghostty";
 
   # Sway output scale. "1" is 100%, "2" is 200% HiDPI. Fractional values
   # such as "1.5" are also accepted by Sway. The scale helper's "default"
@@ -30,18 +33,19 @@
   gapsInner = 5;
   gapsOuter = 5;
 
-  # Font family used by Kitty. It is installed by modules/fonts.nix.
-  terminalFontFamily = "Terminess Nerd Font Mono";
+  # Font family used by Kitty. The generic alias resolves to bitmap Terminus
+  # through modules/fonts.nix.
+  terminalFontFamily = "monospace";
 
   # Font size, in points, for Sway stacked and tabbed window titles.
   stackedViewFontSize = 14;
 
-  # Font size, in points, used by Kitty, Foot, Waybar, rofi, and mako.
+  # Font size, in points, used by Kitty, Ghostty, Foot, Waybar, rofi, and mako.
   terminalFontSize = 16;
 
-  # Directory where grimshot saves screenshots. A leading ~ is expanded to
-  # the configured user's home directory by the Sway module.
-  screenshotDir = "~/Pictures/Screenshots";
+  # Directory where grimshot saves screenshots. Keep this on the MooGoo media
+  # drive unless you intentionally want screenshots stored elsewhere.
+  screenshotDir = "/media/Pictures/Screenshots";
 
   # Anonymous image host used by the screenshot-upload binding. Change this
   # to another 0x0-compatible endpoint or leave it unchanged to keep uploads.

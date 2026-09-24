@@ -55,6 +55,21 @@ in
     MOZ_WAYLAND_USE_FLOAT_SCALE = "1";
   };
 
+  # exFAT rejects ':' in filenames, while grimshot's default `date -Ins`
+  # timestamp includes colons. Put a safe wrapper earlier in PATH so all
+  # existing Sway screenshot bindings continue to work on the media drive.
+  home.file.".local/bin/grimshot" = {
+    executable = true;
+    text = ''
+      #!${pkgs.bash}/bin/bash
+      set -eu
+      if [ -z "''${GRIMSHOT_FILENAME_FORMAT:-}" ]; then
+        export GRIMSHOT_FILENAME_FORMAT="$(${pkgs.coreutils}/bin/date +%Y-%m-%dT%H-%M-%S-%N)"
+      fi
+      exec ${pkgs.sway-contrib.grimshot}/bin/grimshot "$@"
+    '';
+  };
+
   home.pointerCursor = {
     enable = true;
     package = pkgs.bibata-cursors;

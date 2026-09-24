@@ -28,7 +28,10 @@
     with pkgs;
     [
       tldr
+      signal-desktop
       keepassxc
+      monero-gui
+      kdePackages.kleopatra
       kdePackages.dolphin
       kdePackages.dolphin-plugins
       tor-browser
@@ -41,6 +44,7 @@
       fastfetch
       opencode
       codex
+      nodejs
       uv
       steam
       ppsspp
@@ -55,6 +59,6 @@
       unzip
     ]
     ++ [
-      inputs.mcp-nixos.packages.${pkgs.system}.default
+      inputs.mcp-nixos.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
 }

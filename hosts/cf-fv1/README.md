@@ -18,13 +18,15 @@ After system activation, use `arr ps`, `arr logs`, or `arr up -d` instead of
 running Compose against `~/src/arr/docker-compose.yml`. The existing systemd
 `docker-compose` unit uses this same command at startup and shutdown.
 
-The directory containing `systemSettings.arrComposePath` remains the runtime
-project directory (currently `~/src/arr`). Its `.env`, `config/` databases, and
-Gluetun WireGuard credentials stay there and are read at runtime, never copied
-into the Nix store. The old Compose file is retained as a migration reference;
-changes to it no longer configure the managed stack. Project name `arr`,
-network `arr_default`, service/container names, volume mappings, and
-qBittorrent's Gluetun health dependency and network namespace are preserved.
+The runtime project directory is the parent of `systemSettings.arrComposePath`.
+On this machine it remains `~/src/arr`, where the existing `.env`, application
+`config/` databases, image lock, and Gluetun credentials live. These files are
+read at runtime, never copied into the Nix store. Changing the parameter alone
+does not migrate data. The wrapper refuses startup if `.env` or `config/` is
+missing, rather than starting against empty application directories.
+
+Project name `arr`, network `arr_default`, service/container names, volume
+mappings, and qBittorrent's Gluetun health dependency are preserved.
 SABnzbd keeps host port 8081, now correctly forwarded to its actual container
 listener on port 8080; the old 8081-to-8081 mapping reset connections.
 The checked-in image digests match the installed versions. On first startup,
@@ -44,7 +46,12 @@ terminal UI for logs and container status. Avoid volume removal/pruning commands
 when managing the stack.
 Docker daemon image pulls use the host connection even when the local proxy
 is enabled, so it can fetch Emby or Gluetun while the proxy is stopped.
-This does not change qBittorrent's VPN network namespace.
+This does not change qBittorrent's VPN network namespace. Nix daemon downloads
+also use host routing. Host VPN and Docker proxy settings are independent;
+see [AirVPN configuration](../../docs/airvpn-proxy.md).
+
+The stack follows Docker and the media mount, without ordering after
+`multi-user.target`; this avoids a cycle when another boot service needs it.
 
 Download data remains at `/media/downloads` and `/media/torrents`, with the
 same container paths and permissions. Download-client state stays in the
@@ -62,10 +69,42 @@ After activation, open `http://localhost:8096` and set up libraries. Jellyfin's
 existing database is left untouched; users, libraries, and watched history are
 not migrated automatically.
 
-When `systemSettings.systemProxy.enable` is true, Nix includes the Gluetun
+When `systemSettings.dockerProxy.enable` is true, Nix includes the Gluetun
 HTTP proxy and loopback port mapping directly. The updated `airvpn-profile`
 helper uses `arr` when available; `AIRVPN_COMPOSE_FILE` still explicitly
 selects a custom Compose file and its optional local proxy override.
+
+## Ghostfolio Compose migration
+
+Ghostfolio now runs from the upstream Docker image; PostgreSQL and Redis run in
+the same Compose project with persistent data under
+`~/.config/containers/ghostfolio`. Docker uses locally cached images on normal
+restarts and rebuilds. `ghostfolio-update` explicitly pulls the current image
+tags and recreates the services.
+
+Before activating this change, add `DATABASE_PASSWORD` and `REDIS_PASSWORD` to
+`/home/lg/src/ghostfolio/secrets.env`, each as a long hexadecimal secret (for
+example, generate one with `openssl rand -hex 32`). Export the existing native
+PostgreSQL major version with `sudo -u postgres psql -Atc 'SHOW server_version;'`
+and set `systemSettings.ghostfolioPostgresMajor` to that major. Then stop
+Ghostfolio so no writes occur during the final export, and dump the database:
+
+```sh
+sudo systemctl stop ghostfolio
+install -d -m 700 ~/.config/containers/ghostfolio
+umask 077
+sudo -u postgres pg_dump --no-owner --no-privileges ghostfolio \
+  > ~/.config/containers/ghostfolio/initial-database.sql
+```
+
+The first Compose start imports that dump before starting the app, renames the
+dump to `.imported`, and records a completion marker. Keep the native database
+and imported dump until the containerized instance has been verified. The
+import is not run again on later starts. Ghostfolio remains bound to
+`127.0.0.1:3333`; PostgreSQL and Redis ports are not published.
+Ghostfolio updates can migrate the database; take a database backup before
+running `ghostfolio-update` because reverting only the app image may not roll
+back that schema change.
 
 Before activation, build the system and Home Manager configurations using the
 repository validation commands. The generated Compose definition was resolved

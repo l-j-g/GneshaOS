@@ -2,7 +2,9 @@
 
 let
   # greetd uses the login PAM substack, so configure login only once.
-  passwordServices = [ "login" "sudo" "gtklock" "swaylock" ];
+  # gtklock gets its standard unix PAM stack from programs.gtklock.enable.
+  # Keep the extra faillock control rules off its interactive prompt.
+  passwordServices = [ "login" "sudo" "swaylock" ];
   faillock = "${pkgs.linux-pam}/lib/security/pam_faillock.so";
 in
 {

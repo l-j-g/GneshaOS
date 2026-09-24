@@ -3,6 +3,7 @@
   pkgs,
   lib,
   params,
+  variables,
   ...
 }:
 
@@ -17,6 +18,8 @@ let
     name = "gnesha-rebuild";
     runtimeInputs = [ pkgs.nix pkgs.nh pkgs.jq pkgs.coreutils ];
     text = ''
+      # Stale login environments must not make recovery depend on Docker.
+      unset http_proxy https_proxy all_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY
       buildDir=$(mktemp -d -t gnesha-rebuild.XXXXXX)
       trap 'rm -rf -- "$buildDir"' EXIT
       # Freeze the input once: neither edits nor the background updater can
@@ -29,6 +32,42 @@ let
       # nh receives the exact built closures, not a newly evaluated flake.
       nh os switch "$buildDir/system"
       nh home switch "$buildDir/home" -b backup
+    '';
+  };
+  showPublicKey = pkgs.writeShellApplication {
+    name = "pubkey";
+    runtimeInputs = [ pkgs.coreutils pkgs.wl-clipboard pkgs.xclip ];
+    text = ''
+      keyFile=${lib.escapeShellArg variables.publicKeyFile}
+      if [[ ! -r "$keyFile" ]]; then
+        echo "pubkey: cannot read $keyFile" >&2
+        exit 1
+      fi
+
+      cat -- "$keyFile"
+      if [[ -n "''${WAYLAND_DISPLAY:-}" ]]; then
+        wl-copy < "$keyFile"
+        echo "Public key copied to clipboard." >&2
+      elif [[ -n "''${DISPLAY:-}" ]]; then
+        xclip -selection clipboard < "$keyFile"
+        echo "Public key copied to clipboard." >&2
+      else
+        echo "No graphical clipboard is available; printed only." >&2
+      fi
+    '';
+  };
+  decryptClipboard = pkgs.writeShellApplication {
+    name = "declypt";
+    runtimeInputs = [ pkgs.gnupg pkgs.wl-clipboard pkgs.xclip ];
+    text = ''
+      if [[ -n "''${WAYLAND_DISPLAY:-}" ]]; then
+        wl-paste --no-newline | gpg --decrypt
+      elif [[ -n "''${DISPLAY:-}" ]]; then
+        xclip -o -selection clipboard | gpg --decrypt
+      else
+        echo "declypt: no graphical clipboard is available" >&2
+        exit 1
+      fi
     '';
   };
   fishWorkflow = lib.replaceStrings
@@ -56,18 +95,20 @@ in
   };
 
   xdg.configFile."airvpn/proxy.compose.yaml" = lib.mkIf
-    (params.systemSettings.systemProxy.enable or false) {
+    (params.systemSettings.dockerProxy.enable or false) {
       # JSON is valid YAML and keeps the published port in sync with the client.
       text = builtins.toJSON {
         services.gluetun = {
           environment.HTTPPROXY = "on";
-          ports = [ "127.0.0.1:${toString params.systemSettings.systemProxy.port}:8888/tcp" ];
+          ports = [ "127.0.0.1:${toString params.systemSettings.dockerProxy.port}:8888/tcp" ];
         };
       };
     };
 
   home.packages = with pkgs; [
     rebuild
+    showPublicKey
+    decryptClipboard
     lazydocker
     zoxide
     eza

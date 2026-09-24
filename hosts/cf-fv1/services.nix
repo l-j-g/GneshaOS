@@ -77,13 +77,19 @@ in
   networking.hostName = params.systemSettings.hostName;
   networking.networkmanager.enable = true;
 
-  # Standard proxy environment for applications that support HTTP CONNECT.
-  # The local Gluetun proxy must be started before enabling this configuration.
+  # Optional host HTTP proxy, independent of the Docker Gluetun proxy.
+  # Native AirVPN WireGuard routing does not require HTTP proxy variables.
   networking.proxy = lib.mkIf proxy.enable {
     httpProxy = proxyUrl;
     httpsProxy = proxyUrl;
     noProxy = proxy.noProxy;
   };
+
+  # Builds must remain available while the optional application proxy is down.
+  systemd.services.nix-daemon.serviceConfig.UnsetEnvironment = [
+    "http_proxy" "https_proxy" "all_proxy"
+    "HTTP_PROXY" "HTTPS_PROXY" "ALL_PROXY"
+  ];
 
   # Local time = system timezone from the top-level params (should match the
   # wlsunset coordinates).
@@ -104,7 +110,7 @@ in
         "server min protocol" = "SMB2";
         # SMB is LAN-only: set "hosts allow" to your subnet + loopback,
         # and deny everything else.
-        "hosts allow" = "127.";
+        "hosts allow" = "127. 192.";
         "hosts deny" = "0.0.0.0/0";
       };
       media = {
@@ -203,5 +209,8 @@ in
     powertop
     docker-compose
     libnotify
+    # Ghostty sets TERM=xterm-ghostty; make that terminfo entry available
+    # system-wide to tmux and programs launched outside Home Manager's shell.
+    ghostty.terminfo
   ];
 }

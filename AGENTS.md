@@ -18,6 +18,13 @@ running machine.
 - `wallpapers/` contains visual assets and `docs/` contains user-facing
   documentation. There is no separate application source or test directory.
 
+## Supplemental NixOS Management Reference
+
+For broader NixOS tasks such as installation, remote deployment, image building,
+impermanence, LUKS, or monitoring, consult `skills/nixos-managing/SKILL.md` and
+its linked references. This upstream material is general guidance: this
+repository's safety rules and `gneshaos-maintenance` skill take precedence.
+
 ## Build and Validation
 
 Run checks from the repository root:

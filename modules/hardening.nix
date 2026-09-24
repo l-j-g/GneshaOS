@@ -48,7 +48,8 @@
 
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 22 ];
+    allowedTCPPorts = [ 22 64480 ];
+    allowedUDPPorts = [ 64480 ];
   };
 
   nix = {

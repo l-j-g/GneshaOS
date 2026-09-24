@@ -1,0 +1,67 @@
+#!/bin/sh
+# Notify the user about Ghostty's native font-size keybinds.
+#
+# Ghostty owns the actual font-size change. This helper runs from Sway's
+# key-release bindings so it can report the same bounded size without
+# intercepting or reinjecting the key into the terminal.
+
+focusedId=$(swaymsg -t get_tree 2>/dev/null \
+    | jq -r '.. | objects | select(.focused? == true and .app_id? == "com.mitchellh.ghostty") | .id' \
+    | tail -n 1)
+[ -n "$focusedId" ] || exit 0
+
+stateDir="${XDG_RUNTIME_DIR:-/tmp}/gnesha-ghostty-font-size"
+stateFile="$stateDir/$focusedId"
+mkdir -p "$stateDir"
+
+current=$(cat "$stateFile" 2>/dev/null || printf '%s\n' __DEFAULT_FONT_SIZE__)
+case "$current" in
+    12|14|16|18|20|22|24|28|32) ;;
+    *) current=__DEFAULT_FONT_SIZE__ ;;
+esac
+
+boundary=
+case "${1:-}" in
+    up)
+        case "$current" in
+            12) next=14 ;;
+            14) next=16 ;;
+            16) next=18 ;;
+            18) next=20 ;;
+            20) next=22 ;;
+            22) next=24 ;;
+            24) next=28 ;;
+            28) next=32 ;;
+            32) next=32; boundary=maximum ;;
+        esac
+        ;;
+    down)
+        case "$current" in
+            12) next=12; boundary=minimum ;;
+            14) next=12 ;;
+            16) next=14 ;;
+            18) next=16 ;;
+            20) next=18 ;;
+            22) next=20 ;;
+            24) next=22 ;;
+            28) next=24 ;;
+            32) next=28 ;;
+        esac
+        ;;
+    reset)
+        next=__DEFAULT_FONT_SIZE__
+        boundary=default
+        ;;
+    *)
+        exit 0
+        ;;
+esac
+
+printf '%s\n' "$next" > "$stateFile"
+case "$boundary" in
+    maximum) message="$next pt (maximum)" ;;
+    minimum) message="$next pt (minimum)" ;;
+    default) message="$next pt (default)" ;;
+    *)       message="$next pt" ;;
+esac
+notify-send -a Ghostty -u low -t 1200 "Ghostty font size" "$message" >/dev/null 2>&1 || true

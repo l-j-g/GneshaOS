@@ -32,20 +32,39 @@
     backlightDevice = "intel_backlight";
     alsSensorPath = "/sys/bus/iio/devices/iio:device5/in_illuminance_raw";
 
-    # Legacy Compose path: its parent holds the arr .env and config directory.
-    # Nix now generates the stack definition; manage it with the arr command.
+    # Runtime Compose state and credentials live outside the Nix store.
+    containersDirectory = "/home/lg/.config/containers";
     arrComposePath = "/home/lg/src/arr/docker-compose.yml";
+    # Match this to the current native PostgreSQL major version before import.
+    ghostfolioPostgresMajor = "17";
 
     # Mount point of the MooGoo drive used for user media directories.
     mediaMountPoint = "/media";
 
-    # HTTP/HTTPS proxy for compatible system applications. Start the Gluetun
-    # proxy first (docs/airvpn-proxy.md). Set false to restore direct access.
+    # Optional independent host HTTP proxy. Leave disabled for native WireGuard.
+    # Never point this at Docker Gluetun; see docs/airvpn-proxy.md.
     systemProxy = {
-      enable = true;
+      enable = false;
       host = "127.0.0.1";
       port = 8888;
       noProxy = "localhost,127.0.0.1,::1,cf-fv1,.local";
+    };
+
+    # Docker-only HTTP CONNECT proxy; never sets host proxy variables.
+    dockerProxy = {
+      enable = true;
+      port = 8888;
+      noProxy = "localhost,127.0.0.1,::1,cf-fv1,.local";
+    };
+
+    # System-wide AirVPN WireGuard tunnel. The .conf profile contains private
+    # keys, so point configPath at a local profile outside this repo (never
+    # commit it). Set enable = false to disable; the tunnel only starts
+    # manually (systemctl start airvpn-wg) or from the Waybar lock icon.
+    airVpn = {
+      # Temporary nz.conf profile; use a separate device key for concurrent tunnels.
+      enable = true;
+      configPath = "/home/lg/.config/airvpn/host.conf";
     };
   };
 

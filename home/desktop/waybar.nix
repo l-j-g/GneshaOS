@@ -12,6 +12,8 @@
 let
   v = import ../theme/palette.nix { inherit config pkgs; };
   sessionTarget = "sway-session.target";
+  terminalCommand =
+    if variables.terminal == "ghostty" then "${variables.terminal} -e" else variables.terminal;
 in
 {
   programs.waybar = {
@@ -31,6 +33,7 @@ in
       ];
       modules-center = [ "sway/window" ];
       modules-right = [
+        "custom/vpn"
         "network"
         "bluetooth"
         "tray"
@@ -64,8 +67,7 @@ in
 
       memory = {
         interval = 5;
-        # Nerd Fonts v3 nf-md-memory; the older nf-md-memory codepoint is not
-        # present in the Terminess Nerd Font build.
+        # Nerd Fonts v3 nf-md-memory; this is supplied by the symbol fallback.
         format = "󰘚";
         states = {
           warning = 70;
@@ -88,14 +90,23 @@ in
         tooltip-format-wifi = "{essid} ({signalStrength}%)\\n{ifname} {ipaddr}";
         tooltip-format-ethernet = "{ifname} {ipaddr}";
         tooltip-format-disconnected = "disconnected";
-        on-click = "${variables.terminal} nmtui connect";
+        on-click = "${terminalCommand} nmtui connect";
+      };
+
+      "custom/vpn" = {
+        # vpn-toggle is installed to ~/.config/sway/scripts (on session PATH).
+        exec = "vpn-toggle status";
+        on-click = "vpn-toggle toggle";
+        interval = 5;
+        format = "{}";
+        tooltip = true;
       };
 
       bluetooth = {
         format = "󰂯";
         format-disabled = "󰂲";
         tooltip-format = "{status}";
-        on-click = "${variables.terminal} bluetuith";
+        on-click = "${terminalCommand} bluetuith";
         on-click-right = "rfkill toggle bluetooth";
       };
 
@@ -138,14 +149,14 @@ in
 
       clock = {
         interval = 60;
-        format = "{:%H:%M}";
+        format = "{:%I:%M %p}";
         tooltip-format = "{:%a %d %b %Y}";
       };
     };
 
     style = ''
       * {
-        font-family: "Terminess Nerd Font", monospace;
+        font-family: monospace, "Symbols Nerd Font Mono";
         font-size: ${toString variables.terminalFontSize}pt;
         min-height: 0;
       }
@@ -183,11 +194,14 @@ in
         color: ${v.foreground};
       }
 
-      #network, #bluetooth, #battery, #backlight, #pulseaudio, #memory, #cpu, #clock, #tray {
+      #network, #bluetooth, #battery, #backlight, #pulseaudio, #memory, #cpu, #clock, #tray, #custom-vpn {
         padding: 0 6px;
       }
 
       #network.disconnected, #bluetooth.disabled { color: ${v.warning}; }
+
+      #custom-vpn.connected { color: ${v.accent}; }
+      #custom-vpn.disconnected { color: ${v.subtle}; }
 
       #battery.warning { color: ${v.warning}; }
       #battery.critical { color: ${v.critical}; }

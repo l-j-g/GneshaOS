@@ -73,7 +73,7 @@ A declarative NixOS configuration for a [Panasonic Let's Note CF-FV1](https://pa
 | `system-parameters.example.nix` | Documented system-parameter template / fallback |
 | `home/variables.nix` | **Editable Home Manager preferences** — theme, gaps, fonts, and desktop behavior |
 | `docs/user-parameters.md` | **Full self-service reference** — every parameter, allowed values, quickstart |
-| `docs/` | Install runbook |
+| `docs/` | Development workflow, parameter reference, and install runbook |
 
 ## Install / usage
 
@@ -117,6 +117,8 @@ system-parameter files tracked: Git flakes do not include ignored or untracked
 files.
 
 For a from-scratch install, follow [`docs/install.md`](docs/install.md).
+For safe editing and build-only validation, follow
+[`docs/development.md`](docs/development.md).
 
 ## Notes
 

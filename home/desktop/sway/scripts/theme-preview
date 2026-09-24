@@ -215,7 +215,7 @@ EOF
 write_waybar_theme() {
     cat > "$gneshaDir/waybar-live.css" <<EOF
 * {
-  font-family: "Terminess Nerd Font", monospace;
+  font-family: monospace, "Symbols Nerd Font Mono";
   font-size: __TERMINAL_FONT_SIZE__pt;
   min-height: 0;
 }

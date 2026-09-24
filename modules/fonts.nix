@@ -1,10 +1,15 @@
 # Font setup:
-#  - Terminess (TTF port of Terminus, nerd-patched) for the desktop/terminal
-#    stack. The bitmap Terminus font smears when scaled by GUI applications.
-#  - Original Terminus bitmap font (terminus_font) for the Linux virtual
-#    console, sized up for the 216dpi panel.
+#  - Original Terminus bitmap font (terminus_font) as the generic monospace
+#    family, for Ghostty, and for the Linux virtual console.
+#  - Terminess (TTF port of Terminus, nerd-patched) remains available for
+#    artwork and other explicitly selected font families.
 
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   # Nixpkgs currently ships Terminess Nerd Font from Terminus 4.49.2.
@@ -41,6 +46,7 @@ in
     pkgs.noto-fonts-color-emoji
     pkgs.liberation_ttf
     pkgs.nerd-fonts.fira-code
+    pkgs.nerd-fonts.symbols-only
     pkgs.fira-code-symbols
     pkgs.mplus-outline-fonts.githubRelease
     pkgs.dina-font
@@ -48,9 +54,9 @@ in
   ];
 
   fonts.fontconfig = {
-    # Use the fixed-width TTF family for the generic monospace alias. Without
-    # this, Fontconfig can fall back to bitmap Terminus instead.
-    defaultFonts.monospace = [ "Terminess Nerd Font Mono" ];
+    # Make generic monospace resolve to the bitmap family. Apps that render
+    # Nerd Font icons should add Symbols Nerd Font Mono as an explicit fallback.
+    defaultFonts.monospace = [ "Terminus" ];
   };
 
   console = {
@@ -58,6 +64,5 @@ in
     # (Kernel default would be 8x16 VGA at this resolution.)
     font = "${pkgs.terminus_font}/share/consolefonts/ter-v32n.psf.gz";
     earlySetup = true;
-    packages = [ pkgs.terminus_font ];
   };
 }
