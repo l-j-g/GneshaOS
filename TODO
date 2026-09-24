@@ -267,7 +267,7 @@ registered AirVPN profile without pasting its contents or key into chat. Install
 it through the protected path selected in SEC-01, then schedule coexistence and
 recovery checks.
 
-### [ ] REC-01 — Correct the installation and snapshot recovery runbook
+### [x] REC-01 — Correct the installation and snapshot recovery runbook
 
 Priority: P1. Type: confirmed documentation inconsistencies; recovery untested.
 Files: `docs/install.md`, `modules/btrfs.nix`, host hardware file (read-only).
@@ -298,6 +298,25 @@ Implementation:
 Done when: the runbook describes separately verified recovery for each data
 scope, includes explicit preconditions, and no step claims a root snapshot
 restores the separate home/media filesystems. Never test destructive steps live.
+
+Status: completed as documentation and disposable-VM validated; full host boot
+rollback has not been tested. The runbook records this limit explicitly.
+Commit(s): pending focused REC-01 commit.
+Changed files: `docs/install.md`, `modules/btrfs.nix`, and this task record.
+Checks run and exact outcomes: `git diff --check` passed and
+`nix-instantiate --parse modules/btrfs.nix` passed. A disposable NixOS VM with
+an empty virtual disk created the `@`, `@home`, and standalone `.snapshots`
+subvolumes. Snapper snapshot creation succeeded; rollback at the custom-mounted
+`/mnt/root-layout` was rejected as a non-root subvolume. The explicit mount
+remained `subvol=@` while Btrfs default remained `@home`. Snapper `create`
+help confirmed `-p` prints the pre-snapshot number and `--pre-number` pairs the
+post snapshot. Independent review by `work01_review` passed; its suggested
+distinct range placeholders were applied.
+Operational checks not run and why: no host disk was formatted, mounted, or
+modified. Full recovery/boot rollback must still be tested on a disposable
+system that reproduces the host's root mount at `/` before being relied on.
+Remaining prerequisites or operator action: none for the documentation task;
+do not treat snapshots on the host disk as external backups.
 
 ### [ ] THEME-01 — Fix theme-picker cleanup and concurrent activation
 

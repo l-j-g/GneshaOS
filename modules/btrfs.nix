@@ -1,8 +1,8 @@
 # btrfs maintenance: snapper snapshots + timeline for the @ and @home
 # subvolumes, plus monthly scrub.
 #
-# Requires the btrfs root layout from docs/install.md. During
-# install, the .snapshots subvolumes must be created (see runbook step 6):
+# Requires the Btrfs layout from docs/install.md. During
+# install, create the .snapshots subvolumes before mounting for installation:
 #   btrfs subvolume create /mnt/@/.snapshots
 #   btrfs subvolume create /mnt/@home/.snapshots
 
