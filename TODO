@@ -252,7 +252,7 @@ Until a separate profile arrives, record this task as blocked on that input;
 do not call the temporary shared-key arrangement complete.
 
 Status: blocked pending a separate registered AirVPN device profile.
-Commit(s): status record commit pending.
+Commit(s): `a6ec1c4` (`Record AirVPN profile prerequisite`).
 Changed files: this status record only.
 Checks run and exact outcomes: the configured protected path
 `/etc/airvpn/host.conf` is absent. The current
