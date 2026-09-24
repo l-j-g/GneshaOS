@@ -57,14 +57,13 @@
       noProxy = "localhost,127.0.0.1,::1,cf-fv1,.local";
     };
 
-    # System-wide AirVPN WireGuard tunnel. The .conf profile contains private
-    # keys, so point configPath at a local profile outside this repo (never
-    # commit it). Set enable = false to disable; the tunnel only starts
-    # manually (systemctl start airvpn-wg) or from the Waybar lock icon.
+    # System-wide AirVPN WireGuard tunnel. configPath is user-editable; install
+    # the private profile there as root-owned mode 600. Keep it outside the repo
+    # and Nix store. The tunnel starts only on request, never at boot.
     airVpn = {
       # Temporary nz.conf profile; use a separate device key for concurrent tunnels.
       enable = true;
-      configPath = "/home/lg/.config/airvpn/host.conf";
+      configPath = "/etc/airvpn/host.conf";
     };
   };
 

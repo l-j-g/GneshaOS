@@ -169,7 +169,7 @@ profile privilege issue is the next task, SEC-01.
 Remaining prerequisites or operator action: none. Retain the temporary snapshot
 files only as needed; all baseline content is now committed as requested.
 
-### [ ] SEC-01 — Remove passwordless execution of a user-writable VPN profile
+### [x] SEC-01 — Remove passwordless execution of a user-writable VPN profile
 
 Priority: P0. Type: confirmed privilege boundary defect.
 Files: `modules/airvpn-wireguard.nix`, `system-parameters.nix`, VPN docs.
@@ -200,6 +200,32 @@ hooks as root, valid profiles still work, missing profiles fail clearly, and
 no secret enters generated store text. Credential relocation/activation needs
 operator coordination; document the required manual step rather than silently
 changing a path to a file that does not exist.
+
+Status: fixed-in-source, built, and fixture-verified; not activated or verified-live.
+Commit(s): pending; commit ID will be recorded in the follow-up task-record commit.
+Changed files: `modules/airvpn-wireguard.nix`, `system-parameters.nix`,
+`system-parameters.example.nix`, `docs/airvpn-proxy.md`, and
+`docs/user-parameters.md`.
+Checks run and exact outcomes: all three changed Nix files parsed;
+`git diff --check`, `nix flake check --show-trace --no-write-lock-file`,
+`nixos-rebuild build --flake .#cf-fv1 --no-write-lock-file`, and the Home
+Manager activation-package build passed. A disposable bubblewrap user-namespace
+fixture accepted a protected root-owned mode-600 profile, copied it into the
+private runtime directory with mode 600, and reached the `wg-quick` stub. It
+rejected a symlink, a mode-644 file, and a profile under a world-writable
+directory; the untrusted profile's `PreUp` marker did not run. A missing profile
+failed with a clear error. Generated scripts contain no profile contents.
+Evaluation confirmed `wantedBy = []`, `RuntimeDirectoryMode = "0700"`, and
+`RuntimeDirectoryPreserve = "no"`.
+Operational checks not run and why: no service activation or tunnel operation
+was requested. `/etc/airvpn/host.conf` is currently absent; the existing
+`/home/lg/.config/airvpn/host.conf` remains owner 1000, mode 600. The source
+profile was not moved or read.
+Remaining prerequisites or operator action: choose `systemSettings.airVpn.configPath`
+in `system-parameters.nix` and install the reviewed profile there as root-owned
+mode 600; the manual procedure is in `docs/airvpn-proxy.md`. VPN-01 still needs
+a separate registered AirVPN device profile before simultaneous host and
+Docker VPN operation is complete.
 
 ### [ ] VPN-01 — Replace the temporary shared AirVPN device identity
 
