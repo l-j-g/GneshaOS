@@ -301,7 +301,7 @@ restores the separate home/media filesystems. Never test destructive steps live.
 
 Status: completed as documentation and disposable-VM validated; full host boot
 rollback has not been tested. The runbook records this limit explicitly.
-Commit(s): pending focused REC-01 commit.
+Commit(s): `c9badf6` (`Correct installation and recovery runbook`).
 Changed files: `docs/install.md`, `modules/btrfs.nix`, and this task record.
 Checks run and exact outcomes: `git diff --check` passed and
 `nix-instantiate --parse modules/btrfs.nix` passed. A disposable NixOS VM with
