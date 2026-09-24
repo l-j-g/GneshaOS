@@ -251,6 +251,22 @@ cannot break direct host networking, and a boot/rebuild leaves host VPN off.
 Until a separate profile arrives, record this task as blocked on that input;
 do not call the temporary shared-key arrangement complete.
 
+Status: blocked pending a separate registered AirVPN device profile.
+Commit(s): status record commit pending.
+Changed files: this status record only.
+Checks run and exact outcomes: the configured protected path
+`/etc/airvpn/host.conf` is absent. The current
+`/home/lg/.config/airvpn/host.conf` file is present as a regular file owned by
+uid 1000 with mode 600; its contents were not read. No replacement profile was
+provided, so device identities were not compared and no tunnels were operated.
+Operational checks not run and why: separate profile and an authorized
+connectivity window are prerequisites. Do not infer safety from the host
+profile's file mode.
+Remaining prerequisites or operator action: provide a local path to a separate,
+registered AirVPN profile without pasting its contents or key into chat. Install
+it through the protected path selected in SEC-01, then schedule coexistence and
+recovery checks.
+
 ### [ ] REC-01 — Correct the installation and snapshot recovery runbook
 
 Priority: P1. Type: confirmed documentation inconsistencies; recovery untested.
