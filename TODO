@@ -27,9 +27,9 @@ the named symbols rather than relying on line numbers, which will move.
   target dependency and was inactive. Waybar should start it only on request.
 - Docker Gluetun and qBittorrent keep their own VPN. Ordinary host internet and
   Nix/Docker bootstrap must not require Gluetun to exist or be healthy.
-- Host profile is a mode-600 copy of `Downloads/nz.conf` at
-  `~/.config/airvpn/host.conf`. Its key currently matches Docker's key. The user
-  explicitly allowed this temporarily and intends to provide another profile.
+- The host profile is a mode-600 copy of `Downloads/nz.conf` at
+  `~/.config/vpn/host.conf`; its WireGuard identity matches Docker's. The
+  original on `/media/downloads` was left untouched.
 - Existing arr runtime state is `/home/lg/src/arr`, including `.env`, `config/`,
   and `images.lock.json`. No migration to `~/.config/containers/arr` occurred.
 - Ghostfolio's import is commented out in `hosts/cf-fv1/default.nix`. Treat its
@@ -182,18 +182,18 @@ Therefore write access to the profile plus the toggle can become root command
 execution without a password. Mode 600 does not prevent its owner rewriting it.
 
 Implementation:
-1. Prefer a root-owned runtime profile in a root-owned, non-user-writable parent
-   directory (for example `/etc/airvpn/host.conf`), mode 600. Keep it outside the
-   repository and Nix store. Updating it must be an explicit privileged action.
+1. Keep the profile outside the repository and Nix store, mode 600. It may be
+   root-owned outside home or owned by the configured user inside their home
+   directory when a strict parser excludes executable hooks.
 2. Validate ownership, mode, regular-file status, and trusted parent directories
-   before startup. Reject untrusted symlink chains and missing/empty profiles.
+   before import. Reject untrusted symlink chains and missing/empty profiles.
 3. Quote the configured path with `lib.escapeShellArg`; the current `cp
    ${avpn.configPath}` is not shell-quoted.
 4. Use a private systemd runtime directory and arrange cleanup of copied
    credentials on both normal stop and failed startup. Preserve off-at-boot.
-5. If the implementation instead allows user-editable profiles, remove the
-   passwordless root path or design a strict, reviewed parser that excludes all
-   executable hooks. Do not solve this with a grep-only blacklist.
+5. For a user-editable source, remove the passwordless root path and use a
+   strict, reviewed parser that rejects all executable hooks. Do not solve this
+   with a grep-only blacklist.
 
 Done when: a disposable test fixture proves an untrusted profile cannot execute
 hooks as root, valid profiles still work, missing profiles fail clearly, and
@@ -217,15 +217,13 @@ directory; the untrusted profile's `PreUp` marker did not run. A missing profile
 failed with a clear error. Generated scripts contain no profile contents.
 Evaluation confirmed `wantedBy = []`, `RuntimeDirectoryMode = "0700"`, and
 `RuntimeDirectoryPreserve = "no"`.
+The follow-up NetworkManager importer in commit `bef5058` accepts a user-owned
+mode-600 profile under the configured user's home because it parses only
+WireGuard fields and rejects hooks. Its generated system connection remains
+root-only. The current source path is `~/.config/vpn/host.conf`.
 Operational checks not run and why: no service activation or tunnel operation
-was requested. `/etc/airvpn/host.conf` is currently absent; the existing
-`/home/lg/.config/airvpn/host.conf` remains owner 1000, mode 600. The source
-profile was not moved or read.
-Remaining prerequisites or operator action: choose `systemSettings.airVpn.configPath`
-in `system-parameters.nix` and install the reviewed profile there as root-owned
-mode 600; the manual procedure is in `docs/airvpn-proxy.md`. VPN-01 still needs
-a separate registered AirVPN device profile before simultaneous host and
-Docker VPN operation is complete.
+was requested. VPN-01 still needs a separately registered AirVPN device
+profile before simultaneous host and Docker VPN operation is safe.
 
 ### [ ] VPN-01 — Replace the temporary shared AirVPN device identity
 
@@ -252,9 +250,12 @@ cannot break direct host networking, and a boot/rebuild leaves host VPN off.
 Until the separate profile is installed and verified, leave this task
 incomplete; do not call the temporary shared-key arrangement complete.
 
-Status: NetworkManager integration is implemented and VM-verified. It will
-make the imported AirVPN profile selectable in `nmtui`; the profile path is
-still pending, so no live connection is available yet.
+Status: NetworkManager integration is implemented and VM-verified. The user
+provided `~/Downloads/nz.conf`; a mode-600 copy now exists at
+`~/.config/vpn/host.conf`, and the configured path points there. The derived
+WireGuard identity matches Docker's, so simultaneous use remains unsupported.
+The updated system configuration has not been activated and the connection has
+not been loaded or connected on the host.
 Commit(s): `a6ec1c4` (`Record AirVPN profile prerequisite`) and `bef5058`
 (`Manage host AirVPN through NetworkManager`).
 Changed files: `modules/airvpn-networkmanager.nix`,
@@ -272,13 +273,24 @@ check --show-trace --no-write-lock-file`, the NixOS build, Home Manager build,
 Nix parsing, Bash syntax, Python AST parsing, and `git diff --check` passed.
 Independent review by `work01_review` passed after fixing its DNS-priority,
 parser-validation, and stale-keyfile findings.
-Operational checks not run and why: the replacement profile path has not yet
-been provided, so profile identity, host/Docker coexistence, and live routing
-were not tested. No tunnel was activated.
-Remaining prerequisites or operator action: provide the local path to the
-separate registered profile. After its format is reviewed by the strict
-converter, install it at the protected `configPath`; then schedule an
-authorized connectivity window for coexistence and recovery checks.
+Follow-up path setup: at the user's direction, copied `~/Downloads/nz.conf` to
+`~/.config/vpn/host.conf` with directory mode 700 and file mode 600; the source
+on `/media/downloads` was left unchanged. The importer now allows this exact
+user-owned path while retaining strict parsing and root-only generated
+NetworkManager credentials. The configured validator accepted the copied
+profile. Both this profile and Docker's profile parsed, and derived public-key
+comparison confirmed their device identities are the same. The updated flake
+check and NixOS build passed. Home Manager build was blocked because the existing
+untracked `home/shell/rg-fzf.fish` is referenced by the flake; it was preserved.
+Independent review by `work01_review` passed the path ownership, symlink,
+permission, parser, and root-only keyfile checks.
+Operational checks not run and why: the source profile identity matches
+Docker's. No tunnel was activated, so live routing and coexistence were not
+tested.
+Remaining prerequisites or operator action: install a separate registered
+AirVPN profile at `configPath` before host and Docker tunnels run together.
+Then schedule an authorized connectivity window for host-only, Docker-only,
+combined, disconnect, restart, and recovery checks.
 
 ### [x] REC-01 — Correct the installation and snapshot recovery runbook
 

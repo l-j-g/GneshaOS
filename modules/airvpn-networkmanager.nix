@@ -7,6 +7,8 @@ let
   avpn = params.systemSettings.airVpn or { };
   profilePath = avpn.configPath or "/etc/airvpn/host.conf";
   profileArg = lib.escapeShellArg profilePath;
+  homeArg = lib.escapeShellArg params.userSettings.homeDirectory;
+  userArg = lib.escapeShellArg params.userSettings.userName;
   connectionPath = "/etc/NetworkManager/system-connections/airvpn.nmconnection";
   connectionUuid = "60d25a7b-a0a9-56c7-8a6d-ea7ea3061f65";
 
@@ -22,10 +24,21 @@ let
     [[ "$resolved" == "$profile" ]] \
       || { echo "AirVPN profile path contains a symlink" >&2; exit 1; }
 
+    expectedUid=$(${pkgs.coreutils}/bin/id -u ${userArg})
+    home=$(${pkgs.coreutils}/bin/realpath -e -- ${homeArg})
+    case "$profile" in
+      "$home"/*) profileInHome=true ;;
+      *) profileInHome=false ;;
+    esac
+
     fileMetadata=$(${pkgs.coreutils}/bin/stat -c '%u %a %F' -- "$profile")
     read -r fileOwner fileMode fileType <<< "$fileMetadata"
-    [[ "$fileOwner" == 0 && "$fileMode" == 600 && "$fileType" == "regular file" ]] \
-      || { echo "AirVPN profile must be root-owned mode 600" >&2; exit 1; }
+    [[ "$fileMode" == 600 && "$fileType" == "regular file" ]] \
+      || { echo "AirVPN profile must be mode 600" >&2; exit 1; }
+    if [[ "$fileOwner" != 0 ]]; then
+      [[ "$profileInHome" == true && "$fileOwner" == "$expectedUid" ]] \
+        || { echo "AirVPN profile must be root-owned or owned by the configured user inside their home" >&2; exit 1; }
+    fi
 
     directory=$(${pkgs.coreutils}/bin/dirname -- "$profile")
     while :; do
@@ -36,8 +49,12 @@ let
         || { echo "AirVPN profile parent contains a symlink" >&2; exit 1; }
       directoryMetadata=$(${pkgs.coreutils}/bin/stat -c '%u %a %F' -- "$directory")
       read -r directoryOwner directoryMode directoryType <<< "$directoryMetadata"
-      [[ "$directoryOwner" == 0 && "$directoryType" == "directory" ]] \
-        || { echo "AirVPN profile parents must be root-owned directories" >&2; exit 1; }
+      [[ "$directoryType" == "directory" ]] \
+        || { echo "AirVPN profile parents must be directories" >&2; exit 1; }
+      if [[ "$directoryOwner" != 0 ]]; then
+        [[ "$profileInHome" == true && "$directoryOwner" == "$expectedUid" ]] \
+          || { echo "AirVPN profile parents must be root-owned or owned by the configured user inside their home" >&2; exit 1; }
+      fi
       directoryModeValue=$((8#$directoryMode))
       (( (directoryModeValue & 0022) == 0 )) \
         || { echo "AirVPN profile parents must not be group/world writable" >&2; exit 1; }
@@ -77,7 +94,10 @@ in
         wantedBy = [ "multi-user.target" ];
         requires = [ "NetworkManager.service" ];
         after = [ "NetworkManager.service" ];
-        unitConfig.ConditionPathExists = profilePath;
+        unitConfig = {
+          ConditionPathExists = profilePath;
+          RequiresMountsFor = profilePath;
+        };
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;

@@ -7,8 +7,10 @@ The host and Docker have separate controls:
   it can be selected from `nmtui` or the Waybar VPN toggle. It does not
   autoconnect. Set `systemSettings.airVpn.configPath` in
   `system-parameters.nix` to the chosen profile path. Keep the source profile
-  outside the repository and Nix store, owned by root with mode 600; the
-  importer checks the file and its parent directories. It writes the parsed
+  outside the repository and Nix store, mode 600, and either owned by root or
+  by the configured user inside that user's home directory. Parent directories
+  must not be group- or world-writable. The importer checks the file and its
+  parent directories. It writes the parsed
   connection, including its private key, to a root-only file under
   `/etc/NetworkManager/system-connections`, then loads it into NetworkManager.
   The file and connection are removed when the loader stops; boot-time cleanup
@@ -30,12 +32,11 @@ variables. They use host routing, including the native VPN when it is active.
 The `rebuild` helper also clears stale proxy variables inherited from a login
 session, so it can recover the system while Gluetun is stopped.
 
-This machine's configured path is `/etc/airvpn/host.conf`. Install the selected
-profile at that protected path. For example:
+This machine's configured path is `~/.config/vpn/host.conf`:
 
 ```sh
-sudo install -d -o root -g root -m 700 /etc/airvpn
-sudo install -o root -g root -m 600 /path/to/reviewed/host.conf /etc/airvpn/host.conf
+install -d -m 700 "$HOME/.config/vpn"
+install -m 600 "$HOME/Downloads/nz.conf" "$HOME/.config/vpn/host.conf"
 ```
 
 If you choose a different `configPath`, use that same destination in the
@@ -46,10 +47,11 @@ loads the connection; it does not activate the tunnel. Restarting the loader
 disconnects an active AirVPN session. Use `nmtui` to select and activate
 `AirVPN`, or use the Waybar toggle.
 
-Do not put profile contents in the repository or Nix store. For concurrent
-host and Docker VPN use, provide a separately registered AirVPN device profile.
-Keep the host tunnel disconnected when performing other VPN profile or route
-changes.
+Do not put profile contents in the repository or Nix store. The current
+`nz.conf` has the same WireGuard device identity as the Docker Gluetun profile.
+It can be listed in NetworkManager, but do not connect both tunnels
+simultaneously until a separate AirVPN device profile has been registered and
+installed. Keep the host tunnel disconnected during route changes.
 
 ## Runtime data
 

@@ -58,11 +58,11 @@
     };
 
     # AirVPN WireGuard profile imported into NetworkManager, selectable in
-    # nmtui. Install it at configPath as root-owned mode 600. It never
-    # autoconnects.
+    # nmtui. Keep it mode 600; it may be user-owned inside the private home
+    # directory or root-owned elsewhere. It never autoconnects.
     airVpn = {
       enable = true;
-      configPath = "/etc/airvpn/host.conf";
+      configPath = "/home/lg/.config/vpn/host.conf";
     };
   };
 

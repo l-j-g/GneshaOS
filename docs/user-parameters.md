@@ -77,7 +77,7 @@ the machine, account, or installation changes.
 | `systemSettings.systemProxy.enable` | Enable an independent host HTTP proxy; leave disabled for native WireGuard. | `false` | NixOS and desktop proxy settings |
 | `systemSettings.systemProxy.host` / `port` | Address of the local HTTP CONNECT proxy. | `"127.0.0.1"` / `8888` | NixOS and desktop proxy settings |
 | `systemSettings.systemProxy.noProxy` | Comma-separated hosts/domains reached directly. | `"localhost,127.0.0.1,::1,cf-fv1,.local"` | NixOS and desktop proxy settings |
-| `systemSettings.airVpn.configPath` | User-selected path to a root-owned mode-600 WireGuard profile outside the repo and Nix store. Set it in `system-parameters.nix`; the importer validates it and creates a root-only NetworkManager connection. | `"/etc/airvpn/host.conf"` on this host | system AirVPN module |
+| `systemSettings.airVpn.configPath` | User-selected path to a mode-600 WireGuard profile outside the repo and Nix store. It may be owned by the configured user inside their private home directory or root-owned elsewhere. The importer validates it and creates a root-only NetworkManager connection. | `"/home/lg/.config/vpn/host.conf"` on this host | system AirVPN module |
 | `userSettings.userName` | POSIX login name. Must match the host's declared user. | `"lg"` | NixOS and Home Manager |
 | `userSettings.homeDirectory` | User home directory and `@home` volume location. | `"/home/lg"` | Home Manager |
 

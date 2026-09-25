@@ -61,11 +61,11 @@
     };
 
     # AirVPN WireGuard profile imported into NetworkManager for nmtui and the
-    # Waybar toggle. Install the private profile at the configured path as a
-    # root-owned mode-600 file. It never autoconnects.
+    # Waybar toggle. Keep it mode 600; it may be user-owned inside the private
+    # home directory or root-owned elsewhere. It never autoconnects.
     airVpn = {
       enable = false;
-      configPath = "/path/to/root-owned/airvpn-profile.conf";
+      configPath = "/home/your-user/.config/vpn/host.conf";
     };
   };
 
