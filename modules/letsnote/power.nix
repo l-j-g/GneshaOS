@@ -1,5 +1,6 @@
 # CPU power management for the Let's Note CF-FV1.
-# The fans are EC/ACPI-managed (read-only RPM; panafanpwr doesn't support CF-FV1).
+# Fan RPM is read-only. The CF-FV1 fanControl option requests an EC quiet
+# profile through acpi_call; it does not provide general fan-speed control.
 # RAPL powercap constraint files are read-only on this kernel, so we use
 # intel_pstate frequency capping instead — same thermal/noise effect.
 #

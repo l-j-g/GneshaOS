@@ -19,10 +19,12 @@
 
   letsnote.ecFeatures = true;
   # CPU power capping (RAPL): 20W sustained on AC, 15W on battery.
-  # Fans are EC-managed and not software-controllable on CF-FV1 (panafanpwr
-  # doesn't support this model) - the power cap is the heat/noise lever.
+  # The CF-FV1 does not have general fan-speed control here; the separate
+  # fanControl option only requests its EC quiet profile. CPU power capping is
+  # the other heat/noise control.
   letsnote.cpuPower = true;
-  # EC quiet fan curve via acpi_call (SEFM eco); verified on-device.
+  # Request the CF-FV1 EC quiet profile via acpi_call (SEFM eco). The ACPI
+  # method result does not confirm that the EC applied the requested mode.
   letsnote.fanControl = true;
   # Remap the dead JIS keys (無変換/変換/かな) to something useful
   letsnote.jisKeys = true;

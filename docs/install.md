@@ -14,8 +14,9 @@ preconditions have been checked and the exact command has been reviewed.
   are untested.
 
 The repository already configures the Panasonic EC kernel parameters and
-`panasonic-laptop` module. `panafanpwr` fan control remains disabled because
-CF-FV1 support is not confirmed.
+`panasonic-laptop` module. It does not use `panafanpwr`. The CF-FV1
+configuration requests one EC quiet profile through `acpi_call`; that does not
+provide general fan-speed control.
 
 ## Install: preflight and target layout
 
@@ -187,7 +188,9 @@ The flake discovers hosts from `hosts/`. Stable machine values belong in
 - Test the charge limit through the configured Panasonic EC interface.
 - Verify `/media` mounts read/write and restore data from the external backup.
 - Configure LTE if present; identify hardware with `lsusb`/`lspci` first.
-- Keep fan control disabled until the CF-FV1 platform is confirmed supported.
+- Do not enable general fan-speed control for the CF-FV1. The existing EC quiet
+  profile request is model-specific and should not be treated as broad fan
+  control.
 
 ## Known install notes
 

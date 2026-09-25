@@ -12,8 +12,8 @@ in
       Requires the acpi_osi kernel params to fool the BIOS into enabling them.
     '';
     fanControl = lib.mkEnableOption ''
-      acpi_call kernel module + panafanpwr fan/power-mode daemon.
-      The CF-FV1 is NOT yet supported by panafanpwr - enable at your own risk.
+      acpi_call kernel module for the CF-FV1 EC quiet-fan request.
+      This does not provide fan telemetry or general fan control.
     '';
     jisKeys = lib.mkEnableOption ''
       keyd remap for the dead JIS keys (無変換/変換/かな) that have no US-layout
@@ -76,18 +76,28 @@ in
       boot.kernelModules = [ "acpi_call" ];
       boot.extraModulePackages = with config.boot.kernelPackages; [ acpi_call ];
 
-      # EC namespace + quiet/eco byte (0x05) verified from this machine's
-      # DSDT/SSDT2; matches CF-SV1. Firmware re-applies the fan profile on
-      # wake via _WAK -> IETM.WAK -> REFM, so boot-time apply is sufficient.
+      # CF-FV1's existing host configuration uses 0x01. The old 0x05 note
+      # referred to CF-SV1 and did not match this method call. A successful
+      # ACPI method result does not prove the EC applied the requested mode.
       systemd.services.letsnote-fan-eco = {
         description = "Enable Let's Note EC quiet fan curve (SEFM eco)";
         wantedBy = [ "multi-user.target" ];
         after = [ "systemd-modules-load.service" ];
         serviceConfig = {
           Type = "oneshot";
-          RemainAfterExit = true;
           ExecStart = pkgs.writeShellScript "letsnote-fan-eco" ''
+            set -eu
             printf '\\_SB.PC00.LPCB.EC0.SEFM 0x01\n' > /proc/acpi/call
+            result=$(${pkgs.coreutils}/bin/cat /proc/acpi/call)
+            case "$result" in
+              ""|"not called"|Error:*)
+                printf 'ACPI method failed: %s\\n' "$result" >&2
+                exit 1
+                ;;
+              *)
+                printf 'ACPI method returned: %s\\n' "$result"
+                ;;
+            esac
           '';
         };
       };

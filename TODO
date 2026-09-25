@@ -395,7 +395,31 @@ Implementation:
 
 Done when: a harmless stub service demonstrates initial plus scheduled runs,
 unit state no longer prevents repetition, and hardware changes are separately
-reviewed and verified on the correct model.
+reviewed and verified on the correct model. Keep the configured EC byte
+separate from the source-level timer fix; verify the applied fan profile on the
+CF-FV1 before claiming hardware behavior.
+
+Status: timer and result-reporting fixes are built and fixture-verified. The
+service is now an inactive-after-exit oneshot, so both scheduled starts can run.
+The existing CF-FV1 request remains `0x01`; the stale `0x05` comment referred to
+CF-SV1 and was corrected without changing the hardware request. Documentation
+now distinguishes this EC quiet-profile request from general fan-speed control
+and `panafanpwr`, which is not used. The actual EC response was not queried on
+the laptop during this change, so hardware behavior remains unverified here.
+Changed files: `modules/letsnote/default.nix`, `modules/letsnote/power.nix`,
+`modules/letsnote/README.md`, `hosts/cf-fv1/laptop.nix`, `docs/install.md`,
+the repository `README.md`, and this record.
+Checks: flake check and NixOS build passed. `systemd-analyze verify` accepted
+the generated service and timer; the generated service omits
+`RemainAfterExit`, and the timer has 45-second and 180-second `OnBootSec`
+entries. A disposable user-systemd oneshot/timer fixture ran five times in
+0.8 seconds, confirming repeated starts. ACPI-result fixtures accepted `0x0`
+and rejected `Error: AE_NOT_FOUND` and `not called`. No ACPI call was sent to
+the live EC. Independent review confirmed service/timer semantics and found
+two stale documentation claims; those were corrected and follow-up review
+passed.
+Remaining verification: check the method result and actual quiet-profile
+behavior on the CF-FV1 before marking POWER-01 complete.
 
 ### [ ] BUILD-01 — Make system/Home Manager activation recoverable and serialized
 
