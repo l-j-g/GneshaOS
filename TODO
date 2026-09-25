@@ -545,7 +545,7 @@ a 30s bound on the AirVPN profile loader. Keep wait-online disabled and
 document the ordering/connectivity distinction. Flake check and NixOS build
 passed; independent review passed. No activation or reboot was run.
 Post-activation boot/login timing and service readiness remain unmeasured, so
-this task stays open until that separate runtime check. Commit: pending.
+this task stays open until that separate runtime check. Commit: `e9b6855`.
 
 ### [ ] NET-01 — Make network exposure match the documented access boundary
 
