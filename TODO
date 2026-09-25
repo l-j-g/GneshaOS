@@ -467,7 +467,7 @@ the NixOS build, and the Home Manager activation build passed; the latter used a
 disposable source snapshot because the checkout contains an unrelated untracked
 Fish file. No live activation was run. Commit: `7b69611`.
 
-### [ ] BUILD-02 — Tighten background-update apply and stale-candidate behavior
+### [x] BUILD-02 — Tighten background-update apply and stale-candidate behavior
 
 Priority: P1. Type: recovery and concurrency gap.
 Files: `hosts/cf-fv1/services.nix`, `home/shell/nix-workflow.fish`,
@@ -494,6 +494,19 @@ Implementation:
 Done when: stale candidates are rejected, review is responsive, failed apply
 reports the exact lock/live-state relationship, and no unrelated lock edit is
 lost. Include a stubbed concurrent-writer/failure test.
+
+Completed: review returns without waiting on the updater lock; update apply
+holds the updater and shared activation locks on separate descriptors, then
+rechecks source and lock immediately before acceptance. Transaction resume
+checks saved source/lock state, rejects and preserves third-party lock edits,
+and reports which update activation phase failed. Theme preference writes now
+coordinate with the shared lock. Fixtures covered concurrent source/lock edits,
+candidate acceptance, failure reporting, nonblocking review, and the
+nixpkgs-only update policy. Independent review passed. Flake check, NixOS build,
+and Home Manager activation build passed; the latter used a disposable source
+snapshot because the checkout contains an unrelated untracked Fish file. No
+live apply was run. External writers that ignore the lock can still race the
+atomic lock rename. Commit: pending.
 
 ### [ ] BOOT-01 — Replace blanket five-second startup deadlines with scoped limits
 

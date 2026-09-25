@@ -108,6 +108,15 @@ if ! "$previewScript" --apply "$choice"; then
     exit 1
 fi
 
+# Serialize this source edit with update-apply's final freshness check. The
+# activation process will acquire the same lock again when it starts.
+activationStateDir="$HOME/.local/state/gnesha-activation"
+mkdir -p "$activationStateDir"
+chmod 700 "$activationStateDir"
+exec 9>"$activationStateDir/activation.lock"
+chmod 600 "$activationStateDir/activation.lock"
+flock -x 9
+
 tmpFile=$(mktemp "$(dirname "$paramsFile")/.variables.nix.XXXXXX")
 paramsMode=$(stat -c '%a' "$paramsFile")
 sed -E "s|^([[:space:]]*themeName = ).*;|\1\"$choice\";|" "$paramsFile" > "$tmpFile"
@@ -120,6 +129,8 @@ else
     rm -f -- "$tmpFile"
     tmpFile=
 fi
+flock -u 9
+exec 9>&-
 
 activationLog="$logDir/home-activation-$(date -u +%Y%m%dT%H%M%SZ)-$$.log"
 if command -v nh >/dev/null 2>&1; then

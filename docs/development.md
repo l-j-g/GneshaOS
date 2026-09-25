@@ -82,9 +82,10 @@ The system switch, Home Manager switch, update apply, theme-picker activation,
 and the normal shell activation helpers share one lock, so those activation
 sequences cannot interleave.
 
-Theme picker sessions also take a short user-state lock so previews and
-preference writes are serialized. It replaces `home/variables.nix` atomically
-beside the file while preserving its mode. Each background Home Manager run
+Theme picker sessions also take a short user-state lock so previews are
+serialized. Preference writes use the shared activation lock, then replace
+`home/variables.nix` atomically beside the file while preserving its mode.
+Each background Home Manager run
 writes a separate log under `~/.config/gnesha/theme-activation-logs/`; a failed
 activation leaves the saved selection in place and reports that the live
 preview may differ.
@@ -105,8 +106,8 @@ System and Home Manager activation is sequential, not atomic. A failed Home
 Manager activation can leave the new system generation active; inspect the
 recorded phase and retry or recover manually. These commands do not roll back
 live databases or services automatically. Failed update applies use the same
-transaction record; resume verifies the repository `flake.lock` still matches
-the candidate lock before switching.
+transaction record; resume verifies both the repository source and `flake.lock`
+against the saved candidate before switching.
 
 The daily `gnesha-nixpkgs-update` timer prepares a separate candidate at 05:30
 local time, with up to 30 minutes of jitter. It runs only on AC power, uses one
@@ -116,10 +117,18 @@ A scheduled run skipped on battery waits for the next timer/manual invocation.
 Store paths shared with existing generations do not duplicate their contents,
 but new versions still need disk space. Failed builds retain the last ready candidate.
 
-Use `update-status`, `update-review`, then `update-apply` when ready. Apply checks
-that the configuration still matches the candidate, writes its reviewed
-`flake.lock`, and switches to the exact system and Home Manager builds. Commit
-and push that lock change separately. To request another background run:
+Use `update-status`, `update-review`, then `update-apply` when ready. Review
+returns promptly with a build-in-progress message while the updater holds its
+lock; retry after it completes. Apply checks both the source and lock before
+recording the attempt and checks them again under the shared activation lock
+immediately before accepting the candidate `flake.lock`. On failure, the
+transaction phase and retained old/candidate lock files show whether the
+candidate lock was accepted and which activation step reported failure. Resume
+refuses changed source or a lock that matches neither saved version. These
+locks coordinate repository tools; an unrelated editor or process that ignores
+them can still race the final lock-file rename, so do not edit `flake.lock`
+while applying an update. Commit and push an accepted lock change separately.
+To request another background run:
 
 ```sh
 sudo systemctl start --no-block gnesha-nixpkgs-update
@@ -140,6 +149,13 @@ nix build --no-link '.#homeConfigurations."<user>@<host>".activationPackage'
 
 Use `nix flake update` without an input name only when intentionally updating
 all inputs.
+
+The background update policy advances only `nixpkgs`. The flake pins Home
+Manager and other inputs independently; Home Manager follows the selected
+`nixpkgs`, while its own revision remains pinned. If that Home Manager revision
+no longer builds with a new `nixpkgs`, the candidate check fails for review.
+Update other inputs separately and intentionally with a full `nix flake update`,
+then review that broader lock change.
 
 ## Codex workflow
 

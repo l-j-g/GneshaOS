@@ -40,6 +40,9 @@ end
 
 function update-status
     systemctl status gnesha-nixpkgs-update.service --no-pager
+    if test (systemctl is-active gnesha-nixpkgs-update.service 2>/dev/null) = activating
+        echo "The candidate build is still running; update-review reports progress without waiting for its lock."
+    end
     if test -L /var/lib/gnesha-update/ready
         echo "A tested update is ready. Review with update-review; apply with update-apply."
     end

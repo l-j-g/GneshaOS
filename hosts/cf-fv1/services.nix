@@ -56,19 +56,26 @@ let
       source ${activationStateLib}
       state=${lib.escapeShellArg updateState}
       repo=${lib.escapeShellArg params.systemSettings.flakePath}
+      exec 8>"$state/lock"
+      if [ "''${1:-}" = --review ]; then
+        if ! flock -n 8; then
+          echo "The background update build is still running; review is nonblocking. Retry update-review after it completes. Use update-status for current service state."
+          exit 0
+        fi
+      else
+        flock 8
+      fi
       if [ ! -L "$state/ready" ]; then
         echo "No completed update is ready. Check systemctl status gnesha-nixpkgs-update." >&2
         exit 1
       fi
-      exec 9>"$state/lock"
-      flock 9
       ready=$(readlink -f "$state/ready")
       echo "Candidate built at $(cat "$ready/built-at")"
       diff -u "$repo/flake.lock" "$ready/source/flake.lock" || [ "$?" -eq 1 ]
       nvd diff /run/current-system "$ready/system"
       if [ "''${1:-}" = --review ]; then exit 0; fi
       if [ "$#" -ne 0 ]; then echo "Usage: gnesha-update-apply [--review]" >&2; exit 2; fi
-      current=$(nix flake metadata --json --no-write-lock-file "$repo" | jq -er .path)
+      current=$("''${NIX_COMMAND:-nix}" flake metadata --json --no-write-lock-file "$repo" | jq -er .path)
       if ! diff -qr --exclude=flake.lock "$current" "$ready/source" >/dev/null ||
         { ! cmp -s "$current/flake.lock" "$ready/base.lock" &&
           ! cmp -s "$current/flake.lock" "$ready/source/flake.lock"; }; then
@@ -77,7 +84,7 @@ let
         exit 1
       fi
       # Explicit update-apply accepts the reviewed lock file and exact closures.
-      candidateSnapshot=$(nix flake metadata --json --no-write-lock-file "$ready/source" | jq -er .path)
+      candidateSnapshot=$("''${NIX_COMMAND:-nix}" flake metadata --json --no-write-lock-file "$ready/source" | jq -er .path)
       activation_lock
       if ! activation_require_capacity; then
         activation_unlock
@@ -93,6 +100,12 @@ let
         echo "Could not preserve the current and candidate lock files; attempt $activation_id was retained." >&2
         exit 1
       fi
+      if ! cmp -s "$activation_old_lock" "$ready/base.lock" &&
+        ! cmp -s "$activation_old_lock" "$activation_new_lock"; then
+        activation_set_phase blocked_lock_mismatch
+        echo "Repository flake.lock matches neither the candidate base nor candidate lock; leaving it untouched. Attempt $activation_id was retained." >&2
+        exit 1
+      fi
       chmod 600 -- "$activation_old_lock" "$activation_new_lock"
       systemClosure=$(readlink -f "$ready/system")
       homeClosure=$(readlink -f "$ready/home")
@@ -103,14 +116,10 @@ let
       activation_set_phase candidate_ready
 
       activation_lock
-      activation_set_phase accepting_lock
-      if ! activation_accept_update_lock; then
-        activation_set_phase failed_lock_acceptance
-        echo "Could not accept the candidate lock. Attempt $activation_id was retained." >&2
+      if ! activation_update_accept_lock; then exit 1; fi
+      if ! activation_apply_pair false true; then
         exit 1
       fi
-      activation_set_phase lock_accepted
-      activation_apply_pair false true
     '';
   };
 in

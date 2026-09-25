@@ -187,6 +187,36 @@ activation_accept_update_lock() {
   fi
 }
 
+activation_update_source_matches() {
+  local current_snapshot
+  current_snapshot=$("${NIX_COMMAND:-nix}" flake metadata --json --no-write-lock-file "$activation_repo" | jq -er .path) || return 1
+  diff -qr --exclude=flake.lock "$current_snapshot" "$activation_snapshot" >/dev/null
+}
+
+activation_update_accept_lock() {
+  if ! activation_update_source_matches; then
+    activation_set_phase blocked_stale_source
+    printf 'Repository source changed since update attempt %s was built; refusing candidate lock acceptance.\n' "$activation_id" >&2
+    return 1
+  fi
+  if cmp -s "$activation_repo/flake.lock" "$activation_new_lock"; then
+    activation_set_phase lock_accepted
+    return 0
+  fi
+  if ! cmp -s "$activation_repo/flake.lock" "$activation_old_lock"; then
+    activation_set_phase blocked_lock_mismatch
+    printf 'Repository flake.lock matches neither saved version for update attempt %s; leaving it untouched.\n' "$activation_id" >&2
+    return 1
+  fi
+  activation_set_phase accepting_lock
+  if ! activation_accept_update_lock; then
+    activation_set_phase failed_lock_acceptance
+    printf 'Could not accept the candidate lock for update attempt %s.\n' "$activation_id" >&2
+    return 1
+  fi
+  activation_set_phase lock_accepted
+}
+
 activation_build_pair() {
   local host_name="$1" home_profile="$2"
   if [[ ! -e "$activation_dir/system" ]]; then
@@ -239,7 +269,11 @@ activation_apply_pair() {
     activation_set_phase activating_system
     if ! activation_run_logged "${NH_COMMAND:-nh}" os switch "$activation_dir/system"; then
       activation_set_phase failed_system_activation
-      printf 'System activation failed. Attempt %s is retained; resume with gnesha-rebuild --resume %s.\n' "$activation_id" "$activation_id" >&2
+      if [[ "$activation_kind" == update ]]; then
+        printf 'Update attempt %s retained: the candidate lock is accepted, the system switch reported failure, and Home Manager was not attempted. Inspect live state before resuming.\n' "$activation_id" >&2
+      else
+        printf 'System activation failed. Attempt %s is retained; resume with gnesha-rebuild --resume %s.\n' "$activation_id" "$activation_id" >&2
+      fi
       return 1
     fi
     activation_set_phase system_activated
@@ -248,7 +282,11 @@ activation_apply_pair() {
   activation_set_phase activating_home
   if ! activation_run_logged "${NH_COMMAND:-nh}" home switch "$activation_dir/home" -b backup; then
     activation_set_phase failed_home_activation
-    printf 'Home Manager activation failed after the system switch. Attempt %s is retained; resume with gnesha-rebuild --resume %s.\n' "$activation_id" "$activation_id" >&2
+    if [[ "$activation_kind" == update ]]; then
+      printf 'Update attempt %s retained: the candidate lock is accepted and the system switch reported success, but Home Manager activation reported failure. Inspect live state before resuming.\n' "$activation_id" >&2
+    else
+      printf 'Home Manager activation failed after the system switch. Attempt %s is retained; resume with gnesha-rebuild --resume %s.\n' "$activation_id" "$activation_id" >&2
+    fi
     return 1
   fi
 
@@ -289,24 +327,15 @@ activation_resume() {
       return 1
     fi
     case "$activation_phase" in
-      candidate_ready|accepting_lock)
-        if cmp -s "$activation_repo/flake.lock" "$activation_old_lock"; then
-          activation_set_phase accepting_lock
-          if ! activation_accept_update_lock; then
-            activation_set_phase failed_lock_acceptance
-            printf 'Could not accept the saved candidate lock for %s.\n' "$activation_id" >&2
-            return 1
-          fi
-          activation_set_phase lock_accepted
-        elif cmp -s "$activation_repo/flake.lock" "$activation_new_lock"; then
-          activation_set_phase lock_accepted
-        else
-          activation_set_phase blocked_lock_mismatch
-          printf 'The repository lock matches neither saved lock for attempt %s; refusing activation.\n' "$activation_id" >&2
-          return 1
-        fi
+      candidate_ready|accepting_lock|failed_lock_acceptance|blocked_stale_source|blocked_lock_mismatch)
+        activation_update_accept_lock || return 1
         ;;
       *)
+        if ! activation_update_source_matches; then
+          activation_set_phase blocked_stale_source
+          printf 'Repository source changed since update attempt %s was built; refusing to activate its saved closures.\n' "$activation_id" >&2
+          return 1
+        fi
         if ! cmp -s "$activation_repo/flake.lock" "$activation_new_lock"; then
           activation_set_phase blocked_lock_mismatch
           printf 'The repository lock no longer matches this update attempt; refusing activation of %s.\n' "$activation_id" >&2
