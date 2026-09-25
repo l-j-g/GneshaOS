@@ -240,32 +240,45 @@ Implementation:
    either key. Confirm it is a separately registered AirVPN device profile.
 3. Install through the protected path chosen in SEC-01. Preserve the temporary
    profile as a private rollback copy if needed; do not overwrite Docker's file.
-4. Keep the host service available but not wanted by a boot target. Update the
-   temporary-profile note in the docs only after replacement is verified.
+4. Keep the NetworkManager profile available in `nmtui`, with autoconnect
+   disabled. Update the temporary-profile note in the docs only after the
+   replacement is verified.
 5. In an authorized connectivity window, verify host tunnel alone, Docker VPN
-   alone, both together, host stop, and Docker restart. Keep an existing SSH
-   session and recovery path open while testing routes.
+   alone, both together, host disconnect, and Docker restart. Keep an existing
+   SSH session and recovery path open while testing routes.
 
 Done when: device identities differ, both tunnels can coexist, Docker restart
 cannot break direct host networking, and a boot/rebuild leaves host VPN off.
-Until a separate profile arrives, record this task as blocked on that input;
-do not call the temporary shared-key arrangement complete.
+Until the separate profile is installed and verified, leave this task
+incomplete; do not call the temporary shared-key arrangement complete.
 
-Status: blocked pending a separate registered AirVPN device profile.
-Commit(s): `a6ec1c4` (`Record AirVPN profile prerequisite`).
-Changed files: this status record only.
-Checks run and exact outcomes: the configured protected path
-`/etc/airvpn/host.conf` is absent. The current
-`/home/lg/.config/airvpn/host.conf` file is present as a regular file owned by
-uid 1000 with mode 600; its contents were not read. No replacement profile was
-provided, so device identities were not compared and no tunnels were operated.
-Operational checks not run and why: separate profile and an authorized
-connectivity window are prerequisites. Do not infer safety from the host
-profile's file mode.
-Remaining prerequisites or operator action: provide a local path to a separate,
-registered AirVPN profile without pasting its contents or key into chat. Install
-it through the protected path selected in SEC-01, then schedule coexistence and
-recovery checks.
+Status: NetworkManager integration is implemented and VM-verified. It will
+make the imported AirVPN profile selectable in `nmtui`; the profile path is
+still pending, so no live connection is available yet.
+Commit(s): `a6ec1c4` (`Record AirVPN profile prerequisite`); NetworkManager
+integration commit pending.
+Changed files: `modules/airvpn-networkmanager.nix`,
+`modules/airvpn-nm-profile.py`, `hosts/cf-fv1/default.nix`,
+`home/desktop/sway/scripts/vpn-toggle`, `system-parameters.nix`,
+`system-parameters.example.nix`, `docs/airvpn-proxy.md`,
+`docs/user-parameters.md`, and this record.
+Checks run and exact outcomes: a disposable NetworkManager 1.58.1 VM accepted
+the generated keyfile, listed a connection named `AirVPN` with
+`autoconnect=false`, confirmed mode 600, and confirmed it remained disconnected.
+The test rejected an executable `PostUp` hook. A disposable NixOS VM using the
+actual service loaded the profile without connecting; stopping the loader
+removed both the NetworkManager connection and generated keyfile. `nix flake
+check --show-trace --no-write-lock-file`, the NixOS build, Home Manager build,
+Nix parsing, Bash syntax, Python AST parsing, and `git diff --check` passed.
+Independent review by `work01_review` passed after fixing its DNS-priority,
+parser-validation, and stale-keyfile findings.
+Operational checks not run and why: the replacement profile path has not yet
+been provided, so profile identity, host/Docker coexistence, and live routing
+were not tested. No tunnel was activated.
+Remaining prerequisites or operator action: provide the local path to the
+separate registered profile. After its format is reviewed by the strict
+converter, install it at the protected `configPath`; then schedule an
+authorized connectivity window for coexistence and recovery checks.
 
 ### [x] REC-01 — Correct the installation and snapshot recovery runbook
 

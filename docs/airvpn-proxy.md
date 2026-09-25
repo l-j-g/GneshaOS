@@ -3,12 +3,21 @@
 The host and Docker have separate controls:
 
 - `systemSettings.airVpn` configures the native host WireGuard service.
-  It starts only on demand from the Waybar toggle or `systemctl start airvpn-wg`.
-  It does not depend on Docker. Set `systemSettings.airVpn.configPath` in
-  `system-parameters.nix` to the chosen profile path. Keep the profile outside
-  the repository and Nix store, owned by root with mode 600; the service checks
-  the file and every parent directory before startup.
-  Do not reuse Docker's WireGuard device key for simultaneous tunnels.
+  The profile is imported as a NetworkManager connection named `AirVPN`, so
+  it can be selected from `nmtui` or the Waybar VPN toggle. It does not
+  autoconnect. Set `systemSettings.airVpn.configPath` in
+  `system-parameters.nix` to the chosen profile path. Keep the source profile
+  outside the repository and Nix store, owned by root with mode 600; the
+  importer checks the file and its parent directories. It writes the parsed
+  connection, including its private key, to a root-only file under
+  `/etc/NetworkManager/system-connections`, then loads it into NetworkManager.
+  The file and connection are removed when the loader stops; boot-time cleanup
+  removes a stale generated file before NetworkManager starts. Do not reuse
+  Docker's WireGuard device key for simultaneous tunnels.
+  The importer accepts standard keys for interface addresses, DNS, MTU, and
+  peers. It rejects hooks and unsupported directives instead of silently
+  dropping them. When the profile defines DNS, the generated connection uses
+  negative DNS priority to avoid falling back to physical-interface resolvers.
 - `systemSettings.dockerProxy` enables Gluetun's HTTP CONNECT proxy and its
   loopback port (default 8888). Container clients on `arr_default` use
   `http://gluetun:8888`. qBittorrent shares Gluetun's VPN network namespace.
@@ -21,10 +30,8 @@ variables. They use host routing, including the native VPN when it is active.
 The `rebuild` helper also clears stale proxy variables inherited from a login
 session, so it can recover the system while Gluetun is stopped.
 
-This machine's configured path is `/etc/airvpn/host.conf`. The current private
-profile is still in `~/.config/airvpn/host.conf`; it must be deliberately
-installed at the configured protected path before the revised service is
-activated. For example, after reviewing which profile should be used:
+This machine's configured path is `/etc/airvpn/host.conf`. Install the selected
+profile at that protected path. For example:
 
 ```sh
 sudo install -d -o root -g root -m 700 /etc/airvpn
@@ -32,13 +39,17 @@ sudo install -o root -g root -m 600 /path/to/reviewed/host.conf /etc/airvpn/host
 ```
 
 If you choose a different `configPath`, use that same destination in the
-installation commands.
+installation commands. After installing a profile or changing the configured
+path, rebuild and activate the system configuration, then load the connection
+with `sudo systemctl restart airvpn-networkmanager-profile`. The importer only
+loads the connection; it does not activate the tunnel. Restarting the loader
+disconnects an active AirVPN session. Use `nmtui` to select and activate
+`AirVPN`, or use the Waybar toggle.
 
-Do not put profile contents in the repository or Nix store. The current
-temporary profile shares Docker's device key; replace it with a separately
-registered AirVPN device profile for concurrent use. With the host tunnel
-stopped and host HTTP proxy disabled, host internet access uses the direct
-network. Docker keeps its own VPN.
+Do not put profile contents in the repository or Nix store. For concurrent
+host and Docker VPN use, provide a separately registered AirVPN device profile.
+Keep the host tunnel disconnected when performing other VPN profile or route
+changes.
 
 ## Runtime data
 

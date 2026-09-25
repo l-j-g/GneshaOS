@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Show the AirVPN WireGuard tunnel status and toggle the native wg-quick
-# system
-# service. Used by the Waybar custom/vpn module.
+# Show the AirVPN WireGuard status and toggle its NetworkManager connection.
+# Used by the Waybar custom/vpn module.
 
 set -euo pipefail
 
-service="airvpn-wg"
+connection="AirVPN"
 
 is_active() {
-  systemctl is-active --quiet "$service"
+  nmcli --terse --fields NAME connection show --active | grep --fixed-strings \
+    --line-regexp --quiet "$connection"
 }
 
 status() {
@@ -21,9 +21,9 @@ status() {
 
 toggle() {
   if is_active; then
-    sudo systemctl stop "$service"
+    nmcli connection down id "$connection"
   else
-    sudo systemctl start "$service"
+    nmcli connection up id "$connection"
   fi
   status
 }

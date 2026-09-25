@@ -12,7 +12,7 @@
     ../../modules/fonts.nix
     ../../modules/btrfs.nix
     # ../../modules/ghostfolio.nix
-    ../../modules/airvpn-wireguard.nix
+    ../../modules/airvpn-networkmanager.nix
   ];
 
   system.stateVersion = "25.05";

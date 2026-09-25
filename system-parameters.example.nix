@@ -60,10 +60,9 @@
       noProxy = "localhost,127.0.0.1,::1,cf-fv1,.local";
     };
 
-    # System-wide AirVPN WireGuard tunnel. Install the private profile manually
-    # at the configured path as a root-owned mode-600 file. Choose the path
-    # here in system-parameters.nix; never commit the profile or put it in the
-    # Nix store. The tunnel starts only on request, never at boot.
+    # AirVPN WireGuard profile imported into NetworkManager for nmtui and the
+    # Waybar toggle. Install the private profile at the configured path as a
+    # root-owned mode-600 file. It never autoconnects.
     airVpn = {
       enable = false;
       configPath = "/path/to/root-owned/airvpn-profile.conf";
