@@ -258,6 +258,7 @@ The updated system configuration has not been activated and the connection has
 not been loaded or connected on the host.
 Commit(s): `a6ec1c4` (`Record AirVPN profile prerequisite`) and `bef5058`
 (`Manage host AirVPN through NetworkManager`).
+Follow-up commit: `9c6f6d7` (`Use private home path for AirVPN profile`).
 Changed files: `modules/airvpn-networkmanager.nix`,
 `modules/airvpn-nm-profile.py`, `hosts/cf-fv1/default.nix`,
 `home/desktop/sway/scripts/vpn-toggle`, `system-parameters.nix`,
