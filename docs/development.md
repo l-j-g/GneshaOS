@@ -82,6 +82,13 @@ The system switch, Home Manager switch, update apply, theme-picker activation,
 and the normal shell activation helpers share one lock, so those activation
 sequences cannot interleave.
 
+Theme picker sessions also take a short user-state lock so previews and
+preference writes are serialized. It replaces `home/variables.nix` atomically
+beside the file while preserving its mode. Each background Home Manager run
+writes a separate log under `~/.config/gnesha/theme-activation-logs/`; a failed
+activation leaves the saved selection in place and reports that the live
+preview may differ.
+
 Each `rebuild` attempt records its input snapshot, old and candidate generations,
 phase, and log under `~/.local/state/gnesha-activation/transactions/`. Candidate
 GC roots and logs remain after failure. Retry the exact saved closures with

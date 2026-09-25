@@ -311,17 +311,27 @@ case "${1:-}" in
     --open)
         [ -n "${2:-}" ] || die "missing preview state file"
         stateFile=$2
+        previewTitle="Gnesha Theme Preview ${stateFile##*/}"
         mkdir -p "$(dirname "$stateFile")"
-        kitty --class gnesha-theme-preview --title "Gnesha Theme Preview" "$0" --terminal "$stateFile" >/dev/null 2>&1 &
+        command -v kitty >/dev/null 2>&1 || die "kitty is not installed"
+        kitty --class gnesha-theme-preview --title "$previewTitle" "$0" --terminal "$stateFile" >/dev/null 2>&1 &
+        previewPid=$!
         # The rule in sway-extra.conf makes this a floating window. Place it
         # on the right side of the focused output after Kitty maps it.
         if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
             outputRect=""
             attempt=0
             while [ "$attempt" -lt 20 ]; do
-                if swaymsg -t get_tree 2>/dev/null | jq -e '.. | objects | select(.app_id? == "gnesha-theme-preview")' >/dev/null 2>&1; then
+                if swaymsg -t get_tree 2>/dev/null | jq -e --arg title "$previewTitle" '.. | objects | select(.app_id? == "gnesha-theme-preview" and .name? == $title)' >/dev/null 2>&1; then
                     outputRect=$(swaymsg -t get_outputs 2>/dev/null | jq -r '.[] | select(.focused == true) | [.rect.x, .rect.y, .rect.width, .rect.height] | @tsv' | sed -n '1p')
                     break
+                fi
+                if [ -n "$previewPid" ] && ! kill -0 "$previewPid" 2>/dev/null; then
+                    if wait "$previewPid"; then
+                        previewPid=
+                    else
+                        die "kitty failed to open the preview"
+                    fi
                 fi
                 sleep 0.05
                 attempt=$((attempt + 1))
@@ -336,8 +346,15 @@ EOF
                 previewX=$((outputX + outputWidth - previewWidth - 40))
                 previewY=$((outputY + 80))
                 [ "$previewX" -lt "$outputX" ] && previewX=$outputX
-                swaymsg "[app_id=\"gnesha-theme-preview\"] resize set $previewWidth $previewHeight, move position $previewX $previewY" >/dev/null 2>&1 || true
+                swaymsg "[title=\"$previewTitle\"] resize set $previewWidth $previewHeight, move position $previewX $previewY" >/dev/null 2>&1 || true
             fi
+            if [ "$attempt" -ge 20 ]; then
+                [ -z "$previewPid" ] || kill "$previewPid" >/dev/null 2>&1 || true
+                [ -z "$previewPid" ] || wait "$previewPid" 2>/dev/null || true
+                die "preview window did not open"
+            fi
+        elif ! kill -0 "$previewPid" 2>/dev/null; then
+            wait "$previewPid" 2>/dev/null || die "kitty failed to open the preview"
         fi
         ;;
     --apply)
@@ -346,11 +363,16 @@ EOF
         apply_runtime
         ;;
     --close)
-        if command -v swaymsg >/dev/null 2>&1; then
-            swaymsg '[app_id="gnesha-theme-preview"] kill' >/dev/null 2>&1 || true
+        [ -n "${2:-}" ] || die "missing preview state file"
+        previewTitle="Gnesha Theme Preview ${2##*/}"
+        if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+            previewId=$(swaymsg -t get_tree 2>/dev/null | jq -r --arg title "$previewTitle" '.. | objects | select(.app_id? == "gnesha-theme-preview" and .name? == $title) | .id' | sed -n '1p')
+            if [ -n "$previewId" ]; then
+                swaymsg "[con_id=$previewId] kill" >/dev/null 2>&1 || true
+            fi
         fi
         ;;
     *)
-        die "usage: theme-preview --select NAME | --terminal STATE | --open STATE | --apply NAME | --close"
+        die "usage: theme-preview --select NAME | --terminal STATE | --open STATE | --apply NAME | --close STATE"
         ;;
 esac

@@ -13,6 +13,17 @@ paramsFile="$flakePath/home/variables.nix"
 previewScript="${HOME}/.config/sway/scripts/theme-preview"
 rofiLauncher="${HOME}/.config/sway/scripts/gnesha-rofi"
 homeProfile="${GNESHA_HOME_PROFILE:-__HOME_PROFILE__}"
+logDir="$configDir/theme-activation-logs"
+previewState=
+tmpFile=
+previewOpened=0
+
+mkdir -p "$configDir" "$logDir"
+chmod 700 "$logDir"
+# Serialize picker sessions so cleanup cannot close another picker preview
+# and selection writes cannot race. Activation uses BUILD-01's shared lock.
+exec 8>"$configDir/theme-picker.lock"
+flock -x 8
 
 if [ ! -r "$themeCatalog" ] || [ ! -r "$themeData" ]; then
     notify-send "Theme picker" "Theme catalog is missing; rebuild Home Manager first."
@@ -27,17 +38,31 @@ fi
 currentTheme=$(sed -nE 's/^[[:space:]]*themeName = "([^"]*)";.*/\1/p' "$paramsFile" | sed -n '1p')
 [ -n "$currentTheme" ] || currentTheme=$(sed -n '1p' "$themeCatalog")
 
+cleanup() {
+    result=$?
+    trap - EXIT HUP INT TERM
+    if [ "$previewOpened" -eq 1 ]; then
+        "$previewScript" --close "$previewState" >/dev/null 2>&1 || true
+    fi
+    [ -z "$previewState" ] || rm -f -- "$previewState"
+    [ -z "$tmpFile" ] || rm -f -- "$tmpFile"
+    exit "$result"
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
 previewState=$(mktemp "${TMPDIR:-/tmp}/gnesha-theme-preview.XXXXXX")
 printf '%s\n' "$currentTheme" > "$previewState"
 export GNESHA_THEME_PREVIEW_STATE="$previewState"
 
-cleanup() {
-    "$previewScript" --close >/dev/null 2>&1 || true
-    rm -f "$previewState"
-}
-trap cleanup EXIT HUP INT TERM
-
-"$previewScript" --open "$previewState" >/dev/null 2>&1 &
+if "$previewScript" --open "$previewState" >/dev/null 2>&1; then
+    previewOpened=1
+else
+    notify-send "Theme picker" "Could not open the theme preview; the saved theme was not changed." >/dev/null 2>&1 || true
+    exit 1
+fi
 
 rows() {
     while IFS="$(printf '\t')" read -r name base00 base01 base02 base03 base04 base05 base06 base07 base08 base09 base0A base0B base0C base0D base0E base0F; do
@@ -78,17 +103,25 @@ if ! grep -Eq '^[[:space:]]*themeName = "[^"]*";' "$paramsFile"; then
     exit 1
 fi
 
-"$previewScript" --apply "$choice"
-
-tmpFile=$(mktemp "${TMPDIR:-/tmp}/gnesha-theme.XXXXXX")
-trap 'rm -f "$tmpFile"' EXIT HUP INT TERM
-sed -E "s|^([[:space:]]*themeName = ).*;|\1\"$choice\";|" "$paramsFile" > "$tmpFile"
-
-if ! cmp -s "$paramsFile" "$tmpFile"; then
-    mv "$tmpFile" "$paramsFile"
+if ! "$previewScript" --apply "$choice"; then
+    notify-send "Theme picker" "Preview failed; the saved theme was not changed. The live preview may be partial." >/dev/null 2>&1 || true
+    exit 1
 fi
 
-activationLog="$configDir/home-activation.log"
+tmpFile=$(mktemp "$(dirname "$paramsFile")/.variables.nix.XXXXXX")
+paramsMode=$(stat -c '%a' "$paramsFile")
+sed -E "s|^([[:space:]]*themeName = ).*;|\1\"$choice\";|" "$paramsFile" > "$tmpFile"
+chmod "$paramsMode" "$tmpFile"
+
+if ! cmp -s "$paramsFile" "$tmpFile"; then
+    mv -f -- "$tmpFile" "$paramsFile"
+    tmpFile=
+else
+    rm -f -- "$tmpFile"
+    tmpFile=
+fi
+
+activationLog="$logDir/home-activation-$(date -u +%Y%m%dT%H%M%SZ)-$$.log"
 if command -v nh >/dev/null 2>&1; then
     # Keep the selector responsive while the standalone Home Manager
     # activation updates the declarative generation in the background.
@@ -97,10 +130,10 @@ if command -v nh >/dev/null 2>&1; then
         if gnesha-activation-lock nh home switch "$1" -c "$2" --no-nom >"$3" 2>&1; then
             notify-send "Theme activated" "$2" >/dev/null 2>&1 || true
         else
-            notify-send "Theme activation failed" "See $3" >/dev/null 2>&1 || true
+            notify-send "Theme activation failed" "Saved theme remains configured; live preview may differ. See $3" >/dev/null 2>&1 || true
         fi
     ' theme-home-activation "$flakePath" "$homeProfile" "$activationLog" >/dev/null 2>&1 &
-    notify-send "Theme applied" "$choice — Home Manager activation started" >/dev/null 2>&1 || true
+    notify-send "Theme saved" "$choice — Home Manager activation started. Log: $activationLog" >/dev/null 2>&1 || true
 else
-    notify-send "Theme applied" "$choice — runtime preview active; run home-rebuild" >/dev/null 2>&1 || true
+    notify-send "Theme saved" "$choice — runtime preview active; Home Manager was not available, so run home-rebuild" >/dev/null 2>&1 || true
 fi
