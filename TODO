@@ -380,7 +380,7 @@ shared lock and per-run logs. Stub fixtures passed for cancel, success, preview
 failure, activation failure, rapid selections, and startup/cleanup failures.
 Independent review passed. Flake check and the Home Manager activation build
 passed; the latter used a disposable source snapshot because the checkout has
-an unrelated untracked Fish file. No live activation was run. Commit: pending.
+an unrelated untracked Fish file. No live activation was run. Commit: `7359000`.
 
 ### [ ] POWER-01 — Make the fan reapply timer actually run again
 
