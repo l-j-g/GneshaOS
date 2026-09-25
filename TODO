@@ -420,6 +420,7 @@ two stale documentation claims; those were corrected and follow-up review
 passed.
 Remaining verification: check the method result and actual quiet-profile
 behavior on the CF-FV1 before marking POWER-01 complete.
+Implementation commit: `260c8a9` (`Make fan reapply timer repeat`).
 
 ### [ ] BUILD-01 — Make system/Home Manager activation recoverable and serialized
 
