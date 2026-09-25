@@ -18,6 +18,26 @@ function rebuild
     gnesha-rebuild
 end
 
+function activation-list
+    gnesha-rebuild --list
+end
+
+function activation-resume
+    if test (count $argv) -ne 1
+        echo "Usage: activation-resume ATTEMPT_ID"
+        return 2
+    end
+    gnesha-rebuild --resume $argv[1]
+end
+
+function activation-discard
+    if test (count $argv) -ne 1
+        echo "Usage: activation-discard ATTEMPT_ID"
+        return 2
+    end
+    gnesha-rebuild --discard $argv[1]
+end
+
 function update-status
     systemctl status gnesha-nixpkgs-update.service --no-pager
     if test -L /var/lib/gnesha-update/ready
@@ -34,11 +54,11 @@ function update-apply
 end
 
 function home-rebuild
-    nh home switch "__FLAKE_PATH__" -c "__HOME_PROFILE__" -b backup
+    gnesha-activation-lock nh home switch "__FLAKE_PATH__" -c "__HOME_PROFILE__" -b backup
 end
 
 function retest
-    nh os test "__FLAKE_PATH__" -H "__HOST_NAME__"
+    gnesha-activation-lock nh os test "__FLAKE_PATH__" -H "__HOST_NAME__"
 end
 
 function rebuild-boot
@@ -48,7 +68,7 @@ function rebuild-boot
         set before $generations[-1]
     end
 
-    nh os boot "__FLAKE_PATH__" -H "__HOST_NAME__"
+    gnesha-activation-lock nh os boot "__FLAKE_PATH__" -H "__HOST_NAME__"
     if test $status -ne 0
         return 1
     end

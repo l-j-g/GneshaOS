@@ -14,24 +14,70 @@ let
   homeProfile = "${params.userSettings.userName}@${hostName}";
   flakeRef = "${flakePath}#${hostName}";
   systemBuildRef = "${flakePath}#nixosConfigurations.${hostName}.config.system.build.toplevel";
+  activationStateLib = ./activation-state.sh;
+  activationLock = pkgs.writeShellApplication {
+    name = "gnesha-activation-lock";
+    runtimeInputs = [ pkgs.coreutils pkgs.util-linux ];
+    text = ''
+      activation_state_root=${lib.escapeShellArg "${params.userSettings.homeDirectory}/.local/state/gnesha-activation"}
+      activation_lock_file="$activation_state_root/activation.lock"
+      # shellcheck disable=SC1091
+      source ${activationStateLib}
+      if [[ "$#" -eq 0 ]]; then
+        echo "Usage: gnesha-activation-lock COMMAND [ARG ...]" >&2
+        exit 2
+      fi
+      activation_init
+      exec flock -x "$activation_lock_file" "$@"
+    '';
+  };
   rebuild = pkgs.writeShellApplication {
     name = "gnesha-rebuild";
-    runtimeInputs = [ pkgs.nix pkgs.nh pkgs.jq pkgs.coreutils ];
+    runtimeInputs = [ pkgs.nix pkgs.nh pkgs.jq pkgs.coreutils pkgs.util-linux pkgs.gnused ];
     text = ''
+      activation_state_root=${lib.escapeShellArg "${params.userSettings.homeDirectory}/.local/state/gnesha-activation"}
+      : "$activation_state_root"
+      # shellcheck disable=SC1091
+      source ${activationStateLib}
+      flakePath=${lib.escapeShellArg flakePath}
+      hostName=${lib.escapeShellArg hostName}
+      homeProfile=${lib.escapeShellArg homeProfile}
+
+      case "$#" in
+        0) ;;
+        1)
+          case "$1" in
+            --list) activation_list; exit 0 ;;
+            *) echo "Usage: gnesha-rebuild [--list | --resume ID | --discard ID]" >&2; exit 2 ;;
+          esac
+          ;;
+        2)
+          case "$1" in
+            --resume) activation_resume "$2" "$hostName" "$homeProfile"; exit $? ;;
+            --discard) activation_discard "$2"; exit $? ;;
+            *) echo "Usage: gnesha-rebuild [--list | --resume ID | --discard ID]" >&2; exit 2 ;;
+          esac
+          ;;
+        *) echo "Usage: gnesha-rebuild [--list | --resume ID | --discard ID]" >&2; exit 2 ;;
+      esac
+
       # Stale login environments must not make recovery depend on Docker.
       unset http_proxy https_proxy all_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY
-      buildDir=$(mktemp -d -t gnesha-rebuild.XXXXXX)
-      trap 'rm -rf -- "$buildDir"' EXIT
       # Freeze the input once: neither edits nor the background updater can
       # change what gets activated between these two builds.
-      snapshot=$(nix flake metadata --json --no-write-lock-file ${lib.escapeShellArg flakePath} | jq -er .path)
-      nix build --out-link "$buildDir/system" --no-write-lock-file \
-        "$snapshot#nixosConfigurations.${hostName}.config.system.build.toplevel"
-      nix build --out-link "$buildDir/home" --no-write-lock-file \
-        "$snapshot#homeConfigurations.\"${homeProfile}\".activationPackage"
-      # nh receives the exact built closures, not a newly evaluated flake.
-      nh os switch "$buildDir/system"
-      nh home switch "$buildDir/home" -b backup
+      if ! snapshot=$("''${NIX_COMMAND:-nix}" flake metadata --json --no-write-lock-file "$flakePath" | jq -er .path); then
+        echo "Could not freeze the flake input; no activation was started." >&2
+        exit 1
+      fi
+      activation_lock
+      if ! activation_require_capacity; then
+        activation_unlock
+        exit 1
+      fi
+      activation_create rebuild "$snapshot" "$flakePath"
+      activation_unlock
+      if ! activation_build_pair "$hostName" "$homeProfile"; then exit 1; fi
+      activation_apply_pair
     '';
   };
   showPublicKey = pkgs.writeShellApplication {
@@ -107,6 +153,7 @@ in
 
   home.packages = with pkgs; [
     rebuild
+    activationLock
     showPublicKey
     decryptClipboard
     lazydocker
@@ -153,11 +200,11 @@ in
       nfcheck = "nixfmt --check";
       nixcheck = "nix flake check --show-trace ${flakePath}";
       nixgc = "sudo nix-collect-garbage -d";
-      home-rebuild-raw = "nh home switch ${flakePath} -c ${homeProfile} -b backup";
+      home-rebuild-raw = "gnesha-activation-lock nh home switch ${flakePath} -c ${homeProfile} -b backup";
       # Explicit raw fallbacks for feature parity or troubleshooting.
-      rebuild-raw = "sudo nixos-rebuild switch --flake ${flakeRef}";
-      retest-raw = "sudo nixos-rebuild test --flake ${flakeRef}";
-      rebuild-boot-raw = "sudo nixos-rebuild boot --flake ${flakeRef}";
+      rebuild-raw = "gnesha-activation-lock sudo nixos-rebuild switch --flake ${flakeRef}";
+      retest-raw = "gnesha-activation-lock sudo nixos-rebuild test --flake ${flakeRef}";
+      rebuild-boot-raw = "gnesha-activation-lock sudo nixos-rebuild boot --flake ${flakeRef}";
     };
     interactiveShellInit = fishWorkflow + "\n" + themeFishInit;
   };

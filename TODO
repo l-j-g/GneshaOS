@@ -422,7 +422,7 @@ Remaining verification: check the method result and actual quiet-profile
 behavior on the CF-FV1 before marking POWER-01 complete.
 Implementation commit: `260c8a9` (`Make fan reapply timer repeat`).
 
-### [ ] BUILD-01 — Make system/Home Manager activation recoverable and serialized
+### [x] BUILD-01 — Make system/Home Manager activation recoverable and serialized
 
 Priority: P1. Type: reliability gap.
 Files: `home/shell/default.nix` (`gnesha-rebuild`),
@@ -448,6 +448,14 @@ Implementation:
 Done when: injected failures at each phase leave inspectable state, a safe retry
 uses the same validated closures, and concurrent activation attempts cannot
 interleave. Use stubbed `nh`/Nix commands; do not fault-inject on the laptop.
+
+Completed: shared activation state, bounded retention, exact-closure resume,
+and locking are implemented. Stubbed failure/retry and lock-contention scenarios
+passed; a stale-source fixture confirmed rebuild refuses to switch after another
+change and retains the attempt. Independent review passed. `nix flake check`,
+the NixOS build, and the Home Manager activation build passed; the latter used a
+disposable source snapshot because the checkout contains an unrelated untracked
+Fish file. No live activation was run. Commit: pending.
 
 ### [ ] BUILD-02 — Tighten background-update apply and stale-candidate behavior
 

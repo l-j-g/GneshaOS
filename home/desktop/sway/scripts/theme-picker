@@ -94,7 +94,7 @@ if command -v nh >/dev/null 2>&1; then
     # activation updates the declarative generation in the background.
     # shellcheck disable=SC2016
     nohup sh -c '
-        if nh home switch "$1" -c "$2" --no-nom >"$3" 2>&1; then
+        if gnesha-activation-lock nh home switch "$1" -c "$2" --no-nom >"$3" 2>&1; then
             notify-send "Theme activated" "$2" >/dev/null 2>&1 || true
         else
             notify-send "Theme activation failed" "See $3" >/dev/null 2>&1 || true

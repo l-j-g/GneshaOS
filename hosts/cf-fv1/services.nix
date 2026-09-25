@@ -4,6 +4,8 @@ let
   proxy = params.systemSettings.systemProxy or { enable = false; };
   proxyUrl = "http://${proxy.host}:${toString proxy.port}";
   updateState = "/var/lib/gnesha-update";
+  activationStateLib = ../../home/shell/activation-state.sh;
+  activationStateRoot = "${params.userSettings.homeDirectory}/.local/state/gnesha-activation";
   updateBuild = pkgs.writeShellApplication {
     name = "gnesha-update-build";
     runtimeInputs = [ pkgs.nix pkgs.git pkgs.jq pkgs.coreutils pkgs.util-linux ];
@@ -38,8 +40,20 @@ let
   };
   updateApply = pkgs.writeShellApplication {
     name = "gnesha-update-apply";
-    runtimeInputs = [ pkgs.nix pkgs.nh pkgs.nvd pkgs.jq pkgs.coreutils pkgs.diffutils pkgs.util-linux ];
+    runtimeInputs = [ pkgs.nix pkgs.nh pkgs.nvd pkgs.jq pkgs.coreutils pkgs.diffutils pkgs.util-linux pkgs.gnused ];
     text = ''
+      activation_state_root=${lib.escapeShellArg activationStateRoot}
+      # shellcheck source=${activationStateLib}
+      activation_id=
+      activation_dir=
+      activation_phase=
+      activation_new_system=
+      activation_new_home=
+      activation_old_lock=
+      activation_new_lock=
+      : "$activation_state_root" "$activation_phase" "$activation_new_system" "$activation_new_home"
+      # shellcheck disable=SC1091
+      source ${activationStateLib}
       state=${lib.escapeShellArg updateState}
       repo=${lib.escapeShellArg params.systemSettings.flakePath}
       if [ ! -L "$state/ready" ]; then
@@ -63,13 +77,40 @@ let
         exit 1
       fi
       # Explicit update-apply accepts the reviewed lock file and exact closures.
-      lockTemp=$(mktemp "$repo/.flake.lock.XXXXXX")
-      trap 'rm -f -- "$lockTemp"' EXIT
-      cp "$ready/source/flake.lock" "$lockTemp"
-      chmod 644 "$lockTemp"
-      mv -f "$lockTemp" "$repo/flake.lock"
-      nh os switch "$ready/system"
-      nh home switch "$ready/home" -b backup
+      candidateSnapshot=$(nix flake metadata --json --no-write-lock-file "$ready/source" | jq -er .path)
+      activation_lock
+      if ! activation_require_capacity; then
+        activation_unlock
+        exit 1
+      fi
+      activation_create update "$candidateSnapshot" "$repo"
+      activation_unlock
+      activation_old_lock="$activation_dir/old.lock"
+      activation_new_lock="$activation_dir/new.lock"
+      if ! cp -- "$repo/flake.lock" "$activation_old_lock" ||
+        ! cp -- "$ready/source/flake.lock" "$activation_new_lock"; then
+        activation_set_phase failed_preparation
+        echo "Could not preserve the current and candidate lock files; attempt $activation_id was retained." >&2
+        exit 1
+      fi
+      chmod 600 -- "$activation_old_lock" "$activation_new_lock"
+      systemClosure=$(readlink -f "$ready/system")
+      homeClosure=$(readlink -f "$ready/home")
+      ln -s -- "$systemClosure" "$activation_dir/system"
+      ln -s -- "$homeClosure" "$activation_dir/home"
+      activation_new_system="$systemClosure"
+      activation_new_home="$homeClosure"
+      activation_set_phase candidate_ready
+
+      activation_lock
+      activation_set_phase accepting_lock
+      if ! activation_accept_update_lock; then
+        activation_set_phase failed_lock_acceptance
+        echo "Could not accept the candidate lock. Attempt $activation_id was retained." >&2
+        exit 1
+      fi
+      activation_set_phase lock_accepted
+      activation_apply_pair false true
     '';
   };
 in
@@ -159,6 +200,7 @@ in
       Type = "oneshot";
       User = params.userSettings.userName;
       Group = "users";
+      Environment = "HOME=${params.userSettings.homeDirectory}";
       StateDirectory = "gnesha-update";
       StateDirectoryMode = "0700";
       ExecStart = "${updateBuild}/bin/gnesha-update-build";

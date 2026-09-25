@@ -71,13 +71,35 @@ but several of them change live state:
 | `retest` | Build and activate a temporary NixOS test generation |
 | `rebuild-boot` | Set a new NixOS boot generation |
 | `rebuild` | Build both outputs from one source snapshot, then activate both |
+| `activation-list` / `activation-resume ID` / `activation-discard ID` | Inspect, retry, or explicitly discard a saved activation attempt |
 | `update-status` | Show background build status |
 | `update-review` | Review the prepared lock and system package diff |
 | `update-apply` | Accept the prepared lock and activate its built outputs |
 
 `rebuild` freezes one source snapshot and builds both NixOS and Home Manager
-before activating either. A failed build leaves the current generations running.
-Activation itself is sequential, so an activation failure can still require repair.
+before activating either. Long builds run outside the shared activation lock.
+The system switch, Home Manager switch, update apply, theme-picker activation,
+and the normal shell activation helpers share one lock, so those activation
+sequences cannot interleave.
+
+Each `rebuild` attempt records its input snapshot, old and candidate generations,
+phase, and log under `~/.local/state/gnesha-activation/transactions/`. Candidate
+GC roots and logs remain after failure. Retry the exact saved closures with
+`activation-resume ATTEMPT_ID`; this does not re-evaluate the source. Use
+`activation-list` to find an ID and `activation-discard ID` only when you
+explicitly want to release its roots and remove its log. The system retains the
+five newest completed attempts and allows at most three unresolved attempts
+before asking you to resume or discard one. Attempt creation reserves capacity
+under the same lock. After building outside the lock, a rebuild rechecks its
+saved source snapshot under the lock and refuses to activate if the source
+changed while it was building.
+
+System and Home Manager activation is sequential, not atomic. A failed Home
+Manager activation can leave the new system generation active; inspect the
+recorded phase and retry or recover manually. These commands do not roll back
+live databases or services automatically. Failed update applies use the same
+transaction record; resume verifies the repository `flake.lock` still matches
+the candidate lock before switching.
 
 The daily `gnesha-nixpkgs-update` timer prepares a separate candidate at 05:30
 local time, with up to 30 minutes of jitter. It runs only on AC power, uses one
