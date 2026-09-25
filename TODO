@@ -255,8 +255,8 @@ incomplete; do not call the temporary shared-key arrangement complete.
 Status: NetworkManager integration is implemented and VM-verified. It will
 make the imported AirVPN profile selectable in `nmtui`; the profile path is
 still pending, so no live connection is available yet.
-Commit(s): `a6ec1c4` (`Record AirVPN profile prerequisite`); NetworkManager
-integration commit pending.
+Commit(s): `a6ec1c4` (`Record AirVPN profile prerequisite`) and `bef5058`
+(`Manage host AirVPN through NetworkManager`).
 Changed files: `modules/airvpn-networkmanager.nix`,
 `modules/airvpn-nm-profile.py`, `hosts/cf-fv1/default.nix`,
 `home/desktop/sway/scripts/vpn-toggle`, `system-parameters.nix`,
