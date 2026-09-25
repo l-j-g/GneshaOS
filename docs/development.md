@@ -157,6 +157,21 @@ no longer builds with a new `nixpkgs`, the candidate check fails for review.
 Update other inputs separately and intentionally with a full `nix flake update`,
 then review that broader lock change.
 
+## Boot timeouts and network readiness
+
+The host uses 90-second systemd start/stop defaults. Services with a measured
+or deliberate different bound should set their own timeout; the AirVPN profile
+loader has a 30-second start limit. `NetworkManager-wait-online` remains
+disabled so local login does not wait for connectivity. In this configuration,
+ordering a service after `network-online.target` does not prove an uplink or
+working DNS; the optional background update can fail when offline and be
+reviewed/retried later.
+
+For boot-timeout changes, inspect the current boot journal for actual timed-out
+units and compare `systemd-analyze time` plus the `graphical.target` critical
+chain before and after activation. Do not infer a timeout from a service that
+merely failed for another reason.
+
 ## Codex workflow
 
 Repository-local Codex configuration lives in `.codex/`:

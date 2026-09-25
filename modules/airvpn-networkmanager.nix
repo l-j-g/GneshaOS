@@ -101,6 +101,7 @@ in
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
+          TimeoutStartSec = "30s";
           ExecStartPre = validateProfile;
           ExecStart = loadConnection;
           ExecStopPost = removeConnection;

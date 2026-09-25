@@ -6,14 +6,15 @@
   # Skip the boot-menu wait -> login ASAP (hold a key to still open it)
   boot.loader.timeout = 1;
 
-  # Don't block login waiting for the network to come up
+  # Keep login independent of connectivity. network-online.target below is
+  # only an ordering point because this wait service is disabled.
   systemd.services.NetworkManager-wait-online.enable = false;
 
-  # Faster service timeouts (no long waits on slow units).
+  # Keep systemd's normal bounded service deadlines.
   # LogLevel=warning silences systemd's "Starting/Started container..." lines.
   systemd.settings.Manager = {
-    DefaultTimeoutStartSec = "5s";
-    DefaultTimeoutStopSec = "10s";
+    DefaultTimeoutStartSec = "90s";
+    DefaultTimeoutStopSec = "90s";
     LogLevel = "warning";
   };
 

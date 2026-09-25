@@ -511,7 +511,7 @@ atomic lock rename. Commit: `98f06d0`.
 ### [ ] BOOT-01 — Replace blanket five-second startup deadlines with scoped limits
 
 Priority: P1. Type: configuration risk requiring runtime measurements.
-Files: `hosts/cf-fv1/boot.nix`, `modules/airvpn-wireguard.nix`, service modules.
+Files: `hosts/cf-fv1/boot.nix`, `modules/airvpn-networkmanager.nix`, service modules.
 
 Evidence: manager `DefaultTimeoutStartSec = "5s"` affects services without their
 own timeout. Native VPN startup has no explicit timeout. NetworkManager's
@@ -531,6 +531,21 @@ Implementation:
 Done when: normal slow-network startup is handled, genuinely failed services
 still terminate within known limits, and local login is not unnecessarily
 blocked on optional services.
+
+Read-only baseline recorded 2026-09-25: effective manager defaults were 5s
+start/10s stop; `systemctl --failed` listed no failed system services, and the
+boot journal had no service-start timeout matches. `systemd-analyze time`
+reported 32.362s total (12.455s firmware, 1.885s loader, 1.022s kernel,
+4.870s initrd, 12.128s userspace); `graphical.target` was reached 5.120s into
+userspace. The AirVPN profile unit is inactive in the current live generation,
+with no journal entries, so no VPN failure is inferred.
+
+Configuration change reviewed and built: restore 90s manager defaults and set
+a 30s bound on the AirVPN profile loader. Keep wait-online disabled and
+document the ordering/connectivity distinction. Flake check and NixOS build
+passed; independent review passed. No activation or reboot was run.
+Post-activation boot/login timing and service readiness remain unmeasured, so
+this task stays open until that separate runtime check. Commit: pending.
 
 ### [ ] NET-01 — Make network exposure match the documented access boundary
 
