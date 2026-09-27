@@ -21,7 +21,8 @@ in
     settings = {
       # Allow nnn's preview-tui plugin to create a Kitty split and use icat.
       allow_remote_control = "yes";
-      listen_on = "unix:/tmp/kitty";
+      # Keep the remote-control socket in this login session's private runtime dir.
+      listen_on = "unix:$XDG_RUNTIME_DIR/kitty-{kitty_pid}";
       enabled_layouts = "splits";
 
       confirm_os_window_close = 0;

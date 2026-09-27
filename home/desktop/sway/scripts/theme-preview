@@ -254,7 +254,7 @@ apply_runtime() {
     write_shell_colors
 
     if command -v kitten >/dev/null 2>&1; then
-        kitten @ --to unix:/tmp/kitty set-colors --all --configured "$gneshaDir/kitty-live.conf" >/dev/null 2>&1 || true
+        kitten @ --to "${KITTY_LISTEN_ON:-unix:$XDG_RUNTIME_DIR/kitty-{kitty_pid}}" set-colors --all --configured "$gneshaDir/kitty-live.conf" >/dev/null 2>&1 || true
     fi
 
     if command -v swaymsg >/dev/null 2>&1; then

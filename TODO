@@ -1048,6 +1048,20 @@ Implementation:
 Done when: cancellation, failed recorder startup, concurrent sessions, and stale
 versus live lock fixtures behave correctly without disturbing other processes.
 
+Progress (2026-09-27): recorder selection-cancel, recorder-failure, and
+successful-nonempty-output fixtures pass. Recorder toggling now targets only its
+own PID recorded under a runtime directory keyed by the Sway session; concurrent
+state transitions use an atomic session lock. The help overlay records and
+signals only its own wrapper PIDs under the same session key. Calcurse's unsafe
+unconditional lock deletion was removed. The Kitty
+socket and consumers now use the session runtime directory. Home Manager builds
+the generated unit and Kitty configuration; generated output contains no
+Calcurse lock deletion. Pending: test live recorder stop and simultaneous
+invocations, verify Kitty/nnn/theme-preview remote control against a running
+Kitty instance, and decide whether to condition the Calcurse unit on the user's
+`daemon.enable` setting (the default is disabled, and the existing config must
+not be overwritten). Leave this task open until these behaviors are verified.
+
 ## Validation coverage, documentation, and repository hygiene
 
 ### [ ] CHECK-01 — Add focused flake checks for Home Manager and feature combinations

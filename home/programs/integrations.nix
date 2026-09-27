@@ -39,6 +39,6 @@
     # preview-tui uses Kitty's split and graphics protocol when these are set.
     NNN_TERMINAL = "kitty";
     NNN_PREVIEWIMGPROG = "icat";
-    KITTY_LISTEN_ON = "unix:/tmp/kitty";
+    KITTY_LISTEN_ON = "unix:$XDG_RUNTIME_DIR/kitty-{kitty_pid}";
   };
 }

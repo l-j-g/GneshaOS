@@ -1,20 +1,41 @@
 #!/bin/sh
-# sway-help [--toggle] — show/hide the nwg-wrapper keybinding overlay.
-LOCK="$HOME/.local/state/help_disabled"
+# sway-help [--toggle] — toggle this session's nwg-wrapper keybinding overlay.
+runtime=${XDG_RUNTIME_DIR:-}
+[ -n "$runtime" ] && [ -d "$runtime" ] || exit 1
+session=${SWAYSOCK##*/}
+[ -n "$session" ] || session=${WAYLAND_DISPLAY:-}
+case "$session" in ""|*[!A-Za-z0-9_.-]*) exit 1 ;; esac
+state="$runtime/gneshaos/$session/sway-help"
+mkdir -p "$state" || exit 1
+chmod 700 "$state"
+lock="$state/lock"
+if ! mkdir "$lock" 2>/dev/null; then exit 0; fi
+trap 'rmdir "$lock" 2>/dev/null || true' EXIT HUP INT TERM
 
-if [ "${1:-}" = "--toggle" ]; then
-    if [ -f "$LOCK" ]; then
-        rm -f "$LOCK"
-    else
-        touch "$LOCK"
+disabled="$HOME/.local/state/help_disabled"
+pids="$state/wrapper-pids"
+stop_own_overlays() {
+    if [ -f "$pids" ]; then
+        while IFS= read -r pid; do
+            if [ -r "/proc/$pid/comm" ] && [ "$(cat "/proc/$pid/comm")" = nwg-wrapper ]; then
+                kill -TERM "$pid" 2>/dev/null || true
+            fi
+        done < "$pids"
     fi
+    rm -f "$pids"
+}
+
+if [ "${1:-}" = --toggle ]; then
+    mkdir -p "$(dirname "$disabled")"
+    if [ -e "$disabled" ]; then rm -f "$disabled"; else touch "$disabled"; fi
 fi
+stop_own_overlays
+[ -e "$disabled" ] && exit 0
 
-pkill -f 'nwg-wrapper.*-s help.sh' 2>/dev/null
-sleep 0.1
-
-[ -f "$LOCK" ] && exit 0
-
+tmp="$pids.$$"
+: > "$tmp"
 for out in $(swaymsg -t get_outputs --raw | jq -r '.[].name'); do
     nwg-wrapper -o "$out" -s help.sh -p left -a end &
+    printf '%s\n' "$!" >> "$tmp"
 done
+mv "$tmp" "$pids"

@@ -138,7 +138,6 @@ in
     };
     Service = {
       Type = "forking";
-      ExecStartPre = "${pkgs.coreutils}/bin/rm -f %h/.local/share/calcurse/.calcurse.pid %h/.local/share/calcurse/daemon.lock";
       ExecStart = "${pkgs.calcurse}/bin/calcurse --daemon";
       Restart = "on-failure";
       RestartSec = 5;
