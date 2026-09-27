@@ -85,6 +85,13 @@ identified backup sets where practical. A restore may need them from compatible
 points in time. Local Btrfs snapshots, if available, are useful for local
 rollback but are not an independent off-disk backup.
 
+The Arr configuration bind mounts under `/home/lg/src/arr/config` reside on
+`/home`, so they are included in the configured `@home` Snapper snapshots.
+Use the [Home data restore procedure](install.md#home-data-restore-home-on-home)
+to inspect or recover selected files. This is same-device rollback coverage;
+it does not make a live application database consistent or replace an
+independent backup.
+
 ## Safe restore-drill procedure
 
 The restore drill is **pending**. No off-disk destination is selected, and no
@@ -121,4 +128,7 @@ Inventory: verified read-only for the seven running containers and the listed
 bind-mount roots. Off-disk destination and retention: pending operator
 selection. Per-application consistency/export procedures: pending verification
 for the deployed versions. Disposable restore drill: pending; no restore has
-been performed.
+been performed. Arr configuration under `/home/lg/src/arr/config` is covered by
+local `@home` Snapper snapshots, with the selected-file recovery instructions
+linked to `docs/install.md`; this does not establish app consistency or an
+off-disk backup.
