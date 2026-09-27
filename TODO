@@ -1347,7 +1347,10 @@ inventory, separates Nix generations from app configuration, databases, secrets,
 and media, and describes a disposable restore drill. The off-disk destination,
 retention, deployed-version consistency/export procedures, and drill remain
 pending; no backup or restore was performed. Keep this task open until those
-choices and a successful isolated drill are documented.
+choices and a successful isolated drill are documented. Follow-up commit
+`55c6be5` links Arr configuration under `/home` to local `@home` Snapper
+snapshots and the selected-file restore steps; it does not claim
+application consistency or an off-disk backup.
 
 ### [x] HYGIENE-01 — Remove tracked scratch output and clarify local-only inputs
 
