@@ -890,7 +890,7 @@ Done when: each integration has one owner, absent optional files do not break
 fresh-clone evaluation, scripts run with a minimal PATH, and no runtime secret
 is copied into the store.
 
-### [ ] STRUCT-07 — Unify declarative and live theme generation
+### [x] STRUCT-07 — Unify declarative and live theme generation
 
 Priority: P2. Type: structural refinement. Depends on: THEME-01.
 Files: `home/theme/`, `home/programs/dolphin.nix`, terminal modules,
@@ -917,6 +917,18 @@ Implementation:
 Done when: preview and activation agree for tested palettes, one palette edit
 has one authoritative owner, and no terminal/file-manager preference changes
 are hidden inside the refactor.
+
+Completed (2026-09-27): `home/theme/ansi-palette.nix` is the shared Kitty
+Base16-to-color0-15 mapping. Home Manager Kitty settings use it directly; the
+generated `theme-data` contract serializes both the 16 Base16 fields and those
+16 derived ANSI colors for `theme-preview`. The live preview and declarative
+Kitty settings matched for Ashes and Dracula. Optional Kitty/Sway/Waybar reload
+failures now log while the other theme outputs still succeed. Dolphin color
+rendering moved to `home/theme/dolphin-colors.nix`; its generated color-scheme
+and kdeglobals outputs were byte-identical before and after extraction.
+Flake check, Home Manager activation-package build, Nix and shell parsing, and
+`git diff --check` passed. Live visual confirmation after activation remains
+pending; no app or service was activated/restarted during this task.
 
 ## Runtime behavior and feature completeness
 

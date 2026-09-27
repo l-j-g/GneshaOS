@@ -3,6 +3,7 @@
 {
   config,
   pkgs,
+  lib,
   variables,
   ...
 }:
@@ -33,22 +34,8 @@ in
       foreground = "#${p.base05}";
       selection_foreground = "#${p.base06}";
       selection_background = "#${p.base02}";
-      color0 = "#${p.base03}";
-      color1 = "#${p.base08}";
-      color2 = "#${p.base0B}";
-      color3 = "#${p.base0A}";
-      color4 = "#${p.base0D}";
-      color5 = "#${p.base0E}";
-      color6 = "#${p.base0C}";
-      color7 = "#${p.base05}";
-      color8 = "#${p.base04}";
-      color9 = "#${p.base08}";
-      color10 = "#${p.base0B}";
-      color11 = "#${p.base0A}";
-      color12 = "#${p.base0D}";
-      color13 = "#${p.base0E}";
-      color14 = "#${p.base0C}";
-      color15 = "#${p.base07}";
-    };
+    } // lib.listToAttrs (lib.imap0
+      (index: color: lib.nameValuePair "color${toString index}" "#${color}")
+      v.ansi);
   };
 }

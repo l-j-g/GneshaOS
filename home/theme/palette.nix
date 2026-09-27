@@ -9,11 +9,12 @@
 
 let
   palette = config.colorScheme.palette;
+  ansi = import ./ansi-palette.nix { inherit palette; };
   hash = c: "#${c}";
 in
 {
   # raw palette (no '#') — for Kitty etc.
-  inherit palette;
+  inherit palette ansi;
 
   # CSS / Sway style (with '#')
   bg = hash palette.base00;

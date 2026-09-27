@@ -65,7 +65,7 @@ else
 fi
 
 rows() {
-    while IFS="$(printf '\t')" read -r name base00 base01 base02 base03 base04 base05 base06 base07 base08 base09 base0A base0B base0C base0D base0E base0F; do
+    while IFS="$(printf '\t')" read -r name base00 base01 base02 base03 base04 base05 base06 base07 base08 base09 base0A base0B base0C base0D base0E base0F ansi00 ansi01 ansi02 ansi03 ansi04 ansi05 ansi06 ansi07 ansi08 ansi09 ansi0A ansi0B ansi0C ansi0D ansi0E ansi0F; do
         [ -n "${name:-}" ] || continue
         swatches=""
         for color in "$base00" "$base01" "$base02" "$base03" "$base04" "$base05" "$base06" "$base07" "$base08" "$base09" "$base0A" "$base0B" "$base0C" "$base0D" "$base0E" "$base0F"; do

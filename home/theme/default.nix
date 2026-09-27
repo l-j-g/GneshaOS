@@ -62,11 +62,14 @@ let
     "base0F"
   ];
   stripHash = color: builtins.replaceStrings [ "#" ] [ "" ] color;
+  # Shared build/runtime palette contract: 16 Base16 fields followed by the
+  # centralized color0-15 mapping consumed by Kitty and theme-preview.
   themeData = lib.concatMapStringsSep "\n" (name:
     let
       palette = themes.${name}.palette;
+      ansi = import ./ansi-palette.nix { inherit palette; };
     in
-    lib.concatStringsSep "\t" ([ name ] ++ map (field: stripHash palette.${field}) paletteFields)
+    lib.concatStringsSep "\t" ([ name ] ++ map (field: stripHash palette.${field}) paletteFields ++ ansi)
   ) availableThemes + "\n";
   selectedTheme =
     if builtins.hasAttr themeName themes then

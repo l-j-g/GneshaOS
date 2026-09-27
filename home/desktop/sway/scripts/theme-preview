@@ -46,26 +46,44 @@ load_palette() {
     base0D=$6
     base0E=$7
     base0F=$8
+    shift 8
+    ansi00=$1
+    ansi01=$2
+    ansi02=$3
+    ansi03=$4
+    ansi04=$5
+    ansi05=$6
+    ansi06=$7
+    ansi07=$8
+    shift 8
+    ansi08=$1
+    ansi09=$2
+    ansi0A=$3
+    ansi0B=$4
+    ansi0C=$5
+    ansi0D=$6
+    ansi0E=$7
+    ansi0F=$8
 }
 
 palette_color() {
     case "$1" in
-        0) printf '%s' "$base00" ;;
-        1) printf '%s' "$base08" ;;
-        2) printf '%s' "$base0B" ;;
-        3) printf '%s' "$base0A" ;;
-        4) printf '%s' "$base0D" ;;
-        5) printf '%s' "$base0E" ;;
-        6) printf '%s' "$base0C" ;;
-        7) printf '%s' "$base05" ;;
-        8) printf '%s' "$base04" ;;
-        9) printf '%s' "$base08" ;;
-        10) printf '%s' "$base0B" ;;
-        11) printf '%s' "$base0A" ;;
-        12) printf '%s' "$base0D" ;;
-        13) printf '%s' "$base0E" ;;
-        14) printf '%s' "$base0C" ;;
-        15) printf '%s' "$base07" ;;
+        0) printf '%s' "$ansi00" ;;
+        1) printf '%s' "$ansi01" ;;
+        2) printf '%s' "$ansi02" ;;
+        3) printf '%s' "$ansi03" ;;
+        4) printf '%s' "$ansi04" ;;
+        5) printf '%s' "$ansi05" ;;
+        6) printf '%s' "$ansi06" ;;
+        7) printf '%s' "$ansi07" ;;
+        8) printf '%s' "$ansi08" ;;
+        9) printf '%s' "$ansi09" ;;
+        10) printf '%s' "$ansi0A" ;;
+        11) printf '%s' "$ansi0B" ;;
+        12) printf '%s' "$ansi0C" ;;
+        13) printf '%s' "$ansi0D" ;;
+        14) printf '%s' "$ansi0E" ;;
+        15) printf '%s' "$ansi0F" ;;
     esac
 }
 
@@ -170,22 +188,22 @@ background #${base00}
 foreground #${base05}
 selection_background #${base02}
 selection_foreground #${base06}
-color0 #${base00}
-color1 #${base08}
-color2 #${base0B}
-color3 #${base0A}
-color4 #${base0D}
-color5 #${base0E}
-color6 #${base0C}
-color7 #${base05}
-color8 #${base04}
-color9 #${base08}
-color10 #${base0B}
-color11 #${base0A}
-color12 #${base0D}
-color13 #${base0E}
-color14 #${base0C}
-color15 #${base07}
+color0 #${ansi00}
+color1 #${ansi01}
+color2 #${ansi02}
+color3 #${ansi03}
+color4 #${ansi04}
+color5 #${ansi05}
+color6 #${ansi06}
+color7 #${ansi07}
+color8 #${ansi08}
+color9 #${ansi09}
+color10 #${ansi0A}
+color11 #${ansi0B}
+color12 #${ansi0C}
+color13 #${ansi0D}
+color14 #${ansi0E}
+color15 #${ansi0F}
 EOF
 }
 
@@ -254,20 +272,35 @@ apply_runtime() {
     write_shell_colors
 
     if command -v kitten >/dev/null 2>&1; then
-        kitten @ --to "${KITTY_LISTEN_ON:-unix:$XDG_RUNTIME_DIR/kitty-{kitty_pid}}" set-colors --all --configured "$gneshaDir/kitty-live.conf" >/dev/null 2>&1 || true
+        if ! kitten @ --to "${KITTY_LISTEN_ON:-unix:$XDG_RUNTIME_DIR/kitty-{kitty_pid}}" set-colors --all --configured "$gneshaDir/kitty-live.conf" >/dev/null 2>&1; then
+            printf '%s\n' "theme-preview: Kitty remote palette update failed; other theme outputs were still written" >&2
+        fi
+    else
+        printf '%s\n' "theme-preview: kitten is unavailable; Kitty palette was written but not applied live" >&2
     fi
 
     if command -v swaymsg >/dev/null 2>&1; then
-        swaymsg "client.focused #$base0B #$base01 #$base05 #$base0B #$base01" >/dev/null 2>&1 || true
-        swaymsg "client.focused_inactive #$base04 #$base01 #$base05 #$base04 #$base01" >/dev/null 2>&1 || true
-        swaymsg "client.unfocused #$base03 #$base00 #$base04 #$base03 #$base00" >/dev/null 2>&1 || true
-        swaymsg "client.urgent #$base08 #$base08 #$base00 #$base08 #$base08" >/dev/null 2>&1 || true
+        for command in \
+            "client.focused #$base0B #$base01 #$base05 #$base0B #$base01" \
+            "client.focused_inactive #$base04 #$base01 #$base05 #$base04 #$base01" \
+            "client.unfocused #$base03 #$base00 #$base04 #$base03 #$base00" \
+            "client.urgent #$base08 #$base08 #$base00 #$base08 #$base08"; do
+            if ! swaymsg "$command" >/dev/null 2>&1; then
+                printf '%s\n' "theme-preview: Sway color update failed: $command" >&2
+            fi
+        done
+    else
+        printf '%s\n' "theme-preview: swaymsg is unavailable; window colors were not applied live" >&2
     fi
 
     if command -v systemctl >/dev/null 2>&1; then
         # Waybar is a Home Manager user service. Restart that one service so
         # the old bar is stopped before the live stylesheet is loaded.
-        systemctl --user restart waybar.service >/dev/null 2>&1 || true
+        if ! systemctl --user restart waybar.service >/dev/null 2>&1; then
+            printf '%s\n' "theme-preview: Waybar restart failed; its stylesheet was written" >&2
+        fi
+    else
+        printf '%s\n' "theme-preview: systemctl is unavailable; Waybar stylesheet was written but not reloaded" >&2
     fi
 }
 
