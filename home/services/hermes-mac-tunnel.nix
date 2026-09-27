@@ -16,7 +16,9 @@
     Service = {
       ExecStart = "${pkgs.openssh}/bin/ssh -N -T -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -L 19119:127.0.0.1:9119 mac";
       Restart = "on-failure";
-      RestartSec = 5;
+      # MacBook may be asleep/off-network. Avoid a tight restart loop and
+      # journal flood while retaining automatic recovery when it returns.
+      RestartSec = 60;
     };
     Install = {
       WantedBy = [ "default.target" ];

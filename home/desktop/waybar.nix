@@ -94,9 +94,10 @@ in
       };
 
       "custom/vpn" = {
-        # vpn-toggle is installed to ~/.config/sway/scripts (on session PATH).
-        exec = "vpn-toggle status";
-        on-click = "vpn-toggle toggle";
+        # Waybar launches commands through a minimal systemd user PATH. Use
+        # the absolute Home Manager path instead of relying on session PATH.
+        exec = "${config.home.homeDirectory}/.config/sway/scripts/vpn-toggle status";
+        on-click = "${config.home.homeDirectory}/.config/sway/scripts/vpn-toggle toggle";
         interval = 5;
         format = "{}";
         tooltip = true;

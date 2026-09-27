@@ -92,7 +92,7 @@ in
       After = [ sessionTarget ];
     };
     Service = {
-      ExecStart = "${pkgs.swayest-workstyle}/bin/swayest-workstyle -d -l error";
+      ExecStart = "${pkgs.swayest-workstyle}/bin/sworkstyle -d -l error";
       NonBlocking = true;
       Restart = "on-failure";
     };
@@ -138,7 +138,7 @@ in
     };
     Service = {
       Type = "forking";
-      ExecStartPre = "rm -f %h/.local/share/calcurse/.calcurse.pid %h/.local/share/calcurse/daemon.lock";
+      ExecStartPre = "${pkgs.coreutils}/bin/rm -f %h/.local/share/calcurse/.calcurse.pid %h/.local/share/calcurse/daemon.lock";
       ExecStart = "${pkgs.calcurse}/bin/calcurse --daemon";
       Restart = "on-failure";
       RestartSec = 5;
@@ -168,7 +168,7 @@ in
       After = [ "sway-session-pre.target" ];
     };
     Service = {
-      ExecStart = "${pkgs.polkit_gnome}/bin/polkit-gnome-authentication-agent-1";
+      ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
       Restart = "on-failure";
       RestartSec = 1;
     };
