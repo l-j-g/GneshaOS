@@ -1107,10 +1107,12 @@ the data plan before enabling.
 Priority: P1 before enabling Ghostfolio. Type: confirmed migration risks.
 Files: `modules/ghostfolio.nix`.
 
-Evidence: the wrapper's PostgreSQL wait loop has no internal deadline (manual
-CLI calls can wait indefinitely). Import uses ON_ERROR_STOP but lacks an explicit
-recovery protocol after a partially applied dump. A marker is written only
-at the end. Images use moving tags with `pull_policy = "missing"`.
+Evidence: previously, PostgreSQL readiness had no deadline, a partial SQL
+import could be retried into the same target, and Compose used moving image tags.
+The implementation now bounds readiness and Docker operations, records import
+states, blocks retries after an uncertain/failed import, and uses reviewed image
+digests. Actual source-database restore and interruption behavior remain
+unverified; Ghostfolio stays disabled pending the GF-01 migration gate.
 
 Implementation:
 1. Add bounded readiness waits that include useful service status on timeout.
@@ -1123,8 +1125,15 @@ Implementation:
 4. Test interruption before import, mid-import, after import before marker,
    missing credentials, unavailable registry, and retry.
 
-Done when: no retry silently corrupts/duplicates data, commands terminate within
-known bounds, and recreating a stack uses the reviewed image versions.
+Progress (2026-09-27): Nix parsing, flake checking, the disabled host build, and
+an enabled synthetic host build pass. A stub fixture harness could not
+reliably intercept the Nix-wrapped Docker command, so import interruption and
+recovery scenarios remain pending. No live data, Docker stack, or migration
+target was touched.
+
+Done when: the import recovery cases are fixture-verified, no retry silently
+corrupts/duplicates data, commands terminate within known bounds, and
+recreating a stack uses the reviewed image versions.
 
 ### [x] TERM-01 — Make Ghostty font-size transitions respect the configured default
 

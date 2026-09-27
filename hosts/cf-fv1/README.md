@@ -128,8 +128,15 @@ file remain independently configurable outside the Nix store.
 When deliberately enabled after the migration gate is cleared, Ghostfolio runs
 from the upstream Docker image; PostgreSQL and Redis run in the same Compose
 project with persistent data under the configured containers directory.
-`ghostfolio-update` currently pulls the image tags and recreates the services;
-image pinning and safe retry behavior are tracked separately in GF-02.
+`ghostfolio-pin --refresh` resolves the configured image tags to immutable
+digests and writes `images.lock.json` in the runtime directory. Run it while
+Ghostfolio is disabled, review the resolved versions, and retain the generated
+lock with the runtime data. The previous lock is saved as
+`images.lock.json.previous.json`; the prior local images are tagged
+`gnesha-rollback` for one generation. Normal Compose starts use only the lock
+and do not pull moving tags. `ghostfolio-update` deliberately refreshes those
+pins and recreates the stack. Back up the database before an update because an
+application image can migrate its schema.
 
 For a future migration, create the configured secrets file with mode 600 and
 `DATABASE_PASSWORD` and `REDIS_PASSWORD`, each a 64-character hex value. The
@@ -158,10 +165,21 @@ the containerized service, restore the source database backup, and restart the
 confirmed source service. Do not use this outline until the actual source unit,
 database name, restore test, and rollback owner have been recorded.
 
-The first Compose start imports that dump before starting the app, renames the
-dump to `.imported`, and records a completion marker. Keep the native database
-and imported dump until the containerized instance has been verified. The
-import is not run again on later starts. Ghostfolio remains bound to
+The first Compose start records `ready`, starts PostgreSQL and Redis, then waits
+up to 180 seconds for PostgreSQL before beginning the import. It records
+`importing` before streaming the dump and `imported` after `psql` succeeds;
+completion writes a marker and renames the dump to `.imported`. A failed or
+interrupted import leaves an `importing` or `failed` state and blocks automatic
+retry. Inspect the partial target and restore a fresh target before retrying;
+do not clear the state file to force a rerun. An interruption after successful
+SQL import but before marker creation is finalized from the `imported` state
+without rerunning SQL. A `ready` state is safe to resume because the import has
+not started. PostgreSQL major changes require a separate, reviewed migration;
+the image lock rejects a major mismatch. Service readiness is bounded to five
+minutes and reports each container state on timeout.
+
+Keep the native database and imported dump until the containerized instance has
+been verified. The import is not run again on later starts. Ghostfolio remains bound to
 `127.0.0.1:3333`; PostgreSQL and Redis ports are not published.
 Ghostfolio updates can migrate the database; take a database backup before
 running `ghostfolio-update` because reverting only the app image may not roll
