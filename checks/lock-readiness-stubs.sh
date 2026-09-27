@@ -18,13 +18,17 @@ fail() {
 
 new_case() {
   CASE_DIR="$fixture_root/$1"
-  mkdir -p "$CASE_DIR/bin" "$CASE_DIR/runtime"
-  export CASE_DIR XDG_RUNTIME_DIR="$CASE_DIR/runtime" PATH="$CASE_DIR/bin:$PATH"
+  mkdir -p "$CASE_DIR/bin" "$CASE_DIR/runtime" "$CASE_DIR/config/gtklock"
+  export CASE_DIR XDG_RUNTIME_DIR="$CASE_DIR/runtime" XDG_CONFIG_HOME="$CASE_DIR/config" PATH="$CASE_DIR/bin:$PATH"
   : > "$CASE_DIR/calls"
   : > "$CASE_DIR/events"
   : > "$CASE_DIR/gtk-mode"
   : > "$CASE_DIR/sway-mode"
   : > "$CASE_DIR/systemctl-mode"
+  cat > "$XDG_CONFIG_HOME/gtklock/config.ini" <<EOF
+[main]
+lock-command=touch '$XDG_RUNTIME_DIR/gnesha-lock.ack'
+EOF
   export SWAYSOCK="$CASE_DIR/sway-ipc.sock"
   : > "$SWAYSOCK"
 
@@ -34,17 +38,21 @@ printf 'gtklock %s\n' "$*" >> "$CASE_DIR/calls"
 printf 'gtk-start %s\n' "$(date +%s%N)" >> "$CASE_DIR/events"
 case $(cat "$CASE_DIR/gtk-mode") in
   callback)
-    # Invoke the command supplied as gtklock's post-lock callback. This models
-    # acknowledgment only after the locker has acquired the compositor lock.
+    # Gtklock reads its post-lock callback from lock-command in config.ini.
+    # Support both its default XDG path and an explicitly selected config.
+    config_path="${XDG_CONFIG_HOME:-$HOME/.config}/gtklock/config.ini"
     for ((i=1; i <= $#; i++)); do
-      if [[ ${!i} == --post-lock-command ]]; then
+      if [[ ${!i} == -c || ${!i} == --config ]]; then
         next=$((i + 1))
-        sleep "${READY_DELAY:-0.2}"
-        printf 'gtklock-ready %s\n' "$(date +%s%N)" >> "$CASE_DIR/events"
-        bash -c "${!next}"
-        break
+        config_path=${!next}
       fi
     done
+    lock_command=$(awk -F= '$1 == "lock-command" { sub(/^[^=]*=/, ""); print; exit }' "$config_path")
+    if [[ -n $lock_command ]]; then
+      sleep "${READY_DELAY:-0.2}"
+      printf 'gtklock-ready %s\n' "$(date +%s%N)" >> "$CASE_DIR/events"
+      bash -c "$lock_command"
+    fi
     ;;
   timeout) sleep 30 ;;
   fail) exit 1 ;;
@@ -62,8 +70,8 @@ case $(cat "$CASE_DIR/sway-mode") in
       if [[ ${!i} == --ready-fd ]]; then
         next=$((i + 1))
         sleep "${READY_DELAY:-0.2}"
-        printf '\n' >&"${!next}"
         printf 'swaylock-ready %s\n' "$(date +%s%N)" >> "$CASE_DIR/events"
+        printf '\n' >&"${!next}"
         break
       fi
     done
