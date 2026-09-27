@@ -69,8 +69,9 @@ Tailnet clients connect to `https://<cf-fv1-tailnet-name>:<port>`. Access is
 governed by the tailnet's access rules; HTTPS certificates must be enabled for
 Tailscale Serve. See the [Tailscale Serve documentation](https://tailscale.com/docs/features/tailscale-serve).
 Emby uses host networking but its direct web ports are not opened in the host
-firewall. Samba is local-only. The media module owns AirVPN's forwarded
-qBittorrent port 64480; shared hardening owns SSH port 22.
+firewall. Samba is local-only. The media module opens
+`systemSettings.airVpn.forwardedPort` (currently 64480) for qBittorrent; shared
+hardening owns SSH port 22.
 
 `arr-doctor` checks the media mount, Docker, service health, local HTTP endpoints,
 qBittorrent's VPN namespace, and proxy connectivity. `lazydocker` provides a

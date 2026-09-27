@@ -70,6 +70,8 @@
       enable = true;
       configPath = "/home/lg/.config/vpn/host.conf";
       autostart = false;
+      # AirVPN's forwarded qBittorrent port; keep in sync with the registered profile.
+      forwardedPort = 64480;
     };
   };
 

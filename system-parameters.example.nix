@@ -74,6 +74,8 @@
       enable = false;
       configPath = "/home/your-user/.config/vpn/host.conf";
       autostart = false;
+      # Provider-assigned forwarded port used by qBittorrent, if enabled.
+      forwardedPort = 64480;
     };
   };
 

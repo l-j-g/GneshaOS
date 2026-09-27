@@ -89,6 +89,7 @@
         assert isAbsolutePath settings.arrComposePath || throw "systemSettings.arrComposePath must be absolute";
         assert isAbsolutePath settings.mediaMountPoint || throw "systemSettings.mediaMountPoint must be absolute";
         assert isAbsolutePath airVpn.configPath || throw "systemSettings.airVpn.configPath must be absolute";
+        assert validPort airVpn.forwardedPort || throw "systemSettings.airVpn.forwardedPort must be between 1 and 65535";
         assert isAbsolutePath ghostfolio.secretsFile || throw "systemSettings.ghostfolio.secretsFile must be absolute";
         assert isNumber settings.latitude && settings.latitude >= -90 && settings.latitude <= 90
           || throw "systemSettings.latitude must be between -90 and 90";

@@ -78,7 +78,7 @@ directory does not enable another platform.
 | `systemSettings.ghostfolio.enable` | Include and start the optional Ghostfolio Compose stack. Keep false until its migration is ready. | `false` | `services.gnesha.ghostfolio` |
 | `systemSettings.ghostfolio.secretsFile` | Runtime-only Compose environment file; its contents stay outside Nix. | `"/home/lg/.config/containers/ghostfolio/secrets.env"` | Ghostfolio Compose stack |
 | `systemSettings.ghostfolioPostgresMajor` | PostgreSQL container major version; match the existing server before importing its dump. | `"17"` | Ghostfolio Compose stack |
-| `systemSettings.mediaMountPoint` | Mount point of the drive used for user media directories. | `"/media"` | Home Manager and media directory setup |
+| `systemSettings.mediaMountPoint` | Absolute mount point for user media directories; the host must provide a filesystem mounted there. Directory setup depends on that mount, checks it, and runs as the configured media user. | `"/media"` | Home Manager and media stack |
 | `systemSettings.mediaUiBindAddress` | Local host address for published media web interfaces; keep loopback so Docker ports are not exposed on LAN interfaces. | `"127.0.0.1"` | Compose media web interfaces; Tailscale Serve provides tailnet access |
 | `systemSettings.airVpn.enable` | Whether the host WireGuard profile is loaded into NetworkManager. | `false` | system AirVPN module |
 | `systemSettings.dockerProxy.enable` / `port` / `noProxy` | Enable the Docker Gluetun HTTP proxy independently of host proxy settings. | `true` / `8888` / `"localhost,127.0.0.1,::1"` | media, Ghostfolio, legacy Compose override |
@@ -87,6 +87,7 @@ directory does not enable another platform.
 | `systemSettings.systemProxy.noProxy` | Comma-separated hosts/domains reached directly. | `"localhost,127.0.0.1,::1,cf-fv1,.local"` | NixOS and desktop proxy settings |
 | `systemSettings.airVpn.configPath` | User-selected path to a mode-600 WireGuard profile outside the repo and Nix store. It may be owned by the configured user inside their private home directory or root-owned elsewhere. The importer validates it and creates a root-only NetworkManager connection. | `"/home/lg/.config/vpn/host.conf"` on this host | system AirVPN module |
 | `systemSettings.airVpn.autostart` | Whether NetworkManager may connect the host profile automatically. Leave false while the host and Docker profiles share one AirVPN identity. | `false` | generated NetworkManager connection |
+| `systemSettings.airVpn.forwardedPort` | Provider-assigned AirVPN forwarded port used by Gluetun/qBittorrent and the host firewall. Keep it in sync with the registered provider profile. | `64480` | Compose and NixOS firewall |
 | `userSettings.userName` | POSIX login name. Must match the host's declared user. | `"lg"` | NixOS and Home Manager |
 | `userSettings.homeDirectory` | User home directory and `@home` volume location. | `"/home/lg"` | Home Manager |
 

@@ -3,6 +3,7 @@
 let
   mediaMountPoint = params.systemSettings.mediaMountPoint;
   mediaUiBindAddress = params.systemSettings.mediaUiBindAddress or "127.0.0.1";
+  forwardedPort = params.systemSettings.airVpn.forwardedPort;
   # Keep Compose project identity, runtime .env, and mutable application data.
   arrDirectory = builtins.dirOf params.systemSettings.arrComposePath;
   proxy = params.systemSettings.dockerProxy or { enable = false; };
@@ -27,13 +28,12 @@ let
         environment = [
           "VPN_SERVICE_PROVIDER=custom"
           "VPN_TYPE=wireguard"
-          "WIREGUARD_ADDRESSES=10.164.61.233/32"
           "FIREWALL_INPUT_PORTS=8080"
-          "FIREWALL_VPN_INPUT_PORTS=64480"
+          "FIREWALL_VPN_INPUT_PORTS=${toString forwardedPort}"
           "TZ=\${TZ}"
         ] ++ lib.optional proxy.enable "HTTPPROXY=on";
         volumes = [ "./config/gluetun:/gluetun/wireguard" ];
-        ports = [ (uiPort 8080 8080) "64480:64480" "64480:64480/udp" ]
+        ports = [ (uiPort 8080 8080) "${toString forwardedPort}:${toString forwardedPort}" "${toString forwardedPort}:${toString forwardedPort}/udp" ]
           ++ lib.optional proxy.enable "127.0.0.1:${toString proxy.port}:8888/tcp";
         networks.default.aliases = [ "qbittorrent" ];
         restart = "unless-stopped";

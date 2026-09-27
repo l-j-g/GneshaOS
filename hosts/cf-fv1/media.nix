@@ -1,7 +1,9 @@
-{ config, lib, pkgs, params, ... }:
+{ config, lib, pkgs, params, utils, ... }:
 
 let
   mediaMountPoint = params.systemSettings.mediaMountPoint;
+  mediaMountUnit = "${utils.escapeSystemdPath mediaMountPoint}.mount";
+  forwardedPort = params.systemSettings.airVpn.forwardedPort;
   media = import ./media/compose.nix { inherit config lib pkgs params; };
   commands = import ./media/commands.nix {
     inherit lib pkgs;
@@ -17,6 +19,24 @@ let
     "${mediaMountPoint}/Pictures/Screenshots"
     "${mediaMountPoint}/Videos"
   ];
+  mediaDirectorySetup = pkgs.writeShellScript "media-directory-setup" ''
+    set -eu
+    if ! ${pkgs.util-linux}/bin/mountpoint -q ${lib.escapeShellArg mediaMountPoint}; then
+      echo "media-directory-setup: ${mediaMountPoint} is not a mounted filesystem; refusing to create directories on the root filesystem." >&2
+      exit 1
+    fi
+    for directory in ${lib.concatMapStringsSep " " lib.escapeShellArg mediaDirectories}; do
+      if [ -L "$directory" ] || { [ -e "$directory" ] && [ ! -d "$directory" ]; }; then
+        echo "media-directory-setup: refusing non-directory or symlink $directory" >&2
+        exit 1
+      fi
+      ${pkgs.coreutils}/bin/mkdir -p -- "$directory"
+      if [ ! -w "$directory" ] || [ ! -x "$directory" ]; then
+        echo "media-directory-setup: $directory is not writable/searchable by $(id -un)" >&2
+        exit 1
+      fi
+    done
+  '';
 in
 
 {
@@ -43,7 +63,7 @@ in
   ];
 
   # Start the Docker *arr stack after its dependencies are ready, and stop it
-  # before /media unmounts (containers hold volumes).
+  # before the configured media filesystem unmounts (containers hold volumes).
   systemd.services.docker-compose = {
     description = "Start and stop Docker *arr stack";
     wantedBy = [ "multi-user.target" ];
@@ -52,13 +72,13 @@ in
     after = [
       "docker.service"
       "media-directory-setup.service"
-      "media.mount"
+      mediaMountUnit
     ];
     before = [ "shutdown.target" ];
     requires = [
       "docker.service"
       "media-directory-setup.service"
-      "media.mount"
+      mediaMountUnit
     ];
     serviceConfig = {
       Type = "oneshot";
@@ -70,10 +90,10 @@ in
     };
   };
 
-  # AirVPN forwards 64480 to Gluetun for qBittorrent. Media web interfaces
+  # AirVPN's configured forwarded port reaches qBittorrent. Media web interfaces
   # use loopback backends and Tailscale Serve for tailnet-only HTTPS access.
-  networking.firewall.allowedTCPPorts = [ 64480 ];
-  networking.firewall.allowedUDPPorts = [ 64480 ];
+  networking.firewall.allowedTCPPorts = [ forwardedPort ];
+  networking.firewall.allowedUDPPorts = [ forwardedPort ];
 
   networking.firewall.interfaces.${config.services.tailscale.interfaceName}.allowedTCPPorts = [
     8443 # Emby -> 127.0.0.1:8096
@@ -122,11 +142,12 @@ in
   systemd.services.media-directory-setup = {
     description = "Create user media directories on the MooGoo drive";
     wantedBy = [ "multi-user.target" ];
-    after = [ "media.mount" ];
-    requires = [ "media.mount" ];
+    after = [ mediaMountUnit ];
+    requires = [ mediaMountUnit ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${pkgs.coreutils}/bin/mkdir -p ${lib.concatStringsSep " " mediaDirectories}";
+      User = params.userSettings.userName;
+      ExecStart = mediaDirectorySetup;
       RemainAfterExit = true;
     };
   };
