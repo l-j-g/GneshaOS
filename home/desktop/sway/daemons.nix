@@ -36,7 +36,7 @@ in
       }
       {
         timeout = variables.idleSuspendSec;
-        command = "${pkgs.acpi}/bin/acpi --ac-adapter | grep -q 'on-line' || systemctl suspend";
+        command = "${pkgs.acpi}/bin/acpi --ac-adapter | grep -q 'on-line' || ${pkgs.systemd}/bin/systemctl suspend";
       }
     ];
     # attrset form (list form is deprecated in home-manager). The initial

@@ -590,19 +590,26 @@ Implementation:
 Done when: authorized and unauthorized-interface checks match the documented
 matrix, SSH recovery access survives, and all published ports have an owner.
 
-Implementation progress (2026-09-27): Compose web ports bind to the documented
-loopback address. Operator confirmed media UIs must also remain reachable over
-Tailscale, so a systemd unit configures Tailscale Serve HTTPS endpoints on
-8443-8448, forwarding to loopback; only those ports are allowed on the
-Tailscale interface. Emby's direct web ports remain closed. Samba is
-local-only per operator direction, uses the configured media mount, and does
-not open firewall ports. Port 64480 is owned by the media module while SSH 22
-remains in shared hardening. Nix parsing and `git diff --check` pass. Evaluation,
-builds, Tailscale Serve state, and interface-level connectivity checks remain
-unverified: the Nix daemon is inaccessible, the locked source cannot be fetched
-offline, and this environment has no active Tailscale daemon. Confirm HTTPS
-certificates are enabled for the tailnet during runtime verification. This task
-remains open.
+Implementation progress (2026-09-27): Compose web ports bind to the configured
+loopback address. The operator confirmed media UIs must remain reachable over
+Tailscale, so a systemd unit configures Serve HTTPS endpoints on 8443-8448 to
+the loopback backends; the media module owns those Tailscale interface ports and
+AirVPN-forwarded port 64480. Shared hardening owns SSH 22. Samba uses the
+configured media mount, denies non-loopback clients, and does not open firewall
+ports. Flake check and NixOS build pass.
+
+Read-only live check: the running current-system matches the built configuration.
+Tailscale Serve is active; all six HTTPS endpoints returned responses with TLS
+verification successful (8443: 302, 8444: 401, 8445: 200, 8446: 200, 8447: 403,
+8448: 200), and the certificate was issued. Serve listeners bind to Tailscale
+addresses. Samba's effective config is loopback-only but smbd binds wildcard
+sockets; Emby also binds wildcard port 8096. Same-host requests to the LAN and
+Tailscale addresses succeeded for Emby, which does not prove how remote clients
+are filtered. Firewall rule inspection was denied to this unprivileged account;
+no separate LAN or tailnet client was available for remote probes. NET-01
+remains pending those interface-level checks and confirmation that Emby 8096,
+Samba, and other direct service ports are blocked remotely while tailnet HTTPS
+remains reachable.
 
 ### [ ] AUTH-01 — Verify lock completion and align PAM policy with the active locker
 
@@ -629,13 +636,28 @@ Implementation:
 Done when: locking is confirmed before sleep where required, errors are visible,
 policy matches both PAM stacks, and no tested path strands the user at login.
 
+Read-only audit (2026-09-27): effective `/etc/pam.d/gtklock` has the standard
+Unix PAM stack but no faillock modules; `/etc/pam.d/swaylock` includes preauth,
+authfail, and authsucc faillock rules. `hosts/cf-fv1/security.nix` explicitly
+excludes gtklock, while the host README incorrectly says gtklock shares the
+five-failure tally. Operator preference on retaining this exception is pending.
+Live swayidle logs also show gtklock failing to acquire the lock and the
+swaylock fallback rejecting generated camelCase flags; the battery suspend
+command failed because its unit PATH lacks `systemctl`. The working tree now
+uses swaylock's kebab-case option names and an absolute systemctl path. A
+non-locking parser fixture accepts the generated swaylock config and proceeds
+to the expected missing-compositor error. The Home Manager activation-package
+build passes. No lock, password, suspend, activation, or reboot scenario was
+triggered. This task remains pending interactive verification with a recovery
+session available.
+
 ## Structure and refactoring
 
 These tasks are deliberately separate from behavior changes. Do not build a
 large generic framework: extract only responsibilities already present twice or
 large units with clear ownership. Keep `default.nix` files as short import lists.
 
-### [ ] STRUCT-01 — Split the host's mixed services module by responsibility
+### [x] STRUCT-01 — Split the host's mixed services module by responsibility
 
 Priority: P2. Type: structural refactor.
 Files: `hosts/cf-fv1/services.nix`, `hosts/cf-fv1/default.nix`.
@@ -657,17 +679,21 @@ Implementation:
 Done when: before/after evaluated service, timer, package, proxy, and firewall
 values match; system builds; no functionality is enabled/disabled by the move.
 
-Status: source split is drafted in the working tree. All host service Nix files
-parse; `git diff --check` and `git diff --cached --check` pass. In this session,
-`nix flake check --show-trace --no-write-lock-file` and
-`nixos-rebuild build --flake .#cf-fv1 --no-write-lock-file` both passed; the
-build produced `/nix/store/y8rpddfwyh0sgvm5xw0paf8hldir6qdg-nixos-system-cf-fv1-26.11.20260922.6774f7b`.
-The refactor currently overlaps with NET-01 behavior changes in Samba and
-firewall ownership, so before/after equivalence has not been established and
-the structural change cannot yet be isolated as a behavior-preserving commit.
-No activation was run. Keep the checkbox open until the behavioral diff is
-separated/reviewed and service, timer, package, proxy, and firewall values are
-compared.
+Status: the service split is integrated and validated. All host service Nix
+files parse; `git diff --check` and `git diff --cached --check` pass. `nix flake
+check --show-trace --no-write-lock-file` and `nixos-rebuild build --flake
+.#cf-fv1 --no-write-lock-file` passed; the build produced
+`/nix/store/y8rpddfwyh0sgvm5xw0paf8hldir6qdg-nixos-system-cf-fv1-26.11.20260922.6774f7b`.
+An evaluated before/after comparison used the same current source snapshot,
+restoring only the old host import and service module for the baseline. Host
+name/timezone, proxy, daemon environment, update unit and timer, session
+services, and system-package names/counts match; package order changed without
+changing package multiplicities. Samba settings and firewall values differ
+intentionally under NET-01: Samba is now loopback-only, and media/Tailscale
+ports have different owners. These deltas were identified explicitly rather
+than attributed to the extraction. No activation was run.
+Commits: `e1a4634` (`Record TODO runtime verification`) and `89c7815`
+(`Connect split host service modules`).
 
 ### [ ] STRUCT-02 — Separate arr Compose data, commands, and host integration
 

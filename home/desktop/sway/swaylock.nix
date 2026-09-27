@@ -65,20 +65,20 @@ in
     package = pkgs.swaylock;
     settings = {
       color = v.bg;
-      insideColor = v.bg;
-      ringColor = v.accentDark;
-      keyHlColor = v.accent;
-      bsHlColor = v.critical;
-      lineColor = v.bg;
-      insideClearColor = v.bg;
-      ringClearColor = v.accent;
-      insideVerColor = v.bg;
-      ringVerColor = v.accent;
-      insideWrongColor = v.bg;
-      ringWrongColor = v.critical;
-      textClearColor = v.accent;
-      textVerColor = v.accent;
-      textWrongColor = v.critical;
+      "inside-color" = v.bg;
+      "ring-color" = v.accentDark;
+      "key-hl-color" = v.accent;
+      "bs-hl-color" = v.critical;
+      "line-color" = v.bg;
+      "inside-clear-color" = v.bg;
+      "ring-clear-color" = v.accent;
+      "inside-ver-color" = v.bg;
+      "ring-ver-color" = v.accent;
+      "inside-wrong-color" = v.bg;
+      "ring-wrong-color" = v.critical;
+      "text-clear-color" = v.accent;
+      "text-ver-color" = v.accent;
+      "text-wrong-color" = v.critical;
     };
   };
 }
