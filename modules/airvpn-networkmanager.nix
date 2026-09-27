@@ -1,14 +1,14 @@
-{ config, lib, pkgs, params, ... }:
+{ config, lib, pkgs, ... }:
 
 # Load the private host profile into NetworkManager without placing it in the
 # Nix store. The resulting root-only keyfile makes the tunnel selectable in
-# nmtui; it never autoconnects.
+# nmtui; NetworkManager autoconnect defaults to disabled.
 let
-  avpn = params.systemSettings.airVpn or { };
-  profilePath = avpn.configPath or "/etc/airvpn/host.conf";
+  avpn = config.services.gnesha.airvpn;
+  profilePath = avpn.profilePath;
   profileArg = lib.escapeShellArg profilePath;
-  homeArg = lib.escapeShellArg params.userSettings.homeDirectory;
-  userArg = lib.escapeShellArg params.userSettings.userName;
+  homeArg = lib.escapeShellArg avpn.homeDirectory;
+  userArg = lib.escapeShellArg avpn.userName;
   connectionPath = "/etc/NetworkManager/system-connections/airvpn.nmconnection";
   connectionUuid = "60d25a7b-a0a9-56c7-8a6d-ea7ea3061f65";
 
@@ -67,7 +67,7 @@ let
     set -euo pipefail
     ${validateProfile}
     ${pkgs.python3}/bin/python3 ${./airvpn-nm-profile.py} \
-      ${profileArg} ${lib.escapeShellArg connectionPath}
+      ${profileArg} ${lib.escapeShellArg connectionPath} ${if avpn.autostart then "true" else "false"}
     ${pkgs.networkmanager}/bin/nmcli connection load ${lib.escapeShellArg connectionPath}
   '';
 
@@ -78,13 +78,45 @@ let
   '';
 in
 {
+  options.services.gnesha.airvpn = {
+    enable = lib.mkEnableOption "the host AirVPN NetworkManager profile";
+    profilePath = lib.mkOption {
+      type = lib.types.str;
+      default = "/etc/airvpn/host.conf";
+      description = "Absolute path to the private wg-quick profile outside the Nix store.";
+    };
+    autostart = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Allow NetworkManager to connect the AirVPN profile automatically.";
+    };
+    userName = lib.mkOption {
+      type = lib.types.str;
+      default = "";
+    };
+    homeDirectory = lib.mkOption {
+      type = lib.types.str;
+      default = "";
+    };
+  };
+
   config = lib.mkMerge [
     {
       # Keep stale private key material out of the connection directory on boot,
       # even when this feature has since been disabled.
       systemd.tmpfiles.rules = [ "r! ${connectionPath}" ];
     }
-    (lib.mkIf (avpn.enable or false) {
+    (lib.mkIf avpn.enable {
+      assertions = [
+        {
+          assertion = lib.hasPrefix "/" avpn.profilePath;
+          message = "services.gnesha.airvpn.profilePath must be absolute";
+        }
+        {
+          assertion = avpn.userName != "" && lib.hasPrefix "/" avpn.homeDirectory;
+          message = "services.gnesha.airvpn requires userName and an absolute homeDirectory";
+        }
+      ];
       boot.kernelModules = [ "wireguard" ];
       networking.resolvconf.enable = true;
       environment.systemPackages = [ pkgs.wireguard-tools ];

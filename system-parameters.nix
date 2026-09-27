@@ -37,6 +37,10 @@
     arrComposePath = "/home/lg/src/arr/docker-compose.yml";
     # Match this to the current native PostgreSQL major version before import.
     ghostfolioPostgresMajor = "17";
+    ghostfolio = {
+      enable = false;
+      secretsFile = "/home/lg/src/ghostfolio/secrets.env";
+    };
 
     # Mount point of the MooGoo drive used for user media directories.
     mediaMountPoint = "/media";
@@ -65,6 +69,7 @@
     airVpn = {
       enable = true;
       configPath = "/home/lg/.config/vpn/host.conf";
+      autostart = false;
     };
   };
 

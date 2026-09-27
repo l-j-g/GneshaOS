@@ -134,7 +134,7 @@ def bounded_int(value, label, minimum, maximum):
     return result
 
 
-def keyfile_lines(profile_path):
+def keyfile_lines(profile_path, autostart=False):
     private_key, interface, peers, addresses, dns_servers, table = parse_profile(
         profile_path
     )
@@ -144,7 +144,7 @@ def keyfile_lines(profile_path):
         "uuid=" + str(uuid.uuid5(uuid.NAMESPACE_URL, "gneshaos-airvpn-host")),
         "type=wireguard",
         "interface-name=airvpn-wg",
-        "autoconnect=false",
+        "autoconnect=" + ("true" if autostart else "false"),
         "",
         "[wireguard]",
         "private-key=" + private_key,
@@ -195,10 +195,15 @@ def keyfile_lines(profile_path):
 
 
 def main():
-    if len(sys.argv) != 3:
-        raise ProfileError("usage: converter PROFILE DESTINATION")
-    source, destination = sys.argv[1:]
-    content = keyfile_lines(source)
+    if len(sys.argv) not in (3, 4):
+        raise ProfileError("usage: converter PROFILE DESTINATION [true|false]")
+    source, destination = sys.argv[1:3]
+    autostart = False
+    if len(sys.argv) == 4:
+        if sys.argv[3] not in ("true", "false"):
+            raise ProfileError("autostart must be true or false")
+        autostart = sys.argv[3] == "true"
+    content = keyfile_lines(source, autostart)
     directory = os.path.dirname(destination)
     os.makedirs(directory, mode=0o700, exist_ok=True)
     metadata = os.stat(directory, follow_symlinks=False)

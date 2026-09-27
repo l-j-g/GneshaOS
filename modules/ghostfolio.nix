@@ -1,17 +1,17 @@
 # Run Ghostfolio and its persistent PostgreSQL and Redis services with Docker
 # Compose. The SQL import is prepared before replacing the native service.
-{ lib, pkgs, params, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  containersDirectory = params.systemSettings.containersDirectory;
-  ghostfolioDirectory = "${containersDirectory}/ghostfolio";
-  secretsFile = "/home/lg/src/ghostfolio/secrets.env";
-  proxy = params.systemSettings.dockerProxy or { enable = false; };
+  ghost = config.services.gnesha.ghostfolio;
+  ghostfolioDirectory = ghost.runtimeDirectory;
+  secretsFile = ghost.secretsFile;
+  proxy = ghost.proxy;
   composeFile = pkgs.writeText "ghostfolio-compose.json" (builtins.toJSON {
     name = "ghostfolio";
     services = {
       postgres = {
-        image = "docker.io/library/postgres:${params.systemSettings.ghostfolioPostgresMajor or "17"}-alpine";
+        image = "docker.io/library/postgres:${ghost.postgresMajor}-alpine";
         pull_policy = "missing";
         restart = "unless-stopped";
         environment = {
@@ -130,21 +130,71 @@ let
   };
 in
 {
-  environment.systemPackages = [ compose update ];
-  environment.etc."containers/ghostfolio-compose.json".source = composeFile;
+  options.services.gnesha.ghostfolio = {
+    enable = lib.mkEnableOption "the Ghostfolio Docker stack";
+    runtimeDirectory = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/lib/ghostfolio";
+      description = "Directory for persistent Ghostfolio databases and import state.";
+    };
+    secretsFile = lib.mkOption {
+      type = lib.types.str;
+      default = "/etc/ghostfolio/secrets.env";
+      description = "Runtime-only Compose environment file; its contents are never read by Nix.";
+    };
+    postgresMajor = lib.mkOption {
+      type = lib.types.str;
+      default = "17";
+      description = "PostgreSQL major version for the existing Ghostfolio database.";
+    };
+    proxy = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Connect Ghostfolio to the media stack's Gluetun proxy.";
+      };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 8888;
+      };
+      noProxy = lib.mkOption {
+        type = lib.types.str;
+        default = "localhost,127.0.0.1,::1";
+      };
+    };
+  };
 
-  systemd.services.ghostfolio-compose = {
-    description = "Ghostfolio Docker Compose stack";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "docker.service" ] ++ lib.optional proxy.enable "docker-compose.service";
-    requires = [ "docker.service" ] ++ lib.optional proxy.enable "docker-compose.service";
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = "${compose}/bin/ghostfolio up -d";
-      ExecStop = "${compose}/bin/ghostfolio down";
-      TimeoutStartSec = 300;
-      TimeoutStopSec = 60;
+  config = lib.mkIf ghost.enable {
+    assertions = [
+      {
+        assertion = lib.hasPrefix "/" ghost.runtimeDirectory;
+        message = "services.gnesha.ghostfolio.runtimeDirectory must be absolute";
+      }
+      {
+        assertion = lib.hasPrefix "/" ghost.secretsFile;
+        message = "services.gnesha.ghostfolio.secretsFile must be absolute";
+      }
+      {
+        assertion = builtins.match "[0-9]+" ghost.postgresMajor != null;
+        message = "services.gnesha.ghostfolio.postgresMajor must contain only digits";
+      }
+    ];
+    environment.systemPackages = [ compose update ];
+    environment.etc."containers/ghostfolio-compose.json".source = composeFile;
+
+    systemd.services.ghostfolio-compose = {
+      description = "Ghostfolio Docker Compose stack";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "docker.service" ] ++ lib.optional proxy.enable "docker-compose.service";
+      requires = [ "docker.service" ] ++ lib.optional proxy.enable "docker-compose.service";
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = "${compose}/bin/ghostfolio up -d";
+        ExecStop = "${compose}/bin/ghostfolio down";
+        TimeoutStartSec = 300;
+        TimeoutStopSec = 60;
+      };
     };
   };
 }

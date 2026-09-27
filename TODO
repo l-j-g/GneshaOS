@@ -725,7 +725,7 @@ command packages and systemd integration are unchanged. Parse, `git diff
 --check`, and NixOS build passed. No service was activated. Commit records the
 behavior-preserving extraction.
 
-### [ ] STRUCT-03 — Give reusable modules typed options and explicit enable flags
+### [x] STRUCT-03 — Give reusable modules typed options and explicit enable flags
 
 Priority: P2. Type: architecture refinement.
 Files: `modules/airvpn-wireguard.nix`, `modules/ghostfolio.nix`,
@@ -751,6 +751,20 @@ Implementation:
 Done when: disabled modules evaluate without unrelated runtime prerequisites,
 enabled modules produce actionable errors for missing settings, and existing
 host behavior is preserved. Use small commits, not an all-module conversion.
+
+Completed initial AirVPN/Ghostfolio scope (2026-09-27): both modules now declare
+typed `services.gnesha.*` options. The host composition maps the existing
+`systemSettings.airVpn` and Ghostfolio parameters into them. Ghostfolio is
+imported normally but disabled by default; runtime paths, PostgreSQL major, and
+proxy settings are explicit options. AirVPN profile autostart is a distinct
+false-by-default option and is passed to the NetworkManager keyfile generator.
+The example and user-parameter docs describe these settings; secrets remain
+runtime-only. Fixtures verified the AirVPN converter emits false/true settings,
+host evaluation reports Ghostfolio disabled and AirVPN autostart false, and a
+synthetic enabled Ghostfolio config produces its proxy network and expected
+Compose listener without reading the secret file. `nix flake check`, the
+NixOS build, Python parsing, Nix parsing, and `git diff --check` passed. No
+activation or tunnel operation was run.
 
 ### [ ] STRUCT-04 — Define a validated parameter contract and host overlays
 

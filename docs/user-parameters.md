@@ -70,15 +70,18 @@ the machine, account, or installation changes.
 | `systemSettings.alsSensorPath` | Machine-specific ambient-light sensor path. | `"/sys/bus/iio/devices/..."` | hardware documentation |
 | `systemSettings.containersDirectory` | Runtime directory for Compose project state, credentials, and bind-mounted data. | `"/home/lg/.config/containers"` | media and Ghostfolio Compose stacks |
 | `systemSettings.arrComposePath` | Legacy Compose path; its parent must contain the existing runtime .env and config directory. | `"/home/lg/.config/containers/arr/compose.yml"` | media stack and `arr` wrapper |
+| `systemSettings.ghostfolio.enable` | Include and start the optional Ghostfolio Compose stack. Keep false until its migration is ready. | `false` | `services.gnesha.ghostfolio` |
+| `systemSettings.ghostfolio.secretsFile` | Runtime-only Compose environment file; its contents stay outside Nix. | `"/home/lg/.config/containers/ghostfolio/secrets.env"` | Ghostfolio Compose stack |
 | `systemSettings.ghostfolioPostgresMajor` | PostgreSQL container major version; match the existing server before importing its dump. | `"17"` | Ghostfolio Compose stack |
 | `systemSettings.mediaMountPoint` | Mount point of the drive used for user media directories. | `"/media"` | Home Manager and media directory setup |
 | `systemSettings.mediaUiBindAddress` | Local host address for published media web interfaces; keep loopback so Docker ports are not exposed on LAN interfaces. | `"127.0.0.1"` | Compose media web interfaces; Tailscale Serve provides tailnet access |
-| `systemSettings.airVpn.enable` | Whether the system-wide AirVPN WireGuard tunnel is configured. | `false` | system AirVPN module |
+| `systemSettings.airVpn.enable` | Whether the host WireGuard profile is loaded into NetworkManager. | `false` | system AirVPN module |
 | `systemSettings.dockerProxy.enable` / `port` / `noProxy` | Enable the Docker Gluetun HTTP proxy independently of host proxy settings. | `true` / `8888` / `"localhost,127.0.0.1,::1"` | media, Ghostfolio, legacy Compose override |
 | `systemSettings.systemProxy.enable` | Enable an independent host HTTP proxy; leave disabled for native WireGuard. | `false` | NixOS and desktop proxy settings |
 | `systemSettings.systemProxy.host` / `port` | Address of the local HTTP CONNECT proxy. | `"127.0.0.1"` / `8888` | NixOS and desktop proxy settings |
 | `systemSettings.systemProxy.noProxy` | Comma-separated hosts/domains reached directly. | `"localhost,127.0.0.1,::1,cf-fv1,.local"` | NixOS and desktop proxy settings |
 | `systemSettings.airVpn.configPath` | User-selected path to a mode-600 WireGuard profile outside the repo and Nix store. It may be owned by the configured user inside their private home directory or root-owned elsewhere. The importer validates it and creates a root-only NetworkManager connection. | `"/home/lg/.config/vpn/host.conf"` on this host | system AirVPN module |
+| `systemSettings.airVpn.autostart` | Whether NetworkManager may connect the host profile automatically. Leave false while the host and Docker profiles share one AirVPN identity. | `false` | generated NetworkManager connection |
 | `userSettings.userName` | POSIX login name. Must match the host's declared user. | `"lg"` | NixOS and Home Manager |
 | `userSettings.homeDirectory` | User home directory and `@home` volume location. | `"/home/lg"` | Home Manager |
 

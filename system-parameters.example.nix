@@ -40,6 +40,10 @@
     containersDirectory = "/home/your-user/.config/containers";
     arrComposePath = "/home/your-user/.config/containers/arr/compose.yml";
     ghostfolioPostgresMajor = "17";
+    ghostfolio = {
+      enable = false;
+      secretsFile = "/home/your-user/.config/containers/ghostfolio/secrets.env";
+    };
 
     # Mount point of the media drive used for user media directories.
     mediaMountPoint = "/media";
@@ -69,6 +73,7 @@
     airVpn = {
       enable = false;
       configPath = "/home/your-user/.config/vpn/host.conf";
+      autostart = false;
     };
   };
 

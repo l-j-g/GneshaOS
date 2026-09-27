@@ -100,15 +100,18 @@ selects a custom Compose file and its optional local proxy override.
 
 ## Ghostfolio Compose migration
 
-Ghostfolio now runs from the upstream Docker image; PostgreSQL and Redis run in
-the same Compose project with persistent data under
+Ghostfolio's module is imported but disabled by default. Set
+`systemSettings.ghostfolio.enable = true` only after completing the migration
+steps below. When enabled, Ghostfolio runs from the upstream Docker image;
+PostgreSQL and Redis run in the same Compose project with persistent data under
 `~/.config/containers/ghostfolio`. Docker uses locally cached images on normal
 restarts and rebuilds. `ghostfolio-update` explicitly pulls the current image
 tags and recreates the services.
 
 Before activating this change, add `DATABASE_PASSWORD` and `REDIS_PASSWORD` to
-`/home/lg/src/ghostfolio/secrets.env`, each as a long hexadecimal secret (for
-example, generate one with `openssl rand -hex 32`). Export the existing native
+the configured `systemSettings.ghostfolio.secretsFile`, each as a long
+hexadecimal secret (for example, generate one with `openssl rand -hex 32`).
+The file remains outside the Nix store. Export the existing native
 PostgreSQL major version with `sudo -u postgres psql -Atc 'SHOW server_version;'`
 and set `systemSettings.ghostfolioPostgresMajor` to that major. Then stop
 Ghostfolio so no writes occur during the final export, and dump the database:
