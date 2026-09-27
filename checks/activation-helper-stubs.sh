@@ -91,4 +91,37 @@ activation_resume rebuild-home-failure cf-fv1 lg@cf-fv1
 assert_phase rebuild-home-failure complete
 [[ "$(cat "$NH_LOG")" == "home switch $activation_dir/home -b backup" ]]
 
+# Capacity failures should identify the retained attempts and safe next steps.
+activation_state_root="$work/capacity-state"
+activation_transactions="$activation_state_root/transactions"
+activation_lock_file="$activation_state_root/activation.lock"
+prepare_attempt rebuild-old-build rebuild failed_build_system "$work/snapshot-current"
+prepare_attempt rebuild-old-system rebuild failed_system_activation "$work/snapshot-current"
+prepare_attempt rebuild-stale-closure rebuild blocked_stale_snapshot "$work/snapshot-old"
+if activation_require_capacity 2> "$work/capacity-error"; then
+  echo "activation capacity unexpectedly allowed a fourth unresolved attempt" >&2
+  exit 1
+fi
+for expected in \
+  'rebuild-old-build' \
+  'failed_build_system' \
+  'rebuild-old-system' \
+  'failed_system_activation' \
+  'rebuild-stale-closure' \
+  'blocked_stale_snapshot' \
+  'blocked by 3 unresolved attempts' \
+  'gnesha-rebuild --resume rebuild-old-build' \
+  'Inspect the log and live state before retrying: gnesha-rebuild --resume rebuild-old-system' \
+  'cannot safely resume' \
+  'activation-list'; do
+  grep -Fq "$expected" "$work/capacity-error" || {
+    echo "capacity error did not explain '$expected'" >&2
+    cat "$work/capacity-error" >&2
+    exit 1
+  }
+done
+for id in rebuild-old-build rebuild-old-system rebuild-stale-closure; do
+  [[ -s "$activation_transactions/$id/state" ]]
+done
+
 echo "activation helper stub checks passed"

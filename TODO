@@ -1244,7 +1244,10 @@ now runs activation helper stubs for stale-source refusal, stopping after a
 failed system switch, and Home-only resume after a failed Home Manager
 activation and the read-only update-review busy/missing/ready paths. A dedicated
 Ghostfolio wrapper fixture also verifies import finalization and blocked retry
-states using a synthetic package overlay. The generated Arr wrapper is now
+states using a synthetic package overlay. Activation capacity diagnostics
+now list unresolved attempt IDs, phases, log paths, and phase-specific
+recovery guidance; a stub fixture verifies those details without changing
+attempt state. The generated Arr wrapper is now
 covered by a temporary-path fixture: missing `.env`/`config/` fail before Docker,
 and valid paths forward the Compose project, env file, and image lock to stub
 Docker. Remaining: the `update-status` systemctl status branch. Full system and

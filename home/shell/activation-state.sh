@@ -121,6 +121,40 @@ activation_run_logged() {
   "$@" 2>&1 | tee -a "$activation_dir/run.log"
 }
 
+activation_explain_attempt() {
+  local id="$1" kind="$2" phase="$3" log="$activation_transactions/$1/run.log"
+  printf '  %s (%s, %s)\n' "$id" "$kind" "$phase" >&2
+  printf '    Log: %s\n' "$log" >&2
+  case "$phase" in
+    failed_build_system|failed_build_home)
+      printf '    Retry the saved build with: gnesha-rebuild --resume %s\n' "$id" >&2
+      ;;
+    failed_system_activation|failed_home_activation|activating_system|activating_home)
+      printf '    Inspect the log and live state before retrying: gnesha-rebuild --resume %s\n' "$id" >&2
+      ;;
+    blocked_stale_snapshot|blocked_stale_source|blocked_lock_mismatch)
+      printf '    This attempt cannot safely resume against the current source/lock. If it is no longer needed, discard it with: gnesha-rebuild --discard %s\n' "$id" >&2
+      ;;
+    *)
+      printf '    Inspect the log before deciding whether to resume or discard this attempt.\n' >&2
+      ;;
+  esac
+}
+
+activation_report_unresolved() {
+  local directory id kind phase
+  for directory in "$activation_transactions"/*; do
+    [[ -d "$directory" && ! -L "$directory" && -r "$directory/state" ]] || continue
+    id=$(sed -n 's/^id=//p' "$directory/state" | head -n 1)
+    kind=$(sed -n 's/^kind=//p' "$directory/state" | head -n 1)
+    phase=$(sed -n 's/^phase=//p' "$directory/state" | head -n 1)
+    case "$phase" in
+      complete|discarded) continue ;;
+    esac
+    activation_explain_attempt "$id" "$kind" "$phase"
+  done
+}
+
 activation_require_capacity() {
   activation_init
   local unresolved=0 directory phase
@@ -133,7 +167,9 @@ activation_require_capacity() {
     esac
   done
   if (( unresolved >= 3 )); then
-    printf 'There are already %s unresolved activation attempts. Resume or discard one before starting another.\n' "$unresolved" >&2
+    printf 'A new activation is blocked by %s unresolved attempts:\n' "$unresolved" >&2
+    activation_report_unresolved
+    printf 'Use activation-list to review all attempts. No attempt was changed.\n' >&2
     return 1
   fi
 }
