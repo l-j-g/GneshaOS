@@ -38,11 +38,19 @@ The checked-in image digests match the installed versions. On first startup,
 `~/src/arr/images.lock.json`, preserving the versions already running. It
 removes only the old Watchtower updater container (without volume removal).
 Subsequent rebuilds use those pins. `arr-update` explicitly pulls the configured
-upstream tags, publishes a complete digest manifest, recreates services, and
-runs `arr-doctor`. It can interrupt downloads while containers restart; download
-files and application state remain mounted in the same places. Application
-updates may migrate databases, so reverting an image is not a guaranteed data
-rollback. No backup job is added.
+upstream tags, publishes a complete digest manifest, recreates services, waits
+up to five minutes for every container to run and report healthy when a health
+check exists, then runs `arr-doctor`. Ordinary `arr-doctor` remains an immediate
+snapshot. A successful refresh saves the prior manifest as
+`images.lock.json.previous.json` and tags that single prior generation with
+`:gnesha-rollback`; the next successful refresh advances this bounded retention.
+The weekly Docker prune uses the default `docker system prune -f` policy without
+`--all`, so named rollback tags remain available. Partial pulls or failure to
+tag a prior image leave the current manifest untouched. Review the previous
+manifest and rollback tags manually before using them. Updates can interrupt
+downloads while containers restart; data remains mounted in the same places.
+Application updates may migrate databases, so reverting an image does not
+automatically roll back database schemas. No backup job is added.
 
 Media web interfaces bind locally on `systemSettings.mediaUiBindAddress`
 (default `127.0.0.1`). Tailscale Serve proxies them over HTTPS on the indicated
