@@ -37,7 +37,11 @@ let
     "swaycwd" = mkCommand "swaycwd" ./scripts/swaycwd sh (common ++ (with pkgs; [ sway jq ]));
     "theme-picker" = mkCommand "theme-picker" (pkgs.writeText "theme-picker" themePickerScript) sh (common ++ (with pkgs; [ rofi libnotify util-linux gnugrep gnused kitty sway jq nix nh dash ]));
     "theme-preview" = mkCommand "theme-preview" (pkgs.writeText "theme-preview" themePreviewScript) sh (common ++ (with pkgs; [ gawk gnused kitty sway jq systemd ]));
-    "vpn-toggle" = mkCommand "vpn-toggle" ./scripts/vpn-toggle bash (common ++ (with pkgs; [ networkmanager gnugrep ]));
+    "vpn-toggle" = pkgs.writeShellScriptBin "vpn-toggle" ''
+      export PATH=${lib.makeBinPath (common ++ (with pkgs; [ networkmanager gnugrep gawk sudo wireguard-tools ]))}
+      export WG_BIN=${pkgs.wireguard-tools}/bin/wg
+      exec ${bash} ${./scripts/vpn-toggle} "$@"
+    '';
   };
 
   # scale.sh: "default" resets to the Sway-configured scale.

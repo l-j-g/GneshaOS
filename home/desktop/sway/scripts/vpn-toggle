@@ -1,43 +1,94 @@
 #!/usr/bin/env bash
-# Show the AirVPN WireGuard status and toggle its NetworkManager connection.
-# Used by the Waybar custom/vpn module.
-
-set -euo pipefail
+# Show the AirVPN NetworkManager and WireGuard status for Waybar.
+set -uo pipefail
 
 connection="AirVPN"
+interface="airvpn-wg"
+handshake_max_age=180
+
+emit() {
+  local icon="$1" class="$2" tooltip="$3"
+  printf '{"text":"%s","class":"%s","tooltip":"%s"}\n' "$icon" "$class" "$tooltip"
+}
+
+nmcli_bounded() {
+  timeout 3s nmcli "$@"
+}
 
 is_active() {
-  nmcli --terse --fields NAME connection show --active | grep --fixed-strings \
-    --line-regexp --quiet "$connection"
+  nmcli_bounded --terse --fields NAME connection show --active 2>/dev/null \
+    | grep --fixed-strings --line-regexp --quiet "$connection"
 }
 
 status() {
-  if is_active; then
-    printf '{"text":"󰒃","class":"connected","tooltip":"AirVPN connected"}\n'
+  local connections state output latest now
+  if ! nmcli_bounded general status >/dev/null 2>&1; then
+    emit "󰒄" "unavailable" "NetworkManager unavailable"
+    return
+  fi
+  if ! connections=$(nmcli_bounded --terse --fields NAME connection show 2>/dev/null); then
+    emit "󰒄" "unavailable" "Could not read NetworkManager connections"
+    return
+  fi
+  if ! printf '%s\n' "$connections" | grep --fixed-strings --line-regexp --quiet "$connection"; then
+    emit "󰒄" "unavailable" "AirVPN connection is not configured"
+    return
+  fi
+  if ! is_active; then
+    emit "󰒄" "stopped" "AirVPN is stopped; host traffic uses direct routes"
+    return
+  fi
+
+  if ! state=$(nmcli_bounded --terse --fields GENERAL.STATE device show "$interface" 2>/dev/null); then
+    emit "󰒃" "active-unverified" "AirVPN active; interface state could not be read"
+    return
+  fi
+  case "$state" in
+    "40 (connecting)"|"50 (connecting (IP configuration))"|"70 (connecting (getting IP configuration))")
+      emit "󰒃" "starting" "AirVPN is starting"
+      return
+      ;;
+    "120 (failed)")
+      emit "󰒄" "failed" "AirVPN interface failed"
+      return
+      ;;
+  esac
+
+  if ! output=$(timeout 3s sudo -n "${WG_BIN:-/run/current-system/sw/bin/wg}" show "$interface" latest-handshakes 2>/dev/null); then
+    emit "󰒃" "active-unverified" "AirVPN active; handshake status unavailable"
+    return
+  fi
+  latest=$(awk '$1 == "" { next } $2 > newest { newest = $2 } END { print newest + 0 }' <<< "$output")
+  if (( latest == 0 )); then
+    emit "󰒃" "active-unverified" "AirVPN active; no peer handshake recorded"
+    return
+  fi
+  now=$(date +%s)
+  if (( now - latest <= handshake_max_age )); then
+    emit "󰒃" "healthy" "AirVPN handshake received within ${handshake_max_age}s"
   else
-    printf '{"text":"󰒄","class":"disconnected","tooltip":"AirVPN disconnected"}\n'
+    emit "󰒃" "active-unverified" "AirVPN active; last handshake is stale"
   fi
 }
 
 toggle() {
   if is_active; then
-    nmcli connection down id "$connection"
+    if ! nmcli_bounded connection down id "$connection"; then
+      emit "󰒄" "failed" "Could not disconnect AirVPN"
+      return 1
+    fi
   else
-    nmcli connection up id "$connection"
+    if ! nmcli_bounded connection up id "$connection"; then
+      emit "󰒄" "failed" "Could not connect AirVPN; check NetworkManager details"
+      return 1
+    fi
   fi
   status
 }
 
 command="${1:-status}"
 case "$command" in
-  status)
-    status
-    ;;
-  toggle)
-    toggle
-    ;;
-  *)
-    printf 'usage: %s {status|toggle}\n' "$0" >&2
-    exit 2
-    ;;
+  status) status ;;
+  toggle) toggle ;;
+  *) printf 'usage: %s {status|toggle}\n' "$0" >&2; exit 2 ;;
 esac

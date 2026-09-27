@@ -16,6 +16,12 @@ The host and Docker have separate controls:
   The file and connection are removed when the loader stops; boot-time cleanup
   removes a stale generated file before NetworkManager starts. Do not reuse
   Docker's WireGuard device key for simultaneous tunnels.
+  Waybar distinguishes stopped, starting, failed, and active-but-unverified
+  states. It calls one exact passwordless `wg show airvpn-wg latest-handshakes`
+  query through `sudo -n`; a handshake within three minutes is shown as healthy.
+  The rule grants no access to WireGuard keys or other commands. When AirVPN is
+  off, host traffic uses direct routes; this setup does not provide a host
+  kill switch.
   The importer accepts standard keys for interface addresses, DNS, MTU, and
   peers. It rejects hooks and unsupported directives instead of silently
   dropping them. When the profile defines DNS, the generated connection uses

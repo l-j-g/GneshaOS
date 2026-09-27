@@ -121,6 +121,20 @@ in
       networking.resolvconf.enable = true;
       environment.systemPackages = [ pkgs.wireguard-tools ];
 
+      # Waybar may read only the handshake timestamp for this interface. Keep
+      # the privileged query fixed; do not grant arbitrary wg or shell access.
+      security.sudo.extraRules = [
+        {
+          users = [ avpn.userName ];
+          commands = [
+            {
+              command = "${pkgs.wireguard-tools}/bin/wg show airvpn-wg latest-handshakes";
+              options = [ "NOPASSWD" ];
+            }
+          ];
+        }
+      ];
+
       systemd.services.airvpn-networkmanager-profile = {
         description = "Load the protected AirVPN profile into NetworkManager";
         wantedBy = [ "multi-user.target" ];

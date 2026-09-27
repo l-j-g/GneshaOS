@@ -969,11 +969,20 @@ passed. No live Compose command was run.
 
 Priority: P2. Type: status accuracy gap.
 Files: `home/desktop/sway/scripts/vpn-toggle`, `home/desktop/waybar.nix`,
-`modules/airvpn-wireguard.nix`.
+`modules/airvpn-networkmanager.nix`.
 
-Evidence: `vpn-toggle` reports 'AirVPN connected' whenever the oneshot service
-is active, without checking interface presence, handshake, routing, or DNS.
-Missing/disabled service is indistinguishable from an ordinary disconnected VPN.
+Evidence: `vpn-toggle` previously reported 'AirVPN connected' whenever the
+NetworkManager connection was active, without checking interface presence or
+handshake. Missing/disabled service was indistinguishable from disconnected.
+
+Implementation update (2026-09-27): Waybar now distinguishes unavailable,
+stopped, starting, failed, active-but-unverified, and healthy. It bounds
+NetworkManager and WireGuard status calls, and the only privileged access is an
+exact `sudo -n wg show airvpn-wg latest-handshakes` command. A handshake must
+be newer than three minutes to show healthy. Host routing remains direct while
+AirVPN is off; no kill switch was added. The NixOS build, Home Manager
+activation-package build, and simulated state fixtures passed. Manual toggle
+and boot-disconnected behavior remain pending live activation and observation.
 
 Implementation:
 1. Represent unavailable, stopped, starting, active-but-unverified, healthy, and
