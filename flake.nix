@@ -348,6 +348,47 @@
               ${ghostfolioFixtureRoot}
             touch "$out"
           '';
+      arrFixtureRoot = "/build/gnesha-arr-wrapper-check";
+      arrDockerStub = checkPkgs.writeShellScriptBin "docker" ''
+        set -eu
+        printf '%s\n' "$*" >> "$GNESHA_ARR_FIXTURE_LOG"
+        case "$1" in
+          container|compose) exit 0 ;;
+          *) echo "unexpected arr fixture Docker command: $*" >&2; exit 70 ;;
+        esac
+      '';
+      arrFixtureConfig =
+        hostConfiguration "cf-fv1"
+          {
+            systemSettings.arrComposePath = "${arrFixtureRoot}/arr/docker-compose.yml";
+          }
+          {
+            extraModules = [
+              {
+                nixpkgs.overlays = [
+                  (final: prev: { docker = arrDockerStub; })
+                ];
+              }
+            ];
+          };
+      arrFixturePackage = builtins.head (
+        builtins.filter (package: package.name == "arr") arrFixtureConfig.config.environment.systemPackages
+      );
+      arrWrapperCheck =
+        checkPkgs.runCommand "gnesha-arr-wrapper-check"
+          {
+            nativeBuildInputs = [
+              checkPkgs.bash
+              checkPkgs.coreutils
+              checkPkgs.gnugrep
+            ];
+          }
+          ''
+            bash ${./checks/arr-wrapper-stubs.sh} \
+              ${arrFixturePackage}/bin/arr \
+              ${arrFixtureRoot}
+            touch "$out"
+          '';
       configurationCombinationChecks =
         let
           base = hostCheck null;
@@ -408,7 +449,8 @@
               ${./home/shell/airvpn-profile} \
               ${./home/desktop/sway/scripts/vpn-toggle} \
               ${./home/desktop/sway/scripts/recorder.sh} \
-              ${./home/desktop/sway/scripts/sway-help}; do
+              ${./home/desktop/sway/scripts/sway-help} \
+              ${./checks/arr-wrapper-stubs.sh}; do
               bash -n "$script"
             done
             bash ${./checks/activation-helper-stubs.sh} ${./home/shell/activation-state.sh}
@@ -419,7 +461,12 @@
     {
       formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt;
       checks.${system} = {
-        inherit configurationCombinationChecks sourceScriptCheck ghostfolioImportRecoveryCheck;
+        inherit
+          configurationCombinationChecks
+          sourceScriptCheck
+          ghostfolioImportRecoveryCheck
+          arrWrapperCheck
+          ;
       };
 
       # User-level configuration is deliberately separate from the system

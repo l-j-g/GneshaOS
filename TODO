@@ -1244,16 +1244,19 @@ now runs activation helper stubs for stale-source refusal, stopping after a
 failed system switch, and Home-only resume after a failed Home Manager
 activation and the read-only update-review busy/missing/ready paths. A dedicated
 Ghostfolio wrapper fixture also verifies import finalization and blocked retry
-states using a synthetic package overlay. Remaining:
-stub Docker and systemctl status branches. Full system and activation builds
-remain explicit slower commands.
+states using a synthetic package overlay. The generated Arr wrapper is now
+covered by a temporary-path fixture: missing `.env`/`config/` fail before Docker,
+and valid paths forward the Compose project, env file, and image lock to stub
+Docker. Remaining: the `update-status` systemctl status branch. Full system and
+activation builds remain explicit slower commands.
 
 Read-only helper-test audit (2026-09-27): a generic PATH stub cannot safely test
-the generated `arr` command because it embeds the live media paths and runs its
-generated `arr-pin` before forwarding startup commands. A valid forwarding test
-needs a synthetic Nix module instance with temporary paths and stubbed Docker
-and pin dependencies. No live wrapper, Docker command, or media data was used;
-this harness remains pending. Follow-up (2026-09-27): added a separate
+the generated `arr` command because it embeds live media paths and runs its
+generated `arr-pin` before forwarding startup commands. Follow-up: a synthetic
+Nix host evaluation now injects temporary arr paths and a Docker package stub;
+the fixture verifies missing runtime inputs fail before Docker and valid inputs
+forward the expected Compose arguments. No live wrapper, Docker command, or
+media data was used. Follow-up (2026-09-27): added a separate
 temporary-directory harness for the rebuild activation helper. Its Nix/nh stubs
 verify stale-snapshot refusal, no Home Manager call after a failed system
 switch, and a Home-only resume after failed Home activation. The standalone
