@@ -324,10 +324,14 @@
             touch "$out"
           '';
       sourceScriptCheck =
-        checkPkgs.runCommand "gnesha-source-script-syntax"
+        checkPkgs.runCommand "gnesha-source-and-helper-checks"
           {
             nativeBuildInputs = [
               checkPkgs.bash
+              checkPkgs.coreutils
+              checkPkgs.gnused
+              checkPkgs.jq
+              checkPkgs.util-linux
             ];
           }
           ''
@@ -338,6 +342,7 @@
               ${./home/desktop/sway/scripts/sway-help}; do
               bash -n "$script"
             done
+            bash ${./checks/activation-helper-stubs.sh} ${./home/shell/activation-state.sh}
             touch "$out"
           '';
     in

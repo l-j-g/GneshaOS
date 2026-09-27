@@ -68,9 +68,11 @@ The flake exposes the pinned `nixfmt` as its formatter. Apply it only
 to the Nix files in the current change with `nix fmt -- <files...>`; check those
 files first with the formatter's `--check` flag. Routine validation is local and
 non-activating; the repository does not currently configure CI. Use the
-flake's focused configuration-combination and Bash syntax checks for routine
-feedback. Use the explicit Home Manager evaluation/build rows when their scope
-applies rather than hiding the slower closure builds behind formatting.
+flake's focused configuration-combination, Bash syntax, and activation-helper
+stub checks for routine feedback. The helper stubs use temporary state and
+never invoke real `nix` activation or `nh`. Use the explicit Home Manager
+evaluation/build rows when their scope applies rather than hiding the slower
+closure builds behind formatting.
 
 ## Activation helpers
 
