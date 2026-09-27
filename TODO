@@ -623,8 +623,8 @@ intentionally excludes gtklock. The lock helper treats process existence as
 already locked. Sleep/lid paths depend on this helper.
 
 Implementation:
-1. Document the intended gtklock versus fallback authentication policy and
-   confirm that excluding gtklock's faillock rules is intentional.
+1. Apply the same five-failure policy to gtklock and the swaylock fallback, and
+   document that they share the tally.
 2. Verify daemonization/lock-acquisition semantics against the installed locker
    versions. Do not equate a process name alone with compositor lock success.
 3. Exercise simultaneous idle/lid/sleep requests, failed gtklock startup,
@@ -638,9 +638,13 @@ policy matches both PAM stacks, and no tested path strands the user at login.
 
 Read-only audit (2026-09-27): effective `/etc/pam.d/gtklock` has the standard
 Unix PAM stack but no faillock modules; `/etc/pam.d/swaylock` includes preauth,
-authfail, and authsucc faillock rules. `hosts/cf-fv1/security.nix` explicitly
-excludes gtklock, while the host README incorrectly says gtklock shares the
-five-failure tally. Operator preference on retaining this exception is pending.
+authfail, and authsucc faillock rules. At audit time, `hosts/cf-fv1/security.nix`
+excluded gtklock although the host README said the lockers shared the tally.
+The operator confirmed gtklock should share the policy, and the source now
+includes its PAM service in `passwordServices`. The generated
+NixOS system build contains gtklock preauth/authfail/authsucc entries and the
+deny=5, fail_interval=900, unlock_time=600 policy. No activation, failed
+password attempt, successful unlock, or recovery-console scenario was run.
 Live swayidle logs also show gtklock failing to acquire the lock and the
 swaylock fallback rejecting generated camelCase flags; the battery suspend
 command failed because its unit PATH lacks `systemctl`. The working tree now
