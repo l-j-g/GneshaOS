@@ -3,7 +3,7 @@
     ./hardware-configuration.nix
     ./boot.nix
     ./laptop.nix
-    ./services.nix
+    ./services
     ./media.nix
     ./desktop.nix
     ./security.nix
