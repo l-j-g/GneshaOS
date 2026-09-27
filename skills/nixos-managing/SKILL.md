@@ -17,6 +17,14 @@ This reference is supplemental to this repository's `AGENTS.md` and `gneshaos-ma
 - Determine the execution context from the active repository and environment when available; avoid asking the user to repeat information already present.
 
 # NixOS Management
+
+**Repository precedence:** Follow the active repository's `AGENTS.md` and
+local maintenance skill first. Their activation, validation, and publication
+rules override every general example below. In this repository use build-only
+commands by default; `nixos-rebuild test`, `switch`, `boot`, and rollback are
+state-changing and require explicit user approval. Worker agents return changes
+to the integrating agent and do not publish them.
+
 ## Quick Decision: What do you need?
 | Task | Go to |
 |---|---|
@@ -152,11 +160,9 @@ man configuration.nix | grep -A3 "PasswordAuthentication"
 
 NixOS is **declarative and atomic**. Every change produces a new **generation**. You can always roll back.
 
-Key workflow:
-1. Edit `.nix` files
-2. `git add` (in flakes — untracked files are invisible to Nix)
-3. `nixos-rebuild test` (activate without committing to bootloader)
-4. `nixos-rebuild switch` (set as default boot)
+General workflow: edit `.nix` files, then evaluate and build the selected
+configuration. Activation is a separate operator decision governed by the
+active repository's instructions.
 ## Flakes vs Channels
 
 **Use flakes** for reproducibility. Channels are impure (machine-dependent lookup paths).
@@ -170,12 +176,14 @@ nix.settings.experimental-features = [ "nix-command" "flakes" ];
 | Command | When to use |
 |---|---|
 | `nixos-rebuild switch` | Apply + set as default boot |
-| `nixos-rebuild test` | Apply now, skip bootloader — safe first step |
+| `nixos-rebuild test` | Apply now, skip bootloader (state-changing) |
 | `nixos-rebuild boot` | Set as next boot without activating now |
 | `nixos-rebuild dry-activate` | Preview changes without applying |
 | `nixos-rebuild build` | Build only, creates `./result` |
 | `nixos-rebuild build-vm` | Build QEMU VM for local testing |
-Always test before switch — especially on remote servers:
+For reference, a general remote activation sequence is shown below. It changes
+the target system and must not be run unless explicitly requested and allowed by
+the active repository instructions:
 ```bash
 nixos-rebuild test --flake .#hostname --target-host root@server
 nixos-rebuild switch --flake .#hostname --target-host root@server

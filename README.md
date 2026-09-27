@@ -55,7 +55,7 @@ A declarative NixOS configuration for a [Panasonic Let's Note CF-FV1](https://pa
 ## Features
 
 - **btrfs + LUKS2 + TPM2 auto-unlock** — root is LUKS2-encrypted on btrfs subvolumes (`@`, `@nix`, `@home`); the firmware TPM (Intel PTT) unlocks it automatically at boot — no passphrase prompt.
-- **Home-manager** — the entire user environment (shell, editors, Sway/waybar/swaylock, fonts, theme, daemons) is declared in `home/` and built with the system.
+- **Home Manager** — the user environment (shell, editors, Sway/Waybar, gtklock with swaylock fallback, fonts, theme, and daemons) is declared in `home/` and built separately from NixOS.
 - **Sway / Wayland** — tiling WM with custom bindings, scripts, and a 3:2 QHD panel configured for 200% scaling.
 - **`letsnote` module** — Panasonic-specific power management: EC charge-limit / eco mode (`ecFeatures`), a CF-FV1 EC quiet-profile request through `acpi_call` (`fanControl`; no general fan-speed control), and keyd remapping of the dead JIS keys (`jisKeys`).
 - **Hardening module** — sshd hardening, locked-down defaults, no default passwords.

@@ -1231,7 +1231,17 @@ Done when: checks detect deliberately introduced versions of the repaired
 proxy/order/path defects in fixtures, run without live service changes, and
 clearly distinguish cheap evaluation from full system/home builds.
 
-### [ ] CHECK-02 — Make formatting and routine verification reproducible
+Progress (2026-09-27): the flake now has a single fast combination check for
+host AirVPN enabled/off-at-boot, host proxy off, Ghostfolio disabled/enabled,
+Docker proxy on/off, generated Compose proxy values, Docker/Nix daemon proxy
+environment isolation, and service ordering away from `multi-user.target`. A
+focused Bash syntax check is also exposed. `nix flake check --show-trace` passes
+with the final assertions; the documented Home Manager activation derivation
+evaluation also passed without building its closure. Remaining: add small
+helper stubs for the Docker/systemctl/Nix/nh regressions. Full system and
+activation builds remain explicit slower commands.
+
+### [x] CHECK-02 — Make formatting and routine verification reproducible
 
 Priority: P2. Type: developer workflow improvement.
 Files: `flake.nix`, `docs/development.md`, optional CI configuration.
@@ -1250,7 +1260,15 @@ Done when: a fresh checkout can run the documented checks, formatter output is
 stable, and failure messages identify the file/check rather than a generic build
 failure. Do not add a heavyweight test framework for simple Nix syntax checks.
 
-### [ ] DOC-01 — Reconcile docs with active features and command semantics
+Completed (2026-09-27): the flake exposes pinned `nixfmt` and documents a
+non-mutating formatter check, targeted formatting, lightweight flake checks,
+Home Manager evaluation, and explicit full builds. The formatter check initially
+identified `flake.nix`; formatting that touched file made the subsequent check
+pass. `nix flake check --show-trace` passed with the final focused checks. Home
+Manager activation `.drvPath` evaluation passed. No CI or test framework was
+added.
+
+### [x] DOC-01 — Reconcile docs with active features and command semantics
 
 Priority: P2. Type: confirmed stale descriptions.
 Files: `README.md`, `docs/{README,user-parameters,development}.md`,
@@ -1274,6 +1292,17 @@ Implementation:
 Done when: documentation agrees with evaluated options and installed helper
 interfaces, examples use existing paths/commands, and relative links pass.
 
+Completed (2026-09-27): clarified that Ghostfolio remains a proposed disabled
+migration and documented its digest/import state behavior; documented the
+independent host WireGuard, Docker proxy, and optional host HTTP proxy; corrected
+the public-key command to `pubkey`, the configured Ghostty terminal example,
+and Kitty's remaining nnn/theme-preview roles. The media parameter now describes
+the generated `/etc/arr/compose.json` and the runtime directory selected by the
+parent path. Development docs describe `cfn`, build-only `nixbuild`, temporary
+`retest`, two-layer `rebuild`, and next-boot `rebuild-boot`. Existing Let's Note
+docs accurately identify the CF-FV1 `acpi_call` quiet-profile request and do not
+claim general fan control. All 12 checked Markdown files have valid local links.
+
 ### [ ] DOC-02 — Document independent backups and restore drills for stateful apps
 
 Priority: P2. Type: missing operational procedure.
@@ -1292,6 +1321,14 @@ Implementation:
 Done when: the user can identify what a snapshot does and does not cover, and
 at least one safe restore drill proves the documented application-data path.
 Automated backup scheduling is a separate change after destination approval.
+
+Progress (2026-09-27): added [`docs/recovery.md`](docs/recovery.md) and linked
+it from the documentation index. It records the read-only container and mount
+inventory, separates Nix generations from app configuration, databases, secrets,
+and media, and describes a disposable restore drill. The off-disk destination,
+retention, deployed-version consistency/export procedures, and drill remain
+pending; no backup or restore was performed. Keep this task open until those
+choices and a successful isolated drill are documented.
 
 ### [x] HYGIENE-01 — Remove tracked scratch output and clarify local-only inputs
 
@@ -1352,6 +1389,16 @@ Implementation:
 
 Done when: a less capable agent can find the correct instructions, understand
 role boundaries, and work from a clean checkout without untracked dependencies.
+
+Completed (2026-09-27): recorded the vendored upstream URL, MIT license, initial
+repository import commit, and the fact that the precise upstream revision was
+not preserved in [`skills/nixos-managing/PROVENANCE.md`](skills/nixos-managing/PROVENANCE.md).
+The top-level repository instructions now state precedence and publication
+ownership; the supplemental skill marks its activation examples as
+state-changing and subordinate to local rules. The worker agent contract now
+returns changes to the integrating agent without publishing. All referenced
+files are tracked. The upstream revision and complete historical local delta
+remain unknown, so the provenance note records that limitation explicitly.
 
 ## Completion record template
 

@@ -22,8 +22,11 @@ running machine.
 
 For broader NixOS tasks such as installation, remote deployment, image building,
 impermanence, LUKS, or monitoring, consult `skills/nixos-managing/SKILL.md` and
-its linked references. This upstream material is general guidance: this
-repository's safety rules and `gneshaos-maintenance` skill take precedence.
+its linked references. The repository instructions here and the
+`gneshaos-maintenance` skill take precedence over that supplemental reference.
+See `skills/nixos-managing/PROVENANCE.md` for its source, license, and local
+adaptations. Worker agents return changes for integration and do not push;
+the integrating agent follows this file's commit and push policy.
 
 ## Build and Validation
 

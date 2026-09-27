@@ -17,7 +17,7 @@
   gitUserName = "lg";
   gitUserEmail = "lg@lgreve.com";
 
-  # Public PGP key file shown by the `key` shell command.
+  # Public PGP key file shown and optionally copied by the `pubkey` command.
   publicKeyFile = "/home/lg/public-key.asc";
 
   # Terminal command used by Sway, rofi, and Waybar. Change this only when the

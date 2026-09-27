@@ -4,8 +4,11 @@ The host and Docker have separate controls:
 
 - `systemSettings.airVpn` configures the native host WireGuard service.
   The profile is imported as a NetworkManager connection named `AirVPN`, so
-  it can be selected from `nmtui` or the Waybar VPN toggle. It does not
-  autoconnect. Set `systemSettings.airVpn.configPath` in
+  it can be selected from `nmtui` or the Waybar VPN toggle. With
+  `systemSettings.airVpn.enable = true`, the profile is loaded but its
+  connection autoconnect remains disabled unless `airVpn.autostart` is
+  deliberately enabled. With AirVPN stopped, ordinary host traffic uses direct
+  routes. Set `systemSettings.airVpn.configPath` in
   `system-parameters.nix` to the chosen profile path. Keep the source profile
   outside the repository and Nix store, mode 600, and either owned by root or
   by the configured user inside that user's home directory. Parent directories
@@ -30,7 +33,9 @@ The host and Docker have separate controls:
   loopback port (default 8888). Container clients on `arr_default` use
   `http://gluetun:8888`. qBittorrent shares Gluetun's VPN network namespace.
 - `systemSettings.systemProxy` controls optional host HTTP/HTTPS and desktop
-  proxy settings. Leave it disabled when using native host WireGuard.
+  proxy settings independently of native host WireGuard. Leave it disabled
+  when using native host WireGuard unless proxy-aware applications specifically
+  need it.
   Pointing it at Gluetun makes proxy-aware host applications depend on Docker.
 
 Docker registry pulls and Nix daemon downloads explicitly discard HTTP proxy

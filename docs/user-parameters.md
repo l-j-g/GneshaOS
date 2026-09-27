@@ -74,7 +74,7 @@ directory does not enable another platform.
 | `systemSettings.backlightDevice` | Machine-specific backlight device name. | `"intel_backlight"` | Waybar, SwayOSD, wluma |
 | `systemSettings.alsSensorPath` | Machine-specific ambient-light sensor path. | `"/sys/bus/iio/devices/..."` | hardware documentation |
 | `systemSettings.containersDirectory` | Runtime directory for Compose project state, credentials, and bind-mounted data. | `"/home/lg/.config/containers"` | media and Ghostfolio Compose stacks |
-| `systemSettings.arrComposePath` | Legacy Compose path; its parent must contain the existing runtime .env and config directory. | `"/home/lg/.config/containers/arr/compose.yml"` | media stack and `arr` wrapper |
+| `systemSettings.arrComposePath` | Selects the managed media runtime project directory through its parent. The Compose file itself is generated at `/etc/arr/compose.json`; the runtime directory must contain its existing `.env` and `config/`. | `"/home/lg/src/arr/docker-compose.yml"` | media stack and `arr` wrapper |
 | `systemSettings.ghostfolio.enable` | Include and start the optional Ghostfolio Compose stack. Keep false until its migration is ready. | `false` | `services.gnesha.ghostfolio` |
 | `systemSettings.ghostfolio.secretsFile` | Runtime-only Compose environment file; its contents stay outside Nix. | `"/home/lg/.config/containers/ghostfolio/secrets.env"` | Ghostfolio Compose stack |
 | `systemSettings.ghostfolioPostgresMajor` | PostgreSQL container major version; Ghostfolio preflight compares it with the source version recorded in the SQL dump. | `"17"` | Ghostfolio Compose stack and read-only preflight |
@@ -106,7 +106,7 @@ Positive font/scale/zoom values, absolute screenshot/key paths, and the
 | `browserDefaultZoom` | Default webpage zoom factor; `1.5` means 150%. Saved per-site zoom and browser UI scale remain independent. | `1.5` | Firefox and LibreWolf |
 | `gitUserName` | Name written into commits made with the configured Git client. | `"lg"` | Git |
 | `gitUserEmail` | Email written into commits made with the configured Git client. | `"lg@lgreve.com"` | Git |
-| `terminal` | Terminal command used by Sway, rofi, and Waybar. | `"kitty"` | terminal integrations |
+| `terminal` | Terminal command used by Sway, rofi, and Waybar. | `"ghostty"` | terminal integrations |
 | `displayScale` | Sway output scale. Use `"1"` for 100%, `"2"` for 200%, or a fractional value. | `"2"` | Sway and scale helper |
 | `gapsInner` / `gapsOuter` | Inner and outer Sway window gaps, in pixels. | `5` | Sway |
 | `terminalFontFamily` | Font family used by Kitty; `monospace` resolves to bitmap Terminus. | `"monospace"` | Kitty |
@@ -124,8 +124,8 @@ Positive font/scale/zoom values, absolute screenshot/key paths, and the
 | `hermesSshHost` | SSH config alias for the Mac running Hermes. Keep strict host-key checking enabled and enroll its key in `known_hosts`. | `"mac"` | user service |
 | `hermesLocalPort` / `hermesRemotePort` | Local dashboard port and remote loopback dashboard port. | `19119` / `9119` | service and launcher |
 
-Kitty is also used by Sway's configurable terminal command and the live theme
-preview's remote-control integration.
+Ghostty is the configured terminal. Kitty remains enabled for nnn image
+previews and the live theme preview's remote-control integration.
 
 The Hermes tunnel uses batch authentication and strict host-key checking.
 `network-online.target` is a user-manager ordering hint and does not establish
