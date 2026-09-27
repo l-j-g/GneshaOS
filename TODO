@@ -695,7 +695,7 @@ than attributed to the extraction. No activation was run.
 Commits: `e1a4634` (`Record TODO runtime verification`) and `89c7815`
 (`Connect split host service modules`).
 
-### [ ] STRUCT-02 — Separate arr Compose data, commands, and host integration
+### [x] STRUCT-02 — Separate arr Compose data, commands, and host integration
 
 Priority: P2. Type: structural refactor.
 Files: `hosts/cf-fv1/media.nix` (317 lines), host docs.
@@ -715,6 +715,15 @@ Implementation:
 Done when: normalized generated Compose JSON is identical, command interfaces
 are unchanged, unit dependencies match, and system build passes. Follow-up
 behavioral improvements belong in ARR-01/02 rather than this commit.
+
+Completed (2026-09-27): Compose definition, image lock metadata, command
+generation, and host integration now have separate owners under
+`hosts/cf-fv1/media/`. Mutable `.env`, lock, config, and data remain at their
+existing paths. The generated Compose JSON is byte-identical to the pre-move
+snapshot, and the NixOS toplevel build resolves to the same store path, so
+command packages and systemd integration are unchanged. Parse, `git diff
+--check`, and NixOS build passed. No service was activated. Commit records the
+behavior-preserving extraction.
 
 ### [ ] STRUCT-03 — Give reusable modules typed options and explicit enable flags
 
