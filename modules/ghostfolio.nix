@@ -1,5 +1,5 @@
 # Run Ghostfolio and its persistent PostgreSQL and Redis services with Docker
-# Compose. The SQL import is prepared before replacing the native service.
+# Compose. Keep migration preflight available while the feature is disabled.
 { config, lib, pkgs, ... }:
 
 let
@@ -7,6 +7,54 @@ let
   ghostfolioDirectory = ghost.runtimeDirectory;
   secretsFile = ghost.secretsFile;
   proxy = ghost.proxy;
+  preflight = pkgs.writeShellApplication {
+    name = "ghostfolio-preflight";
+    runtimeInputs = [ pkgs.docker pkgs.coreutils pkgs.findutils pkgs.gnugrep pkgs.gnused ];
+    text = ''
+      fail() { echo "ghostfolio-preflight: $*" >&2; exit 1; }
+
+      if [ ! -f ${lib.escapeShellArg secretsFile} ] || [ -L ${lib.escapeShellArg secretsFile} ]; then
+        fail "runtime secrets file is missing or not a regular file: ${secretsFile}"
+      fi
+      mode=$(stat -c '%a' -- ${lib.escapeShellArg secretsFile})
+      [ "$mode" = 600 ] || fail "secrets file must have mode 600: ${secretsFile}"
+      grep -qE '^DATABASE_PASSWORD=[0-9A-Fa-f]{64}$' ${lib.escapeShellArg secretsFile} \
+        || fail "secrets file must define DATABASE_PASSWORD as 64 hexadecimal characters"
+      grep -qE '^REDIS_PASSWORD=[0-9A-Fa-f]{64}$' ${lib.escapeShellArg secretsFile} \
+        || fail "secrets file must define REDIS_PASSWORD as 64 hexadecimal characters"
+
+      marker=${lib.escapeShellArg "${ghostfolioDirectory}/.database-imported"}
+      database=${lib.escapeShellArg "${ghostfolioDirectory}/postgres"}
+      import=${lib.escapeShellArg "${ghostfolioDirectory}/initial-database.sql"}
+      if [ -e "$marker" ]; then
+        [ -s "$database/PG_VERSION" ] || fail "import marker exists but PostgreSQL data is missing; inspect the data before retrying"
+        actual_major=$(cat "$database/PG_VERSION")
+        [ "$actual_major" = ${lib.escapeShellArg ghost.postgresMajor} ] \
+          || fail "PostgreSQL data is major $actual_major but the configured image is major ${ghost.postgresMajor}"
+      else
+        if [ -d "$database" ] && [ -n "$(find "$database" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+          fail "PostgreSQL data already exists without a completion marker; inspect or restore a fresh target before importing"
+        fi
+        [ -s "$import" ] || fail "SQL dump is missing or empty: ${ghostfolioDirectory}/initial-database.sql"
+        dump_major=$(sed -nE 's/^-- Dumped from database version ([0-9]+)\..*/\1/p' "$import" | head -n 1)
+        [ -n "$dump_major" ] || fail "SQL dump has no pg_dump source-version header; verify its source and export method"
+        [ "$dump_major" = ${lib.escapeShellArg ghost.postgresMajor} ] \
+          || fail "SQL dump source major is $dump_major but the configured PostgreSQL image is major ${ghost.postgresMajor}"
+      fi
+
+      docker info >/dev/null 2>&1 || fail "Docker daemon is unavailable or permission was denied"
+      ${lib.optionalString proxy.enable ''
+        docker network inspect arr_default >/dev/null 2>&1 \
+          || fail "Docker network arr_default is missing; start the media stack before Ghostfolio"
+      ''}
+      docker compose --project-name ghostfolio \
+        --project-directory ${lib.escapeShellArg ghostfolioDirectory} \
+        --env-file ${lib.escapeShellArg secretsFile} \
+        -f ${composeFile} config --quiet \
+        || fail "Compose configuration or runtime prerequisites are invalid"
+      echo "ghostfolio-preflight: runtime prerequisites pass for PostgreSQL major ${ghost.postgresMajor}; no data was changed"
+    '';
+  };
   composeFile = pkgs.writeText "ghostfolio-compose.json" (builtins.toJSON {
     name = "ghostfolio";
     services = {
@@ -95,6 +143,7 @@ let
       case "''${1:-}" in
         up)
           shift
+          ${preflight}/bin/ghostfolio-preflight
           mkdir -p ${lib.escapeShellArg ghostfolioDirectory}
           if [ ! -e ${lib.escapeShellArg "${ghostfolioDirectory}/.database-imported"} ]; then
             if [ ! -s ${lib.escapeShellArg "${ghostfolioDirectory}/initial-database.sql"} ]; then
@@ -164,37 +213,40 @@ in
     };
   };
 
-  config = lib.mkIf ghost.enable {
-    assertions = [
-      {
-        assertion = lib.hasPrefix "/" ghost.runtimeDirectory;
-        message = "services.gnesha.ghostfolio.runtimeDirectory must be absolute";
-      }
-      {
-        assertion = lib.hasPrefix "/" ghost.secretsFile;
-        message = "services.gnesha.ghostfolio.secretsFile must be absolute";
-      }
-      {
-        assertion = builtins.match "[0-9]+" ghost.postgresMajor != null;
-        message = "services.gnesha.ghostfolio.postgresMajor must contain only digits";
-      }
-    ];
-    environment.systemPackages = [ compose update ];
-    environment.etc."containers/ghostfolio-compose.json".source = composeFile;
+  config = lib.mkMerge [
+    { environment.systemPackages = [ preflight ]; }
+    (lib.mkIf ghost.enable {
+      assertions = [
+        {
+          assertion = lib.hasPrefix "/" ghost.runtimeDirectory;
+          message = "services.gnesha.ghostfolio.runtimeDirectory must be absolute";
+        }
+        {
+          assertion = lib.hasPrefix "/" ghost.secretsFile;
+          message = "services.gnesha.ghostfolio.secretsFile must be absolute";
+        }
+        {
+          assertion = builtins.match "[0-9]+" ghost.postgresMajor != null;
+          message = "services.gnesha.ghostfolio.postgresMajor must contain only digits";
+        }
+      ];
+      environment.systemPackages = [ compose update ];
+      environment.etc."containers/ghostfolio-compose.json".source = composeFile;
 
-    systemd.services.ghostfolio-compose = {
-      description = "Ghostfolio Docker Compose stack";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "docker.service" ] ++ lib.optional proxy.enable "docker-compose.service";
-      requires = [ "docker.service" ] ++ lib.optional proxy.enable "docker-compose.service";
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStart = "${compose}/bin/ghostfolio up -d";
-        ExecStop = "${compose}/bin/ghostfolio down";
-        TimeoutStartSec = 300;
-        TimeoutStopSec = 60;
+      systemd.services.ghostfolio-compose = {
+        description = "Ghostfolio Docker Compose stack";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "docker.service" ] ++ lib.optional proxy.enable "docker-compose.service";
+        requires = [ "docker.service" ] ++ lib.optional proxy.enable "docker-compose.service";
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${compose}/bin/ghostfolio up -d";
+          ExecStop = "${compose}/bin/ghostfolio down";
+          TimeoutStartSec = 300;
+          TimeoutStopSec = 60;
+        };
       };
-    };
-  };
+    })
+  ];
 }

@@ -1091,6 +1091,17 @@ Done when: the disabled state evaluates cleanly, a dry-run preflight explains
 missing prerequisites, docs match reality, and actual migration remains gated
 on an approved, tested data plan.
 
+Progress (2026-09-27): runtime directory and secrets path already come from
+parameters. Added `ghostfolio-preflight`, available while the stack is disabled;
+it checks mode-600 credentials without printing values, dump and PostgreSQL
+major compatibility, target data/marker consistency, Docker, Compose syntax,
+and the proxy network. It performs no writes or container starts. The disabled
+host build and stubbed missing/invalid/ready prerequisite cases passed. Docs
+now call this a proposed disabled migration and outline verification/rollback.
+Pending: identify and record the actual source service/database/export owner,
+complete a disposable restore with the intended PostgreSQL major, and approve
+the data plan before enabling.
+
 ### [ ] GF-02 — Bound and make Ghostfolio import/update retries safe
 
 Priority: P1 before enabling Ghostfolio. Type: confirmed migration risks.

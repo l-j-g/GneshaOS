@@ -112,29 +112,51 @@ override under `XDG_CONFIG_HOME/airvpn/proxy.compose.yaml`.
 
 ## Ghostfolio Compose migration
 
-Ghostfolio's module is imported but disabled by default. Set
-`systemSettings.ghostfolio.enable = true` only after completing the migration
-steps below. When enabled, Ghostfolio runs from the upstream Docker image;
-PostgreSQL and Redis run in the same Compose project with persistent data under
-`~/.config/containers/ghostfolio`. Docker uses locally cached images on normal
-restarts and rebuilds. `ghostfolio-update` explicitly pulls the current image
-tags and recreates the services.
+Status: proposed and disabled (`systemSettings.ghostfolio.enable = false`).
+This repository does not identify the live source service unit or source
+database name, so the steps below are not a cutover runbook yet. Record the
+actual source owner and database, export method, PostgreSQL version, and a
+successful disposable restore before enabling the Compose module.
 
-Before activating this change, add `DATABASE_PASSWORD` and `REDIS_PASSWORD` to
-the configured `systemSettings.ghostfolio.secretsFile`, each as a long
-hexadecimal secret (for example, generate one with `openssl rand -hex 32`).
-The file remains outside the Nix store. Export the existing native
-PostgreSQL major version with `sudo -u postgres psql -Atc 'SHOW server_version;'`
-and set `systemSettings.ghostfolioPostgresMajor` to that major. Then stop
-Ghostfolio so no writes occur during the final export, and dump the database:
+`ghostfolio-preflight` is read-only and can be run while the feature is
+disabled. It checks the runtime secret file and required values, dump/source
+major version, target database state, Docker, Compose configuration, and the
+`arr_default` network when proxying is enabled. It never starts containers or
+reads secret values to the terminal. The compose data directory and secrets
+file remain independently configurable outside the Nix store.
+
+When deliberately enabled after the migration gate is cleared, Ghostfolio runs
+from the upstream Docker image; PostgreSQL and Redis run in the same Compose
+project with persistent data under the configured containers directory.
+`ghostfolio-update` currently pulls the image tags and recreates the services;
+image pinning and safe retry behavior are tracked separately in GF-02.
+
+For a future migration, create the configured secrets file with mode 600 and
+`DATABASE_PASSWORD` and `REDIS_PASSWORD`, each a 64-character hex value. The
+file remains outside the Nix store. Identify the source PostgreSQL instance and
+major version, then set `systemSettings.ghostfolioPostgresMajor` to the source
+major. Quiesce the actual source service before exporting its database. Do not
+assume a unit or database name that is not confirmed on the source machine:
 
 ```sh
-sudo systemctl stop ghostfolio
 install -d -m 700 ~/.config/containers/ghostfolio
 umask 077
-sudo -u postgres pg_dump --no-owner --no-privileges ghostfolio \
+sudo -u postgres pg_dump --no-owner --no-privileges "$SOURCE_DATABASE" \
   > ~/.config/containers/ghostfolio/initial-database.sql
 ```
+
+Replace `$SOURCE_DATABASE` only after identifying the actual source database.
+Restore the resulting dump to a disposable PostgreSQL instance of the intended
+major version and validate the Ghostfolio data before considering cutover.
+
+The eventual cutover checklist is: take an independent source database backup;
+stop writes using the confirmed source service; create and verify the final SQL
+dump; run `ghostfolio-preflight`; enable the feature and start Compose; verify
+accounts, portfolios, prices, and scheduled jobs; then keep the source database
+and dump intact until the observation period is complete. To roll back, stop
+the containerized service, restore the source database backup, and restart the
+confirmed source service. Do not use this outline until the actual source unit,
+database name, restore test, and rollback owner have been recorded.
 
 The first Compose start imports that dump before starting the app, renames the
 dump to `.imported`, and records a completion marker. Keep the native database
