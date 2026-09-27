@@ -112,9 +112,16 @@ assert_acquisition_after_readiness() {
 }
 
 assert_suspend_after_readiness() {
-  local ready suspend
+  local ready suspend suspend_calls
   suspend=$(awk '/^suspend / { print $2 }' "$CASE_DIR/events")
-  [[ -z $suspend ]] && return 0
+  if ( source "$helper"; declare -F gnesha_lock_and_suspend >/dev/null ); then
+    suspend_calls=$(grep -c '^systemctl suspend\( \|$\)' "$CASE_DIR/calls" || true)
+    [[ $suspend_calls == 1 ]] || fail "lock-and-suspend must issue exactly one suspend request, saw ${suspend_calls:-0}"
+    [[ $(grep -c '^suspend ' "$CASE_DIR/events" || true) == 1 ]] || fail 'lock-and-suspend did not record exactly one suspend event'
+    [[ -n $suspend ]] || fail 'lock-and-suspend did not record a suspend event'
+  else
+    [[ -z $suspend ]] && return 0
+  fi
   ready=$(awk '/^(gtklock|swaylock)-ready / { if ($2 > latest) latest=$2 } END { print latest+0 }' "$CASE_DIR/events")
   [[ -n $ready && $suspend -gt $ready ]] || fail 'suspend was requested before lock readiness'
 }
