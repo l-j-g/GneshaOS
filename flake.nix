@@ -239,6 +239,9 @@
 
       hostConfiguration =
         hostName: parameterOverrides:
+        {
+          extraModules ? [ ],
+        }:
         let
           context = hostContext hostName;
           hostParams =
@@ -255,15 +258,13 @@
             inherit hostParams;
             params = hostParams;
           };
-          modules = [
-            context.hostPath
-          ];
+          modules = [ context.hostPath ] ++ extraModules;
         };
       checkPkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
       };
-      hostCheck = parameterOverrides: hostConfiguration "cf-fv1" parameterOverrides;
+      hostCheck = parameterOverrides: hostConfiguration "cf-fv1" parameterOverrides { };
       hostCheckGhostfolioProxyOff = hostCheck {
         systemSettings = {
           systemProxy.enable = false;
@@ -279,6 +280,74 @@
           ghostfolio.enable = true;
         };
       };
+      ghostfolioFixtureRoot = "/build/gnesha-ghostfolio-import-check";
+      ghostfolioDockerStub = checkPkgs.writeShellScriptBin "docker" ''
+        set -eu
+        printf '%s\n' "$*" >> "$GHOSTFOLIO_FIXTURE_ROOT/docker-calls"
+        case "$1" in
+          info) exit 0 ;;
+          compose)
+            case " $* " in
+              *" config --quiet "*) exit 0 ;;
+              *" ps -q postgres "*) echo postgres-container ;;
+              *" ps -q redis "*) echo redis-container ;;
+              *" ps -q ghostfolio "*) echo ghostfolio-container ;;
+              *" up "*) exit 0 ;;
+              *) echo "unexpected docker compose fixture invocation: $*" >&2; exit 70 ;;
+            esac
+            ;;
+          inspect)
+            case " $* " in
+              *" postgres-container "*) echo 'running healthy' ;;
+              *" redis-container "*) echo 'running healthy' ;;
+              *" ghostfolio-container "*) echo running ;;
+              *) echo "unexpected docker inspect fixture invocation: $*" >&2; exit 71 ;;
+            esac
+            ;;
+          *) echo "unexpected docker fixture invocation: $*" >&2; exit 72 ;;
+        esac
+      '';
+      ghostfolioFixtureConfig =
+        hostConfiguration "cf-fv1"
+          {
+            systemSettings = {
+              containersDirectory = ghostfolioFixtureRoot;
+              dockerProxy.enable = false;
+              ghostfolio = {
+                enable = true;
+                secretsFile = "${ghostfolioFixtureRoot}/ghostfolio/secrets.env";
+              };
+            };
+          }
+          {
+            extraModules = [
+              {
+                nixpkgs.overlays = [
+                  (final: prev: { docker = ghostfolioDockerStub; })
+                ];
+              }
+            ];
+          };
+      ghostfolioFixturePackage = builtins.head (
+        builtins.filter (
+          package: package.name == "ghostfolio"
+        ) ghostfolioFixtureConfig.config.environment.systemPackages
+      );
+      ghostfolioImportRecoveryCheck =
+        checkPkgs.runCommand "gnesha-ghostfolio-import-recovery-check"
+          {
+            nativeBuildInputs = [
+              checkPkgs.bash
+              checkPkgs.coreutils
+              checkPkgs.gnugrep
+            ];
+          }
+          ''
+            bash ${./checks/ghostfolio-import-recovery-stubs.sh} \
+              ${ghostfolioFixturePackage}/bin/ghostfolio \
+              ${ghostfolioFixtureRoot}
+            touch "$out"
+          '';
       configurationCombinationChecks =
         let
           base = hostCheck null;
@@ -350,7 +419,7 @@
     {
       formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt;
       checks.${system} = {
-        inherit configurationCombinationChecks sourceScriptCheck;
+        inherit configurationCombinationChecks sourceScriptCheck ghostfolioImportRecoveryCheck;
       };
 
       # User-level configuration is deliberately separate from the system
@@ -371,7 +440,7 @@
       nixosConfigurations = builtins.listToAttrs (
         map (hostName: {
           name = hostName;
-          value = hostConfiguration hostName null;
+          value = hostConfiguration hostName null { };
         }) hostNames
       );
     };
