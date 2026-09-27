@@ -13,3 +13,6 @@ session-*.md
 
 # Direnv
 .direnv/
+
+# Local git worktrees
+.worktrees/
