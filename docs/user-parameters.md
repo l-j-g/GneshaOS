@@ -72,6 +72,7 @@ the machine, account, or installation changes.
 | `systemSettings.arrComposePath` | Legacy Compose path; its parent must contain the existing runtime .env and config directory. | `"/home/lg/.config/containers/arr/compose.yml"` | media stack and `arr` wrapper |
 | `systemSettings.ghostfolioPostgresMajor` | PostgreSQL container major version; match the existing server before importing its dump. | `"17"` | Ghostfolio Compose stack |
 | `systemSettings.mediaMountPoint` | Mount point of the drive used for user media directories. | `"/media"` | Home Manager and media directory setup |
+| `systemSettings.mediaUiBindAddress` | Local host address for published media web interfaces; keep loopback so Docker ports are not exposed on LAN interfaces. | `"127.0.0.1"` | Compose media web interfaces; Tailscale Serve provides tailnet access |
 | `systemSettings.airVpn.enable` | Whether the system-wide AirVPN WireGuard tunnel is configured. | `false` | system AirVPN module |
 | `systemSettings.dockerProxy.enable` / `port` / `noProxy` | Enable the Docker Gluetun HTTP proxy independently of host proxy settings. | `true` / `8888` / `"localhost,127.0.0.1,::1"` | media, Ghostfolio, legacy Compose override |
 | `systemSettings.systemProxy.enable` | Enable an independent host HTTP proxy; leave disabled for native WireGuard. | `false` | NixOS and desktop proxy settings |

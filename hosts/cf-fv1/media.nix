@@ -2,6 +2,7 @@
 
 let
   mediaMountPoint = params.systemSettings.mediaMountPoint;
+  mediaUiBindAddress = params.systemSettings.mediaUiBindAddress or "127.0.0.1";
   mediaDirectories = [
     "${mediaMountPoint}/downloads"
     "${mediaMountPoint}/torrents"
@@ -15,6 +16,8 @@ let
   # Keep Compose project identity, runtime .env, and mutable application data.
   arrDirectory = builtins.dirOf params.systemSettings.arrComposePath;
   proxy = params.systemSettings.dockerProxy or { enable = false; };
+  uiPort = hostPort: containerPort:
+    "${mediaUiBindAddress}:${toString hostPort}:${toString containerPort}";
   appEnvironment = [ "PUID=\${PUID}" "PGID=\${PGID}" "TZ=\${TZ}" ];
   app = name: {
     image = "lscr.io/linuxserver/${name}:latest";
@@ -40,15 +43,15 @@ let
           "TZ=\${TZ}"
         ] ++ lib.optional proxy.enable "HTTPPROXY=on";
         volumes = [ "./config/gluetun:/gluetun/wireguard" ];
-        ports = [ "8080:8080" "64480:64480" "64480:64480/udp" ]
+        ports = [ (uiPort 8080 8080) "64480:64480" "64480:64480/udp" ]
           ++ lib.optional proxy.enable "127.0.0.1:${toString proxy.port}:8888/tcp";
         networks.default.aliases = [ "qbittorrent" ];
         restart = "unless-stopped";
       };
-      prowlarr = app "prowlarr" // { ports = [ "9696:9696" ]; };
+      prowlarr = app "prowlarr" // { ports = [ (uiPort 9696 9696) ]; };
       lidarr = app "lidarr" // {
         volumes = [ "./config/lidarr:/config" "${mediaMountPoint}/downloads:/downloads" "${mediaMountPoint}/music:/music" ];
-        ports = [ "8686:8686" ];
+        ports = [ (uiPort 8686 8686) ];
         depends_on = [ "prowlarr" ];
       };
       qbittorrent = app "qbittorrent" // {
@@ -64,7 +67,7 @@ let
       };
       sabnzbd = app "sabnzbd" // {
         volumes = [ "./config/sabnzbd:/config" "${mediaMountPoint}/downloads:/downloads" ];
-        ports = [ "8081:8080" ];
+        ports = [ (uiPort 8081 8080) ];
       };
       audiobookshelf = app "audiobookshelf" // {
         image = "ghcr.io/advplyr/audiobookshelf:latest";
@@ -74,7 +77,7 @@ let
           "${mediaMountPoint}/audiobooks:/audiobooks"
           "${mediaMountPoint}/podcasts:/podcasts"
         ];
-        ports = [ "13378:80" ];
+        ports = [ (uiPort 13378 80) ];
       };
       emby = {
         image = "emby/embyserver:4.10.0.40";
@@ -293,8 +296,47 @@ in
     };
   };
 
-  networking.firewall.allowedTCPPorts = [ 8096 8920 ];
-  networking.firewall.allowedUDPPorts = [ 7359 ];
+  # AirVPN forwards 64480 to Gluetun for qBittorrent. Media web interfaces
+  # use loopback backends and Tailscale Serve for tailnet-only HTTPS access.
+  networking.firewall.allowedTCPPorts = [ 64480 ];
+  networking.firewall.allowedUDPPorts = [ 64480 ];
+
+  networking.firewall.interfaces.${config.services.tailscale.interfaceName}.allowedTCPPorts = [
+    8443 # Emby -> 127.0.0.1:8096
+    8444 # qBittorrent -> 127.0.0.1:8080
+    8445 # Prowlarr -> 127.0.0.1:9696
+    8446 # Lidarr -> 127.0.0.1:8686
+    8447 # SABnzbd -> 127.0.0.1:8081
+    8448 # Audiobookshelf -> 127.0.0.1:13378
+  ];
+
+  systemd.services.tailscale-media-serve = {
+    description = "Expose local media web interfaces over Tailscale Serve";
+    after = [ "tailscaled.service" "docker-compose.service" ];
+    wants = [ "tailscaled.service" "docker-compose.service" ];
+    wantedBy = [ "multi-user.target" ];
+    path = [ config.services.tailscale.package ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      tailscale serve --yes --bg --https=8443 http://127.0.0.1:8096
+      tailscale serve --yes --bg --https=8444 http://127.0.0.1:8080
+      tailscale serve --yes --bg --https=8445 http://127.0.0.1:9696
+      tailscale serve --yes --bg --https=8446 http://127.0.0.1:8686
+      tailscale serve --yes --bg --https=8447 http://127.0.0.1:8081
+      tailscale serve --yes --bg --https=8448 http://127.0.0.1:13378
+    '';
+    preStop = ''
+      tailscale serve --yes --https=8443 off || true
+      tailscale serve --yes --https=8444 off || true
+      tailscale serve --yes --https=8445 off || true
+      tailscale serve --yes --https=8446 off || true
+      tailscale serve --yes --https=8447 off || true
+      tailscale serve --yes --https=8448 off || true
+    '';
+  };
 
   # Private mesh VPN for reaching self-hosted services from any device anywhere
   services.tailscale.enable = true;

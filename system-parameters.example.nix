@@ -43,6 +43,9 @@
 
     # Mount point of the media drive used for user media directories.
     mediaMountPoint = "/media";
+    # Keep media web interfaces loopback-bound; Tailscale Serve provides the
+    # tailnet-only remote path. Avoid wildcard addresses for Docker ports.
+    mediaUiBindAddress = "127.0.0.1";
 
     # Optional independent host HTTP proxy. Leave disabled for native WireGuard.
     # Never point this at Docker Gluetun; see docs/airvpn-proxy.md.

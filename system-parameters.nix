@@ -40,6 +40,8 @@
 
     # Mount point of the MooGoo drive used for user media directories.
     mediaMountPoint = "/media";
+    # Bind media web interfaces to loopback; Tailscale Serve handles tailnet access.
+    mediaUiBindAddress = "127.0.0.1";
 
     # Optional independent host HTTP proxy. Leave disabled for native WireGuard.
     # Never point this at Docker Gluetun; see docs/airvpn-proxy.md.
