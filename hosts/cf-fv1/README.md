@@ -95,8 +95,11 @@ not migrated automatically.
 
 When `systemSettings.dockerProxy.enable` is true, Nix includes the Gluetun
 HTTP proxy and loopback port mapping directly. The updated `airvpn-profile`
-helper uses `arr` when available; `AIRVPN_COMPOSE_FILE` still explicitly
-selects a custom Compose file and its optional local proxy override.
+helper uses `arr` when available and derives `config/gluetun/wg0.conf` from
+the same runtime directory as `arrComposePath`. For another stack, set both
+`AIRVPN_COMPOSE_FILE` and its matching `AIRVPN_ACTIVE_CONFIG`; an incomplete
+pair is rejected. A custom Compose file can also use the optional local proxy
+override under `XDG_CONFIG_HOME/airvpn/proxy.compose.yaml`.
 
 ## Ghostfolio Compose migration
 

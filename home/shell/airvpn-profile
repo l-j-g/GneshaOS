@@ -3,9 +3,30 @@
 set -euo pipefail
 
 profile_dir="${AIRVPN_PROFILE_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/airvpn/profiles}"
-compose_file="${AIRVPN_COMPOSE_FILE:-$HOME/src/arr/docker-compose.yml}"
-active_config="${AIRVPN_ACTIVE_CONFIG:-$HOME/src/arr/config/gluetun/wg0.conf}"
+managed_arr_directory="${GNESHA_ARR_DIRECTORY:-}"
+managed_compose_file="${GNESHA_ARR_COMPOSE_FILE:-}"
+custom_compose_file="${AIRVPN_COMPOSE_FILE:-}"
+custom_active_config="${AIRVPN_ACTIVE_CONFIG:-}"
+if [ -n "$custom_compose_file" ] || [ -n "$custom_active_config" ]; then
+  if [ -z "$custom_compose_file" ] || [ -z "$custom_active_config" ]; then
+    printf '%s\n' 'airvpn-profile: custom AIRVPN_COMPOSE_FILE and AIRVPN_ACTIVE_CONFIG must be set together' >&2
+    exit 2
+  fi
+  compose_file="$custom_compose_file"
+  active_config="$custom_active_config"
+elif [ -n "$managed_arr_directory" ] && [ -n "$managed_compose_file" ]; then
+  compose_file="$managed_compose_file"
+  active_config="$managed_arr_directory/config/gluetun/wg0.conf"
+elif [ -z "$managed_arr_directory" ] && [ -z "$managed_compose_file" ]; then
+  # Compatibility fallback for direct, unmanaged invocations.
+  compose_file="$HOME/src/arr/docker-compose.yml"
+  active_config="$HOME/src/arr/config/gluetun/wg0.conf"
+else
+  printf '%s\n' 'airvpn-profile: incomplete managed arr runtime paths' >&2
+  exit 2
+fi
 previous_config="$profile_dir/.previous.conf"
+switch_lock="$profile_dir/.switch.lock"
 proxy_override="${XDG_CONFIG_HOME:-$HOME/.config}/airvpn/proxy.compose.yaml"
 compose_args=(-f "$compose_file")
 if [ -r "$proxy_override" ]; then
@@ -70,12 +91,21 @@ restart_vpn_stack() {
 wait_for_vpn() {
   local health
   local attempt
+  local gluetun_id
+  local qbittorrent_id
 
   for attempt in $(seq 1 60); do
-    health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' gluetun 2>/dev/null || true)"
+    gluetun_id="$("${compose_command[@]}" ps -q gluetun 2>/dev/null | head -n 1)"
+    qbittorrent_id="$("${compose_command[@]}" ps -q qbittorrent 2>/dev/null | head -n 1)"
+    if [ -z "$gluetun_id" ] || [ -z "$qbittorrent_id" ]; then
+      sleep 1
+      continue
+    fi
+    health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$gluetun_id" 2>/dev/null || true)"
     if [ "$health" = healthy ]; then
-      docker inspect --format '{{.State.Running}}' qbittorrent 2>/dev/null | grep -qx true
-      return
+      if docker inspect --format '{{.State.Running}}' "$qbittorrent_id" 2>/dev/null | grep -qx true; then
+        return 0
+      fi
     fi
     if [ "$health" = unhealthy ] || [ "$health" = exited ] || [ "$health" = dead ]; then
       return 1
@@ -103,6 +133,11 @@ switch_profile() {
   validate_profile "$selected"
   "${compose_command[@]}" config --quiet
 
+  install -d -m 700 "$profile_dir"
+  exec 9>"$switch_lock"
+  chmod 600 "$switch_lock"
+  flock -x 9
+
   if [ -r "$active_config" ] && cmp -s "$active_config" "$selected"; then
     printf 'AirVPN profile %s is already active.\n' "$name"
     return
@@ -111,6 +146,8 @@ switch_profile() {
   install -d -m 700 "$(dirname "$active_config")"
   if [ -r "$active_config" ]; then
     install -m 600 "$active_config" "$previous_config"
+  else
+    rm -f -- "$previous_config"
   fi
 
   temporary="$active_config.new.$$"
@@ -127,10 +164,15 @@ switch_profile() {
   if ! restart_vpn_stack || ! wait_for_vpn; then
     if [ -r "$previous_config" ]; then
       printf 'VPN startup failed; restoring the previous profile...\n' >&2
-      install -m 600 "$previous_config" "$active_config"
-      restart_vpn_stack || true
+      if ! install -m 600 "$previous_config" "$active_config"; then
+        die "failed to activate $name and could not restore the previous profile"
+      fi
+      if ! restart_vpn_stack || ! wait_for_vpn; then
+        die "failed to activate $name; restoring the previous profile did not recover the VPN"
+      fi
+      die "failed to activate $name; the previous profile was restored and the VPN is healthy"
     fi
-    die "failed to activate $name"
+    die "failed to activate $name; no previous profile was available to restore"
   fi
 
   printf 'AirVPN profile %s is active; Gluetun is healthy and qBittorrent is running.\n' "$name"

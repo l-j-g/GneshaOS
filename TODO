@@ -932,10 +932,10 @@ pending; no app or service was activated/restarted during this task.
 
 ## Runtime behavior and feature completeness
 
-### [ ] VPN-02 — Derive Docker profile-helper paths from the same runtime contract
+### [x] VPN-02 — Derive Docker profile-helper paths from the same runtime contract
 
 Priority: P2. Type: confirmed future-path inconsistency.
-Files: `home/shell/airvpn-profile`, `home/shell/default.nix`, media parameters.
+Files: `home/shell/airvpn-profile`, `home/shell/interactive.nix`, media parameters.
 
 Evidence: the helper uses the managed `arr` command when available, but still
 writes `active_config` under `$HOME/src/arr/config/gluetun/wg0.conf` by default.
@@ -952,6 +952,18 @@ Implementation:
 
 Done when: selected runtime path, edited profile, and restarted project always
 match; malformed/missing profiles leave existing credentials untouched.
+
+Completed (2026-09-27): the Home Manager wrapper injects the arr project
+directory and Compose file derived from `systemSettings.arrComposePath`; the
+helper derives the mounted Gluetun profile path from that same project. Custom
+Compose and active-profile overrides must be supplied together. The helper now
+serializes replacement/recreation, resolves container IDs from the selected
+Compose project, waits for that project's Gluetun health and qBittorrent
+running state, and verifies recovery after rollback. Two managed temp projects,
+an explicit custom pair, ambiguous overrides, malformed profiles, healthy and
+unhealthy rollback, and concurrent switches passed with stub Docker/Compose.
+The generated wrapper paths were inspected. Flake check and Home Manager build
+passed. No live Compose command was run.
 
 ### [ ] VPN-03 — Distinguish service state from actual tunnel health
 

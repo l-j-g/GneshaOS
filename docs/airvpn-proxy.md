@@ -64,6 +64,11 @@ Use `arr up -d`, `arr ps`, and `arr-doctor` for the managed stack. Normal startu
 uses pinned images and preserves application data. The legacy custom Compose
 path used by `AIRVPN_COMPOSE_FILE` can include the optional proxy override at
 `~/.config/airvpn/proxy.compose.yaml`, controlled by `dockerProxy`.
+The managed `airvpn-profile` command derives `config/gluetun/wg0.conf` and the
+Compose file from `systemSettings.arrComposePath`. For a separate custom stack,
+set both `AIRVPN_COMPOSE_FILE` and its matching `AIRVPN_ACTIVE_CONFIG`; the
+helper rejects either override by itself so it cannot update one project and
+restart another.
 
 ## Verification
 

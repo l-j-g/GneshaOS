@@ -6,6 +6,12 @@
 }:
 
 let
+  arrDirectory = builtins.dirOf params.systemSettings.arrComposePath;
+  airVpnProfile = pkgs.writeShellScriptBin "airvpn-profile" ''
+    export GNESHA_ARR_DIRECTORY=${lib.escapeShellArg arrDirectory}
+    export GNESHA_ARR_COMPOSE_FILE=${lib.escapeShellArg params.systemSettings.arrComposePath}
+    exec ${pkgs.bash}/bin/bash ${./airvpn-profile} "$@"
+  '';
   themeFishInit = ''
     # Runtime theme previews update these files without rewriting shell config.
     set -l gneshaThemeDir "$HOME/.config/gnesha"
@@ -22,7 +28,7 @@ in
   home.sessionVariables.BAT_THEME = "ansi";
 
   home.file.".local/bin/airvpn-profile" = {
-    source = ./airvpn-profile;
+    source = "${airVpnProfile}/bin/airvpn-profile";
     executable = true;
   };
 
