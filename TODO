@@ -842,7 +842,7 @@ the Home Manager activation package built. A stubbed Codex command confirmed
 the configured `/etc/nixos` path and argument forwarding; Fish fixtures
 confirmed unsupported-argument errors. No activation was run.
 
-### [ ] STRUCT-06 — Package desktop scripts explicitly and consolidate integrations
+### [x] STRUCT-06 — Package desktop scripts explicitly and consolidate integrations
 
 Priority: P2. Type: ownership/refactoring.
 Files: `home/desktop/sway/scripts.nix`, `home/programs/integrations.nix`,
@@ -867,6 +867,20 @@ Implementation:
    files, so `builtins.pathExists ../../opencode.json` does not implement the
    promised local override in the normal Git-flake path. Use an explicit safe
    runtime configuration approach if it can contain credentials.
+
+Done: `home/desktop/sway/scripts.nix` now has an explicit manifest for every
+installed command. Each keeps its existing `~/.config/sway/scripts/<name>`
+path and uses a wrapper with declared runtime packages. LF wrapper/path and
+nnn/Kitty environment settings live with their respective program modules.
+Hermes launcher and user service share `hermesMacTunnelEnable`; SSH alias and
+both ports are configurable and validated, with batch auth and strict host-key
+checking enabled. The user-level network-online limitation is documented.
+OpenCode configuration is read from `~/.config/opencode/opencode.jsonc`; the
+repository's ignored `opencode.json` was left untouched and is no longer copied
+to the Nix store. Nix parsing, shell/Python syntax checks, `nix flake check`,
+and the Home Manager activation-package build passed. A Sway helper succeeded
+with an empty inherited PATH. Hermes connectivity and desktop launch behavior
+remain pending live verification.
 
 Done when: each integration has one owner, absent optional files do not break
 fresh-clone evaluation, scripts run with a minimal PATH, and no runtime secret

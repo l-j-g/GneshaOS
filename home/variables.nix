@@ -64,4 +64,11 @@
   # Enable wluma's adaptive ambient-brightness service. Set false if you want
   # brightness to remain entirely manual.
   autoBrightness = true;
+
+  # Start the Hermes tunnel and show its launcher together. SSH must have a
+  # trusted known_hosts entry for this alias before the tunnel can connect.
+  hermesMacTunnelEnable = true;
+  hermesSshHost = "mac";
+  hermesLocalPort = 19119;
+  hermesRemotePort = 9119;
 }

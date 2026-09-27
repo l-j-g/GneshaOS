@@ -1,4 +1,5 @@
 {
+  config,
   ...
 }:
 
@@ -6,6 +7,12 @@ let
   lfPreviewer = ./scripts/lf/preview;
 in
 {
+  home.file.".local/bin/lf-image" = {
+    source = ./scripts/lf/lf-image;
+    executable = true;
+  };
+  home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
+
   programs.lf = {
     enable = true;
     previewer.source = lfPreviewer;

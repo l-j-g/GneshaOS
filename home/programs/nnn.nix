@@ -4,6 +4,15 @@
 }:
 
 {
+  home.sessionVariables = {
+    # Open text files with the configured nnn opener and use Kitty's image
+    # protocol in preview-tui when the active Kitty instance supports it.
+    NNN_OPENER = "nnn-opener";
+    NNN_TERMINAL = "kitty";
+    NNN_PREVIEWIMGPROG = "icat";
+    KITTY_LISTEN_ON = "unix:$XDG_RUNTIME_DIR/kitty-{kitty_pid}";
+  };
+
   programs.nnn = {
     enable = true;
     enableFishIntegration = true;

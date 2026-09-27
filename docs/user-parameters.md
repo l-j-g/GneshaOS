@@ -119,9 +119,19 @@ Positive font/scale/zoom values, absolute screenshot/key paths, and the
 | `idleOffSec` | Seconds before the display powers off. | `600` | swayidle |
 | `idleSuspendSec` | Seconds before battery-only suspend. | `900` | swayidle |
 | `autoBrightness` | Whether wluma manages ambient brightness automatically. | `true` | wluma |
+| `hermesMacTunnelEnable` | Start the Hermes SSH tunnel and expose its desktop launcher together. | `true` | user service and launcher |
+| `hermesSshHost` | SSH config alias for the Mac running Hermes. Keep strict host-key checking enabled and enroll its key in `known_hosts`. | `"mac"` | user service |
+| `hermesLocalPort` / `hermesRemotePort` | Local dashboard port and remote loopback dashboard port. | `19119` / `9119` | service and launcher |
 
 Kitty is also used by Sway's configurable terminal command and the live theme
 preview's remote-control integration.
+
+The Hermes tunnel uses batch authentication and strict host-key checking.
+`network-online.target` is a user-manager ordering hint and does not establish
+that the system network is ready. OpenCode reads personal configuration at
+`~/.config/opencode/opencode.jsonc`; keep that file outside this repository.
+Git flakes omit ignored local files, and OpenCode configuration can contain
+credentials, so Home Manager does not copy it into the Nix store.
 
 ## Applying changes
 

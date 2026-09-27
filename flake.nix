@@ -119,7 +119,12 @@
         && builtins.isInt variables.idleDimPercent
         && variables.idleDimPercent >= 0 && variables.idleDimPercent <= 100
         && isAbsolutePath variables.screenshotDir
-        && isAbsolutePath variables.publicKeyFile;
+        && isAbsolutePath variables.publicKeyFile
+        && builtins.isBool variables.hermesMacTunnelEnable
+        && builtins.isString variables.hermesSshHost
+        && builtins.match "[A-Za-z0-9][A-Za-z0-9._-]*" variables.hermesSshHost != null
+        && builtins.all (port: builtins.isInt port && port >= 1 && port <= 65535)
+          [ variables.hermesLocalPort variables.hermesRemotePort ];
 
       hostNames = builtins.filter (
         name:
