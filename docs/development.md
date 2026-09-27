@@ -28,6 +28,11 @@ Use the repository ownership boundaries when deciding where a value belongs:
 | Reusable NixOS behavior | `modules/` |
 | Shared user environment | `home/` |
 
+Keep generated editor logs and build-result symlinks in the repository root
+only as local scratch; `/nvim.log` and `/result` are ignored. Put credentials or
+personal application configuration under the appropriate user config directory
+outside this checkout.
+
 `hosts/*/hardware-configuration.nix` is generated. Do not edit it manually.
 Update `flake.lock` only as a separate, intentional dependency change.
 

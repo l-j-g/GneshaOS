@@ -2,7 +2,10 @@
 opencode.json
 
 # Build output
-result
+/result
+
+# Editor output
+/nvim.log
 
 # Install transcripts / scratch / backups
 session-*.md

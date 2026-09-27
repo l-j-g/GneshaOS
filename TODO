@@ -1293,7 +1293,7 @@ Done when: the user can identify what a snapshot does and does not cover, and
 at least one safe restore drill proves the documented application-data path.
 Automated backup scheduling is a separate change after destination approval.
 
-### [ ] HYGIENE-01 — Remove tracked scratch output and clarify local-only inputs
+### [x] HYGIENE-01 — Remove tracked scratch output and clarify local-only inputs
 
 Priority: P3. Type: repository hygiene.
 Files: `.gitignore`, tracked `nvim.log`, `home/programs/integrations.nix`, docs.
@@ -1315,6 +1315,18 @@ Implementation:
 
 Done when: generated artifacts stay out of commits and fresh-clone/runtime
 configuration behavior matches the docs. No unrelated file deletion.
+
+Completed (2026-09-27): reviewed the tracked 3 KB `nvim.log` without emitting
+its contents. Checks for private-key headers, token-like assignments, home paths,
+and URL credentials found no matches. Removed it from the Git index while
+preserving the local scratch file, and added an exact `/nvim.log` ignore rule.
+Scoped the existing result-link ignore to `/result`; no `result-*` variants are
+used in this checkout. Development docs identify root logs/build links as local
+scratch and keep personal config outside the repository. STRUCT-06 already
+resolved ignored OpenCode configuration by using its runtime user config rather
+than copying the ignored file into the Nix store. `git diff --check` and
+`git check-ignore -v nvim.log result` passed. No source/dependency change or
+runtime config was modified.
 
 ### [ ] HYGIENE-02 — Make vendored skill provenance and precedence explicit
 
