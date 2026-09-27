@@ -432,6 +432,15 @@ Remaining verification: check the method result and actual quiet-profile
 behavior on the CF-FV1 before marking POWER-01 complete.
 Implementation commit: `260c8a9` (`Make fan reapply timer repeat`).
 
+Read-only live check (2026-09-27): the unit ran three times in this boot,
+including two recent timer activations; each exited successfully and logged an
+ACPI response of `0xffff0500`. The active invocation was inactive after exit,
+and no system units were failed. Available fan RPM sensors report `N/A`; CPU
+package temperature was 53 C during the check. This confirms repeated service
+execution and a non-error method response, but does not prove the EC applied
+the requested profile or that its fan behavior is correct. No EC write or
+stress test was issued. POWER-01 remains open for a safe behavior check.
+
 ### [x] BUILD-01 — Make system/Home Manager activation recoverable and serialized
 
 Priority: P1. Type: reliability gap.
@@ -547,6 +556,15 @@ passed; independent review passed. No activation or reboot was run.
 Post-activation boot/login timing and service readiness remain unmeasured, so
 this task stays open until that separate runtime check. Commit: `e9b6855`.
 
+Read-only live check (2026-09-27): `systemd-analyze time` reports 32.362s
+total, with `graphical.target` reached 5.120s into userspace; there are no
+failed units. The manager reports the configured 90s start/stop defaults. The
+active `/run/current-system` is the built 2026-09-22 configuration, while
+`/run/booted-system` is the 2026-09-20 generation. These timings are from the
+older boot generation, so they do not measure startup after the change. BOOT-01
+remains open until boot/login and readiness are measured after rebooting into
+the active generation.
+
 ### [ ] NET-01 — Make network exposure match the documented access boundary
 
 Priority: P1. Type: confirmed broad bindings; intended exposure needs decision.
@@ -571,6 +589,20 @@ Implementation:
 
 Done when: authorized and unauthorized-interface checks match the documented
 matrix, SSH recovery access survives, and all published ports have an owner.
+
+Implementation progress (2026-09-27): Compose web ports bind to the documented
+loopback address. Operator confirmed media UIs must also remain reachable over
+Tailscale, so a systemd unit configures Tailscale Serve HTTPS endpoints on
+8443-8448, forwarding to loopback; only those ports are allowed on the
+Tailscale interface. Emby's direct web ports remain closed. Samba is
+local-only per operator direction, uses the configured media mount, and does
+not open firewall ports. Port 64480 is owned by the media module while SSH 22
+remains in shared hardening. Nix parsing and `git diff --check` pass. Evaluation,
+builds, Tailscale Serve state, and interface-level connectivity checks remain
+unverified: the Nix daemon is inaccessible, the locked source cannot be fetched
+offline, and this environment has no active Tailscale daemon. Confirm HTTPS
+certificates are enabled for the tailnet during runtime verification. This task
+remains open.
 
 ### [ ] AUTH-01 — Verify lock completion and align PAM policy with the active locker
 
@@ -624,6 +656,18 @@ Implementation:
 
 Done when: before/after evaluated service, timer, package, proxy, and firewall
 values match; system builds; no functionality is enabled/disabled by the move.
+
+Status: source split is drafted in the working tree. All host service Nix files
+parse; `git diff --check` and `git diff --cached --check` pass. In this session,
+`nix flake check --show-trace --no-write-lock-file` and
+`nixos-rebuild build --flake .#cf-fv1 --no-write-lock-file` both passed; the
+build produced `/nix/store/y8rpddfwyh0sgvm5xw0paf8hldir6qdg-nixos-system-cf-fv1-26.11.20260922.6774f7b`.
+The refactor currently overlaps with NET-01 behavior changes in Samba and
+firewall ownership, so before/after equivalence has not been established and
+the structural change cannot yet be isolated as a behavior-preserving commit.
+No activation was run. Keep the checkbox open until the behavioral diff is
+separated/reviewed and service, timer, package, proxy, and firewall values are
+compared.
 
 ### [ ] STRUCT-02 — Separate arr Compose data, commands, and host integration
 
