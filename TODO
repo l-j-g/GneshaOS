@@ -806,7 +806,7 @@ flake path. Invalid width and idle-order fixtures failed with the expected
 specific messages. The fixture was removed afterward. Flake check, NixOS
 build, Home Manager activation build, parsing, and `git diff --check` passed.
 
-### [ ] STRUCT-05 — Separate shell workflows from shell appearance and aliases
+### [x] STRUCT-05 — Separate shell workflows from shell appearance and aliases
 
 Priority: P2. Type: structural refactor.
 Files: `home/shell/default.nix`, `home/shell/nix-workflow.fish`.
@@ -828,6 +828,19 @@ Implementation:
 
 Done when: generated helper behavior matches before/after except separately
 specified fixes, shell checks pass, command help is accurate, and home builds.
+
+Completed (2026-09-27): `home/shell/default.nix` now imports focused interactive
+and workflow modules. The long rebuild implementation is a named Bash source
+file packaged with declared runtime tools; configured paths/profile/host values
+are injected as quoted Nix values or exported session variables. `cfn` remains
+a navigation abbreviation and follows `GNESHA_FLAKE_PATH`; `codex-nix` uses
+that configured path and forwards arguments. Fish workflow functions either
+forward arguments or reject them with usage text. Development docs distinguish
+build-only commands from activation and document that `nixgc` removes old
+generation rollback roots. Fish/Bash/Nix parsing and `git diff --check` passed;
+the Home Manager activation package built. A stubbed Codex command confirmed
+the configured `/etc/nixos` path and argument forwarding; Fish fixtures
+confirmed unsupported-argument errors. No activation was run.
 
 ### [ ] STRUCT-06 — Package desktop scripts explicitly and consolidate integrations
 

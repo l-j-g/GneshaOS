@@ -76,6 +76,13 @@ but several of them change live state:
 | `update-review` | Review the prepared lock and system package diff |
 | `update-apply` | Accept the prepared lock and activate its built outputs |
 
+`cfn` only navigates to the configured flake's `home/` directory. `nixbuild`
+builds a closure and does not activate it; `rebuild` builds the system and Home
+Manager outputs from one snapshot, then activates both. `home-rebuild` changes
+only Home Manager. `nixgc` runs `sudo nix-collect-garbage -d`, which deletes
+unreferenced store paths and old generations; use it only when you intend to
+remove those rollback roots.
+
 `rebuild` freezes one source snapshot and builds both NixOS and Home Manager
 before activating either. Long builds run outside the shared activation lock.
 The system switch, Home Manager switch, update apply, theme-picker activation,
@@ -182,9 +189,10 @@ Repository-local Codex configuration lives in `.codex/`:
 - `nix_worker` implements a narrowly owned change in an isolated worktree.
 - `$gneshaos-maintenance` provides the repository-specific edit and validation
   workflow for Codex sessions.
-- `codex-nix` starts Codex in `~/.config/nix` with repository-scoped writes and
-  no approval prompts, without changing the calling shell's directory.
+- `codex-nix` starts Codex in the configured flake directory with full filesystem and network
+  access and no approval prompts, without changing the calling shell's
+  directory.
 
-Keep sandbox protections enabled for normal work. With the helper's no-prompt
-policy, operations outside the writable scope fail instead of requesting
-escalation. Commands that disable the sandbox remove that safeguard entirely.
+The helper opts out of sandbox protections. Use it only when that access is
+intended; Codex command-line options take precedence over configuration-file
+defaults.

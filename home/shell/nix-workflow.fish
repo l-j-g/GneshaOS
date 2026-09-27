@@ -1,11 +1,15 @@
-# Fish helpers for the NixOS and Home Manager workflows. The placeholders are
-# substituted by home/shell/default.nix from system-parameters.nix.
+# Fish helpers for Nix workflows. Home Manager exports the configured flake,
+# host, profile, and build reference as GNESHA_* session variables.
 
 function __nix_system_generations
     command ls -dv /nix/var/nix/profiles/system-*-link 2>/dev/null
 end
 
 function nvdiff
+    if test (count $argv) -ne 0
+        echo "Usage: nvdiff"
+        return 2
+    end
     set -l generations (__nix_system_generations)
     if test (count $generations) -lt 2
         echo "Need at least two system generations to diff."
@@ -15,10 +19,14 @@ function nvdiff
 end
 
 function rebuild
-    gnesha-rebuild
+    gnesha-rebuild $argv
 end
 
 function activation-list
+    if test (count $argv) -ne 0
+        echo "Usage: activation-list"
+        return 2
+    end
     gnesha-rebuild --list
 end
 
@@ -39,6 +47,10 @@ function activation-discard
 end
 
 function update-status
+    if test (count $argv) -ne 0
+        echo "Usage: update-status"
+        return 2
+    end
     systemctl status gnesha-nixpkgs-update.service --no-pager
     if test (systemctl is-active gnesha-nixpkgs-update.service 2>/dev/null) = activating
         echo "The candidate build is still running; update-review reports progress without waiting for its lock."
@@ -49,29 +61,49 @@ function update-status
 end
 
 function update-review
+    if test (count $argv) -ne 0
+        echo "Usage: update-review"
+        return 2
+    end
     gnesha-update-apply --review
 end
 
 function update-apply
+    if test (count $argv) -ne 0
+        echo "Usage: update-apply"
+        return 2
+    end
     gnesha-update-apply
 end
 
 function home-rebuild
-    gnesha-activation-lock nh home switch "__FLAKE_PATH__" -c "__HOME_PROFILE__" -b backup
+    if test (count $argv) -ne 0
+        echo "Usage: home-rebuild"
+        return 2
+    end
+    gnesha-activation-lock nh home switch "$GNESHA_FLAKE_PATH" -c "$GNESHA_HOME_PROFILE" -b backup
 end
 
 function retest
-    gnesha-activation-lock nh os test "__FLAKE_PATH__" -H "__HOST_NAME__"
+    if test (count $argv) -ne 0
+        echo "Usage: retest"
+        return 2
+    end
+    gnesha-activation-lock nh os test "$GNESHA_FLAKE_PATH" -H "$GNESHA_HOST_NAME"
 end
 
 function rebuild-boot
+    if test (count $argv) -ne 0
+        echo "Usage: rebuild-boot"
+        return 2
+    end
     set -l generations (__nix_system_generations)
     set -l before ""
     if test (count $generations) -gt 0
         set before $generations[-1]
     end
 
-    gnesha-activation-lock nh os boot "__FLAKE_PATH__" -H "__HOST_NAME__"
+    gnesha-activation-lock nh os boot "$GNESHA_FLAKE_PATH" -H "$GNESHA_HOST_NAME"
     if test $status -ne 0
         return 1
     end
@@ -86,27 +118,27 @@ function rebuild-boot
 end
 
 function nixbuild
-    nom build "__SYSTEM_BUILD_REF__"
+    nom build "$GNESHA_SYSTEM_BUILD_REF" $argv
 end
 
 function nixeval
-    if test (count $argv) -lt 1
+    if test (count $argv) -ne 1
         echo "Usage: nixeval OPTION"
         return 2
     end
-    nix eval --show-trace "path:__FLAKE_PATH__#nixosConfigurations.__HOST_NAME__.config.$argv[1]"
+    nix eval --show-trace "path:$GNESHA_FLAKE_PATH#nixosConfigurations.$GNESHA_HOST_NAME.config.$argv[1]"
 end
 
 function nixinspect
     if test (count $argv) -gt 0
         command nix-inspect $argv
     else
-        command nix-inspect --path "__FLAKE_PATH__"
+        command nix-inspect --path "$GNESHA_FLAKE_PATH"
     end
 end
 
 function nixparse
-    if test (count $argv) -lt 1
+    if test (count $argv) -ne 1
         echo "Usage: nixparse FILE"
         return 2
     end
@@ -114,12 +146,12 @@ function nixparse
     and echo "OK: $argv[1]"
 end
 
-function codex-nix --description "Start Codex safely in the GneshaOS repository"
-    set -l repo "$HOME/.config/nix"
+function codex-nix --description "Start Codex with full access in the GneshaOS repository"
+    set -l repo "$GNESHA_FLAKE_PATH"
     if not test -d "$repo"
         echo "GneshaOS repository not found: $repo" >&2
         return 1
     end
 
-    command codex --cd "$repo" --sandbox workspace-write --ask-for-approval never $argv
+    command codex --cd "$repo" --sandbox danger-full-access --ask-for-approval never $argv
 end
