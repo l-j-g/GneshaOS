@@ -1384,7 +1384,7 @@ than copying the ignored file into the Nix store. `git diff --check` and
 `git check-ignore -v nvim.log result` passed. No source/dependency change or
 runtime config was modified.
 
-### [ ] HYGIENE-02 — Make vendored skill provenance and precedence explicit
+### [x] HYGIENE-02 — Make vendored skill provenance and precedence explicit
 
 Priority: P3. Type: tooling/documentation ownership.
 Files: `skills/nixos-managing/`, `.codex/skills/`, `.codex/agents/`,
