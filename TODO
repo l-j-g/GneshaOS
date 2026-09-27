@@ -993,7 +993,7 @@ Implementation:
 Done when: no retry silently corrupts/duplicates data, commands terminate within
 known bounds, and recreating a stack uses the reviewed image versions.
 
-### [ ] TERM-01 — Make Ghostty font-size transitions respect the configured default
+### [x] TERM-01 — Make Ghostty font-size transitions respect the configured default
 
 Priority: P2. Type: confirmed preference inconsistency.
 Files: `home/programs/terminals/ghostty.nix`,
@@ -1013,6 +1013,16 @@ Implementation:
 
 Done when: defaults 14, 16, and 20 (or explicitly supported alternatives), min/max
 bounds, increase/decrease, and reset produce the correct generated bindings.
+
+Completed: the bitmap size sequence now has one Nix source shared by Ghostty
+keybind generation and the notification helper. The configured default becomes
+the root key table; unsupported non-face sizes fail with an assertion. Test-first
+evaluation reproduced the old default-14 bug (root increase incorrectly went
+to 18). Disposable 14/16/20 configurations then verified the root increase and
+decrease bindings, Ctrl+0 reset binding, min/max ignores, notification state
+transitions, default reset, and boundary reporting. `nix flake check
+--show-trace --no-write-lock-file` and the Home Manager activation-package
+build passed. No live Home Manager activation was run.
 
 ### [ ] DESKTOP-01 — Correct helper exit reporting and session scoping
 

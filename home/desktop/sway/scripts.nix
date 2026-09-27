@@ -43,9 +43,25 @@ let
     [ "__HOME_PROFILE__" ]
     [ "${user.userName}@${system.hostName}" ]
     (builtins.readFile ./scripts/theme-picker);
+  fontSizeValues = import ../../programs/terminals/font-sizes.nix;
+  fontSizeCase = direction:
+    lib.concatStringsSep "\n" (lib.imap0
+      (index: size:
+        let
+          neighborIndex = if direction == "up" then index + 1 else index - 1;
+          neighborExists = neighborIndex >= 0 && neighborIndex < builtins.length fontSizeValues;
+          neighbor = if neighborExists then builtins.elemAt fontSizeValues neighborIndex else size;
+          boundary = if neighborExists then "" else if direction == "up" then "; boundary=maximum" else "; boundary=minimum";
+        in
+        "            ${toString size}) next=${toString neighbor}${boundary} ;;")
+      fontSizeValues);
   ghosttyFontSizeNotifyScript = lib.replaceStrings
-    [ "__DEFAULT_FONT_SIZE__" ]
-    [ (toString variables.terminalFontSize) ]
+    [ "__DEFAULT_FONT_SIZE__" "__FONT_SIZE_VALUES__" "__FONT_SIZE_UP_CASE__" "__FONT_SIZE_DOWN_CASE__" ]
+    [ (toString variables.terminalFontSize)
+      (lib.concatMapStringsSep "|" toString fontSizeValues)
+      (fontSizeCase "up")
+      (fontSizeCase "down")
+    ]
     (builtins.readFile ./scripts/ghostty-font-size-notify);
   nwgWrapperStyle = lib.replaceStrings
     [ "__TERMINAL_FONT_SIZE__" ]

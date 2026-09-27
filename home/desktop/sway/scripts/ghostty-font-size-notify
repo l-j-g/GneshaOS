@@ -16,7 +16,7 @@ mkdir -p "$stateDir"
 
 current=$(cat "$stateFile" 2>/dev/null || printf '%s\n' __DEFAULT_FONT_SIZE__)
 case "$current" in
-    12|14|16|18|20|22|24|28|32) ;;
+    __FONT_SIZE_VALUES__) ;;
     *) current=__DEFAULT_FONT_SIZE__ ;;
 esac
 
@@ -24,28 +24,12 @@ boundary=
 case "${1:-}" in
     up)
         case "$current" in
-            12) next=14 ;;
-            14) next=16 ;;
-            16) next=18 ;;
-            18) next=20 ;;
-            20) next=22 ;;
-            22) next=24 ;;
-            24) next=28 ;;
-            28) next=32 ;;
-            32) next=32; boundary=maximum ;;
+__FONT_SIZE_UP_CASE__
         esac
         ;;
     down)
         case "$current" in
-            12) next=12; boundary=minimum ;;
-            14) next=12 ;;
-            16) next=14 ;;
-            18) next=16 ;;
-            20) next=18 ;;
-            22) next=20 ;;
-            24) next=22 ;;
-            28) next=24 ;;
-            32) next=28 ;;
+__FONT_SIZE_DOWN_CASE__
         esac
         ;;
     reset)

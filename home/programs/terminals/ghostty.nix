@@ -11,76 +11,28 @@
 let
   v = import ../../theme/palette.nix { inherit config pkgs; };
   p = v.palette; # raw hex, no '#'
+  fontSizeValues = import ./font-sizes.nix;
+  fontSizeTable = size:
+    if size == variables.terminalFontSize then null else "font-size-${toString size}";
 
   # Terminus is a bitmap font, so one-point changes can select a missing face
   # and make FreeType scale it. Keep Ctrl+=/Ctrl+- on the native faces shipped
   # by terminus_font instead. Ghostty key tables keep the sequence statefully,
   # without Sway intercepting and re-injecting the key through wtype.
-  fontSizeSteps = [
-    {
-      table = null;
-      up = 18;
-      upTable = "font-size-18";
-      down = 14;
-      downTable = "font-size-14";
-    }
-    {
-      table = "font-size-12";
-      up = 14;
-      upTable = "font-size-14";
-      down = null;
-      downTable = "font-size-12";
-    }
-    {
-      table = "font-size-14";
-      up = 16;
-      upTable = null;
-      down = 12;
-      downTable = "font-size-12";
-    }
-    {
-      table = "font-size-18";
-      up = 20;
-      upTable = "font-size-20";
-      down = 16;
-      downTable = null;
-    }
-    {
-      table = "font-size-20";
-      up = 22;
-      upTable = "font-size-22";
-      down = 18;
-      downTable = "font-size-18";
-    }
-    {
-      table = "font-size-22";
-      up = 24;
-      upTable = "font-size-24";
-      down = 20;
-      downTable = "font-size-20";
-    }
-    {
-      table = "font-size-24";
-      up = 28;
-      upTable = "font-size-28";
-      down = 22;
-      downTable = "font-size-22";
-    }
-    {
-      table = "font-size-28";
-      up = 32;
-      upTable = "font-size-32";
-      down = 24;
-      downTable = "font-size-24";
-    }
-    {
-      table = "font-size-32";
-      up = null;
-      upTable = "font-size-32";
-      down = 28;
-      downTable = "font-size-28";
-    }
-  ];
+  fontSizeSteps = lib.imap0
+    (index: size:
+      let
+        previous = if index == 0 then null else builtins.elemAt fontSizeValues (index - 1);
+        next = if index + 1 == builtins.length fontSizeValues then null else builtins.elemAt fontSizeValues (index + 1);
+      in
+      {
+        table = fontSizeTable size;
+        up = next;
+        upTable = if next == null then fontSizeTable size else fontSizeTable next;
+        down = previous;
+        downTable = if previous == null then fontSizeTable size else fontSizeTable previous;
+      })
+    fontSizeValues;
 
   bindingName = table: key: if table == null then key else "${table}/${key}";
   transition = table: key: size: nextTable:
@@ -110,6 +62,13 @@ let
   );
 in
 {
+  assertions = [
+    {
+      assertion = builtins.elem variables.terminalFontSize fontSizeValues;
+      message = "terminalFontSize must be one of the supported bitmap sizes: ${lib.concatMapStringsSep ", " toString fontSizeValues}.";
+    }
+  ];
+
   programs.ghostty = {
     enable = true;
     settings = {
