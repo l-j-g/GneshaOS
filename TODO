@@ -1240,8 +1240,9 @@ with the final assertions; the documented Home Manager activation derivation
 evaluation also passed without building its closure. The flake's source check
 now runs activation helper stubs for stale-source refusal, stopping after a
 failed system switch, and Home-only resume after a failed Home Manager
-activation. Remaining: stub Docker/systemctl and update-review branches. Full
-system and activation builds remain explicit slower commands.
+activation and the read-only update-review busy/missing/ready paths. Remaining:
+stub Docker and systemctl status branches. Full system and activation builds
+remain explicit slower commands.
 
 Read-only helper-test audit (2026-09-27): a generic PATH stub cannot safely test
 the generated `arr` command because it embeds the live media paths and runs its
@@ -1253,7 +1254,11 @@ temporary-directory harness for the rebuild activation helper. Its Nix/nh stubs
 verify stale-snapshot refusal, no Home Manager call after a failed system
 switch, and a Home-only resume after failed Home activation. The standalone
 fixture and `nix flake check --show-trace` pass. Docker, systemctl, and update-
-review helper coverage remains pending.
+review helper coverage is now partly covered by a separate helper fixture:
+busy-lock and missing-ready paths avoid tool calls, and valid review uses stub
+`diff`/`nvd` commands while preserving the candidate repository lock. The
+standalone fixture passed. A Docker wrapper constructor fixture and the
+systemctl status helper remain pending.
 
 ### [x] CHECK-02 — Make formatting and routine verification reproducible
 

@@ -5,6 +5,7 @@ let
   proxyUrl = "http://${proxy.host}:${toString proxy.port}";
   updateState = "/var/lib/gnesha-update";
   activationStateLib = ../../../home/shell/activation-state.sh;
+  updateReviewLib = ../../../home/shell/update-review.sh;
   activationStateRoot = "${params.userSettings.homeDirectory}/.local/state/gnesha-activation";
   updateBuild = pkgs.writeShellApplication {
     name = "gnesha-update-build";
@@ -54,17 +55,16 @@ let
       : "$activation_state_root" "$activation_phase" "$activation_new_system" "$activation_new_home"
       # shellcheck disable=SC1091
       source ${activationStateLib}
+      # shellcheck disable=SC1091
+      source ${updateReviewLib}
       state=${lib.escapeShellArg updateState}
       repo=${lib.escapeShellArg params.systemSettings.flakePath}
-      exec 8>"$state/lock"
       if [ "''${1:-}" = --review ]; then
-        if ! flock -n 8; then
-          echo "The background update build is still running; review is nonblocking. Retry update-review after it completes. Use update-status for current service state."
-          exit 0
-        fi
-      else
-        flock 8
+        update_review "$state" "$repo" /run/current-system
+        exit "$?"
       fi
+      exec 8>"$state/lock"
+      flock 8
       if [ ! -L "$state/ready" ]; then
         echo "No completed update is ready. Check systemctl status gnesha-nixpkgs-update." >&2
         exit 1
@@ -73,7 +73,6 @@ let
       echo "Candidate built at $(cat "$ready/built-at")"
       diff -u "$repo/flake.lock" "$ready/source/flake.lock" || [ "$?" -eq 1 ]
       nvd diff /run/current-system "$ready/system"
-      if [ "''${1:-}" = --review ]; then exit 0; fi
       if [ "$#" -ne 0 ]; then echo "Usage: gnesha-update-apply [--review]" >&2; exit 2; fi
       current=$("''${NIX_COMMAND:-nix}" flake metadata --json --no-write-lock-file "$repo" | jq -er .path)
       if ! diff -qr --exclude=flake.lock "$current" "$ready/source" >/dev/null ||

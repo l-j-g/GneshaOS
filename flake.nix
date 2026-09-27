@@ -343,6 +343,7 @@
               bash -n "$script"
             done
             bash ${./checks/activation-helper-stubs.sh} ${./home/shell/activation-state.sh}
+            bash ${./checks/update-review-stubs.sh} ${./home/shell/update-review.sh}
             touch "$out"
           '';
     in
