@@ -766,7 +766,7 @@ Compose listener without reading the secret file. `nix flake check`, the
 NixOS build, Python parsing, Nix parsing, and `git diff --check` passed. No
 activation or tunnel operation was run.
 
-### [ ] STRUCT-04 — Define a validated parameter contract and host overlays
+### [x] STRUCT-04 — Define a validated parameter contract and host overlays
 
 Priority: P2. Type: schema/ownership refinement.
 Files: `flake.nix`, both root system-parameter files,
@@ -793,6 +793,18 @@ Implementation:
 Done when: a second synthetic host with a different user/path evaluates without
 leaking cf-fv1-specific assumptions, invalid settings fail clearly, and the
 real host still builds. No lock-file update required.
+
+Completed (2026-09-27): flake evaluation now checks required system parameter
+keys/types against `system-parameters.example.nix`, validates absolute runtime
+paths, proxy ports, geographic ranges, display dimensions, positive Home Manager
+font/scale/zoom settings, and strict idle ordering. The platform is explicitly
+fixed to `x86_64-linux`. A partial `hosts/<host>/home-variables.nix` overlay is
+supported and type-checked; the host template and parameter docs describe it.
+A temporary `probe` host using account `probe`, `/home/probe`, and `/srv/media`
+evaluated Home Manager outputs with matching username, home, Git identity, and
+flake path. Invalid width and idle-order fixtures failed with the expected
+specific messages. The fixture was removed afterward. Flake check, NixOS
+build, Home Manager activation build, parsing, and `git diff --check` passed.
 
 ### [ ] STRUCT-05 — Separate shell workflows from shell appearance and aliases
 

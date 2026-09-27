@@ -57,6 +57,11 @@ in `home/variables.nix`.
 These values live in `system-parameters.nix` and generally change only when
 the machine, account, or installation changes.
 
+Flake evaluation checks the root/example parameter shape, Nix value types,
+absolute runtime paths, proxy ports, coordinates, and display dimensions.
+Architecture is currently fixed to `x86_64-linux`; discovering another host
+directory does not enable another platform.
+
 | Variable | Description | Example | Used by |
 | --- | --- | --- | --- |
 | `systemSettings.hostName` | Reference hostname. The host directory name is authoritative for flake outputs. | `"cf-fv1"` | `flake.nix`, NixOS services |
@@ -89,6 +94,10 @@ the machine, account, or installation changes.
 
 These values live in `home/variables.nix`. Each setting is also documented
 inline in that file so it remains easy to edit without searching the modules.
+An optional `hosts/<host>/home-variables.nix` may contain a partial host
+override; preference names and types are checked against the shared defaults.
+Positive font/scale/zoom values, absolute screenshot/key paths, and the
+`idleDimSec < idleLockSec < idleOffSec < idleSuspendSec` ordering are enforced.
 
 | Variable | Description | Example | Used by |
 | --- | --- | --- | --- |

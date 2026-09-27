@@ -4,11 +4,13 @@
 {
   inputs,
   params,
+  lib,
+  hostVariables ? { },
   ...
 }:
 
 let
-  variables = import ./variables.nix;
+  variables = lib.recursiveUpdate (import ./variables.nix) hostVariables;
 in
 {
   imports = [
