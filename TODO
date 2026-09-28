@@ -671,6 +671,12 @@ six-hour build limit. No configuration was activated. BOOT-01 remains pending
 a live update attempt after activation and an eventually-working slow-link
 check.
 
+Read-only host probe (2026-09-29): ran the built readiness helper directly; it
+successfully reached both the GitHub nixpkgs ref endpoint and the Nix cache.
+`gnesha-nixpkgs-update.service` remains inactive. This confirms the current
+host can reach the configured endpoints, not that the update transaction or a
+delayed-link recovery succeeds. No candidate or repository state was created.
+
 ### [ ] NET-01 — Make network exposure match the documented access boundary
 
 Priority: P1. Type: confirmed broad bindings; intended exposure needs decision.
