@@ -493,6 +493,15 @@ the NixOS build, and the Home Manager activation build passed; the latter used a
 disposable source snapshot because the checkout contains an unrelated untracked
 Fish file. No live activation was run. Commit: `7b69611`.
 
+Current-machine recovery state (read-only, 2026-09-29): `gnesha-rebuild --list`
+shows three unresolved attempts. One saved system build failed because its
+snapshot references the removed `hosts/cf-fv1/services` path; one system test
+activation failed after `sudo` timed out waiting for a password; one attempt is
+marked `blocked_stale_snapshot`. The guard blocks another activation while
+these remain unresolved. No attempt was resumed or discarded. This local
+recovery is pending operator review; the implementation and fixture status
+above remain complete.
+
 ### [x] BUILD-02 — Tighten background-update apply and stale-candidate behavior
 
 Priority: P1. Type: recovery and concurrency gap.
