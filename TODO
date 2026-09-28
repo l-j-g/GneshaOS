@@ -1176,6 +1176,16 @@ NixOS build passed. Docker's weekly system prune does not use `--all`, so named
 rollback images remain eligible for retention. Pending: verify a live
 update/readiness cycle and confirm rollback tags against the running daemon.
 
+Read-only live snapshot (2026-09-29): the runtime `images.lock.json` parses
+with all seven configured services and valid sha256 digests. All seven
+containers are running, and each container's full image ID exactly matches its
+locked digest; Gluetun reports healthy. No previous lock file or
+`:gnesha-rollback` tags exist, so rollback retention cannot be confirmed from
+this single image generation. The installed readiness helper available in the
+store was fixture-built and routes Docker calls to a stub, so it is not valid
+live readiness evidence. No image update or container mutation was run. ARR-01
+remains pending a live update/readiness cycle and a prior generation to inspect.
+
 ### [x] ARR-02 — Remove remaining mount and WireGuard address assumptions
 
 Priority: P2. Type: portability/configuration consistency.
