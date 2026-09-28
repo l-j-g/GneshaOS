@@ -25,7 +25,9 @@ reset_fixture() {
     "$runtime_root/initial-database.sql.imported" \
     "$runtime_root/images.lock.json" \
     "$runtime_root/secrets.env" \
-    "$test_root/docker-calls"
+    "$test_root/docker-calls" \
+    "$test_root/docker-calls.before-retry" \
+    "$test_root/psql-input"
 }
 
 mkdir -p "$runtime_root"
@@ -58,6 +60,45 @@ printf 'imported\n' > "$runtime_root/.database-import-state"
 [[ ! -e "$runtime_root/initial-database.sql" ]]
 [[ -s "$runtime_root/initial-database.sql.imported" ]]
 ! grep -Fq 'psql' "$test_root/docker-calls"
+
+# A fresh target must wait for PostgreSQL, import the synthetic dump, and
+# finalize the marker and dump archive after psql succeeds.
+reset_fixture
+write_prerequisites
+rm -f "$runtime_root/postgres/PG_VERSION"
+: > "$test_root/docker-calls"
+"$ghostfolio" up -d
+[[ -e "$runtime_root/.database-imported" ]]
+[[ ! -e "$runtime_root/.database-import-state" ]]
+[[ ! -e "$runtime_root/initial-database.sql" ]]
+[[ -s "$runtime_root/initial-database.sql.imported" ]]
+grep -Fq 'exec -T postgres pg_isready' "$test_root/docker-calls"
+grep -Fq 'exec -T postgres psql' "$test_root/docker-calls"
+grep -Fq 'SELECT 1;' "$test_root/psql-input"
+
+# A failed SQL command must retain the dump and mark the target failed. A
+# subsequent invocation must refuse before making any additional Docker calls.
+reset_fixture
+write_prerequisites
+rm -f "$runtime_root/postgres/PG_VERSION"
+: > "$test_root/docker-calls"
+if GHOSTFOLIO_PSQL_FAIL=1 "$ghostfolio" up -d 2> "$test_root/error"; then
+  echo "Ghostfolio unexpectedly accepted a failed SQL import" >&2
+  exit 1
+fi
+grep -Fq 'SQL import failed' "$test_root/error"
+[[ "$(cat "$runtime_root/.database-import-state")" == failed ]]
+[[ ! -e "$runtime_root/.database-imported" ]]
+[[ -s "$runtime_root/initial-database.sql" ]]
+grep -Fq 'exec -T postgres pg_isready' "$test_root/docker-calls"
+grep -Fq 'exec -T postgres psql' "$test_root/docker-calls"
+cp "$test_root/docker-calls" "$test_root/docker-calls.before-retry"
+if "$ghostfolio" up -d 2> "$test_root/error"; then
+  echo "Ghostfolio unexpectedly retried a failed SQL import" >&2
+  exit 1
+fi
+grep -Fq "database import state is 'failed'" "$test_root/error"
+cmp -s "$test_root/docker-calls.before-retry" "$test_root/docker-calls"
 
 # Uncertain and known-failed imports must stop before a database command.
 for state in importing failed; do

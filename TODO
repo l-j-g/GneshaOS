@@ -1182,13 +1182,17 @@ Implementation:
 4. Test interruption before import, mid-import, after import before marker,
    missing credentials, unavailable registry, and retry.
 
-Progress (2026-09-27): Nix parsing, flake checking, the disabled host build, and
-an enabled synthetic host build pass. A focused flake fixture now evaluates the
-generated `ghostfolio up -d` command with a test-only Docker package and a
-temporary runtime tree. The `imported` state finalizes the marker and dump
-rename without a `psql` call; `importing` and `failed` stop before any Docker
-call. No live data, Docker stack, or migration target was touched. Source export,
-actual PostgreSQL restore, and the remaining interruption windows stay pending.
+Progress (2026-09-28): Nix parsing, flake checking, the disabled host build, and
+an enabled synthetic host build pass. A focused flake fixture evaluates the
+generated `ghostfolio up -d` command with a test-only Docker package, synthetic
+credentials and SQL, and a temporary runtime tree. It verifies `imported`
+finalization without replaying SQL, a fresh synthetic import after readiness,
+`psql` failure transitioning to `failed`, retry refusal before further Docker
+calls, and pre-seeded `importing`/`failed` refusal. The focused fixture build
+passes. No live data, Docker stack, credentials, or migration target were
+touched. Interruption by forced process termination before/mid/after SQL,
+readiness timeout behavior, source export, and actual PostgreSQL restore remain
+unverified; Ghostfolio stays disabled pending the GF-01 migration gate.
 
 Done when: the import recovery cases are fixture-verified, no retry silently
 corrupts/duplicates data, commands terminate within known bounds, and

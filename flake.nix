@@ -289,6 +289,12 @@
           compose)
             case " $* " in
               *" config --quiet "*) exit 0 ;;
+              *" exec -T postgres pg_isready "*) exit 0 ;;
+              *" exec -T postgres psql "*)
+                cat > "$GHOSTFOLIO_FIXTURE_ROOT/psql-input"
+                if [ "''${GHOSTFOLIO_PSQL_FAIL:-0}" = 1 ]; then exit 42; fi
+                exit 0
+                ;;
               *" ps -q postgres "*) echo postgres-container ;;
               *" ps -q redis "*) echo redis-container ;;
               *" ps -q ghostfolio "*) echo ghostfolio-container ;;
