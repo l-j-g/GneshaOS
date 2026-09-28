@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090
 set -euo pipefail
 
 helper=${1:?usage: lock-readiness-stubs.sh HELPER}
@@ -8,11 +9,18 @@ if [[ ! -f $helper ]]; then
 fi
 
 helper=$(realpath "$helper")
+export GNESHA_LOCK_HELPER=$helper
 fixture_root=$(mktemp -d)
 trap 'rm -rf "$fixture_root"' EXIT
 
 fail() {
   printf 'not ok - %s\n' "$*" >&2
+  if [[ -n ${CASE_DIR:-} ]]; then
+    printf 'calls:\n' >&2
+    cat "$CASE_DIR/calls" >&2
+    printf 'events:\n' >&2
+    cat "$CASE_DIR/events" >&2
+  fi
   exit 1
 }
 
@@ -26,6 +34,10 @@ new_case() {
   : > "$CASE_DIR/sway-mode"
   : > "$CASE_DIR/systemctl-mode"
   : > "$CASE_DIR/dbus-mode"
+  echo battery > "$CASE_DIR/ac-mode"
+  echo battery > "$CASE_DIR/bus-mode"
+  SUSPEND_MODE=idle
+  ACQUIRE_ONLY=0
   cat > "$CASE_DIR/bin/lock-ack" <<'STUB'
 #!/usr/bin/env bash
 touch -- "$GNESHA_LOCK_ACK_FILE"
@@ -93,12 +105,37 @@ STUB
 printf 'systemctl %s\n' "$*" >> "$CASE_DIR/calls"
 if [[ ${1:-} == suspend ]]; then
   printf 'suspend %s\n' "$(date +%s%N)" >> "$CASE_DIR/events"
+  if flock -n -x "$XDG_RUNTIME_DIR/gnesha-lock/mutex" -c true; then
+    printf 'suspend-mutex-missing\n' >> "$CASE_DIR/events"
+  else
+    printf 'suspend-mutex-held\n' >> "$CASE_DIR/events"
+  fi
+  if [[ -e $CASE_DIR/before-sleep-callback ]]; then
+    if timeout --kill-after=0.1s 0.5s bash -c 'source "$GNESHA_LOCK_HELPER"; gnesha_lock_acquire'; then
+      printf 'before-sleep-returned\n' >> "$CASE_DIR/events"
+    else
+      printf 'before-sleep-blocked\n' >> "$CASE_DIR/events"
+    fi
+  fi
 fi
 STUB
   cat > "$CASE_DIR/bin/busctl" <<'STUB'
 #!/usr/bin/env bash
 printf 'busctl %s\n' "$*" >> "$CASE_DIR/calls"
-exit 1
+case $(cat "$CASE_DIR/bus-mode") in
+  battery) printf 'b false\n' ;;
+  docked) printf 'b true\n' ;;
+  malformed) printf 'false\n' ;;
+  fail) exit 1 ;;
+esac
+STUB
+  cat > "$CASE_DIR/bin/acpi" <<'STUB'
+#!/usr/bin/env bash
+case $(cat "$CASE_DIR/ac-mode") in
+  battery) printf 'Adapter 0: off-line\n' ;;
+  ac) printf 'Adapter 0: on-line\n' ;;
+  fail) exit 1 ;;
+esac
 STUB
   cat > "$CASE_DIR/bin/dbus-send" <<'STUB'
 #!/usr/bin/env bash
@@ -120,8 +157,12 @@ run_lock_operation() {
       _fixture_original_existing "$@"
     }
   fi
-  if declare -F gnesha_lock_and_suspend >/dev/null; then
-    gnesha_lock_and_suspend
+  if declare -F gnesha_lock_and_suspend >/dev/null && [[ ${ACQUIRE_ONLY:-0} != 1 ]]; then
+    if [[ ${SUSPEND_MODE:-idle} == lid ]]; then
+      gnesha_lock_and_suspend --lid
+    else
+      gnesha_lock_and_suspend
+    fi
   else
     gnesha_lock_acquire
   fi
@@ -150,6 +191,10 @@ assert_suspend_after_readiness() {
   fi
   ready=$(awk '/^(gtklock|swaylock)-ready / { if ($2 > latest) latest=$2 } END { print latest+0 }' "$CASE_DIR/events")
   [[ -n $ready && $suspend -gt $ready ]] || fail 'suspend was requested before lock readiness'
+  if source "$helper" && declare -F gnesha_lock_and_suspend >/dev/null; then
+    grep -q '^suspend-mutex-held$' "$CASE_DIR/events" || fail 'suspend request did not hold the shared lock mutex'
+    if grep -q '^suspend-mutex-missing$' "$CASE_DIR/events"; then fail 'shared lock mutex was not held during suspend'; fi
+  fi
 }
 
 timed_lock_operation() {
@@ -228,6 +273,7 @@ if grep -q '^systemctl .*suspend' "$CASE_DIR/calls" || grep -q '^suspend ' "$CAS
 printf 'ok - no-Sway request fails without side effects\n'
 
 new_case concurrent
+ACQUIRE_ONLY=1
 echo callback > "$CASE_DIR/gtk-mode"
 echo fail > "$CASE_DIR/sway-mode"
 ( timed_lock_operation ) & first=$!
@@ -235,9 +281,44 @@ echo fail > "$CASE_DIR/sway-mode"
 wait "$first" || fail 'first concurrent lock request failed'
 wait "$second" || fail 'second concurrent lock request failed'
 assert_acquisition_after_readiness
-assert_suspend_after_readiness
+if grep -q '^systemctl .*suspend' "$CASE_DIR/calls" || grep -q '^suspend ' "$CASE_DIR/events"; then fail 'lock-only concurrent request suspended'; fi
 assert_call_count 1
 printf 'ok - simultaneous requests launch only one locker\n'
+
+new_case before-sleep-contention
+echo callback > "$CASE_DIR/gtk-mode"
+touch "$CASE_DIR/before-sleep-callback"
+timed_lock_operation || fail 'battery suspend request failed'
+grep -q '^before-sleep-returned$' "$CASE_DIR/events" || fail 'before-sleep lock callback blocked behind the suspend mutex'
+assert_suspend_after_readiness
+assert_call_count 1
+printf 'ok - before-sleep reuses live acknowledged lock\n'
+
+new_case stale-state-contention
+ACQUIRE_ONLY=1
+echo callback > "$CASE_DIR/gtk-mode"
+mkdir -p "$XDG_RUNTIME_DIR/gnesha-lock"
+printf 'gtklock 99999999 1\n' > "$XDG_RUNTIME_DIR/gnesha-lock/state"
+(
+  exec 9>"$XDG_RUNTIME_DIR/gnesha-lock/mutex"
+  flock -x 9
+  touch "$CASE_DIR/held"
+  sleep 0.8
+) & holder=$!
+for ((i=0; i<100; i++)); do
+  [[ -e $CASE_DIR/held ]] && break
+  sleep 0.01
+done
+[[ -e $CASE_DIR/held ]] || fail 'fixture could not hold the mutex for stale-state test'
+(timed_lock_operation) & operation=$!
+sleep 0.2
+assert_call_count 0
+if grep -q '^acquire-return ' "$CASE_DIR/events"; then fail 'stale state bypassed the mutex'; fi
+wait "$holder" || fail 'stale-state mutex holder failed'
+wait "$operation" || fail 'stale-state request failed after mutex release'
+assert_call_count 1
+assert_acquisition_after_readiness
+printf 'ok - stale acknowledgment remains serialized\n'
 
 new_case contention
 echo callback > "$CASE_DIR/gtk-mode"
@@ -338,3 +419,78 @@ assert_call_count 0
 kill "$holder" 2>/dev/null || true
 wait "$holder" 2>/dev/null || true
 printf 'ok - new locker does not start near deadline\n'
+
+new_case battery-lid
+SUSPEND_MODE=lid
+echo callback > "$CASE_DIR/gtk-mode"
+echo battery > "$CASE_DIR/bus-mode"
+echo battery > "$CASE_DIR/ac-mode"
+timed_lock_operation || fail 'battery lid request did not lock then suspend'
+assert_acquisition_after_readiness
+assert_suspend_after_readiness
+[[ $(grep -c '^busctl ' "$CASE_DIR/calls") == 1 ]] || fail 'battery lid request did not query logind Docked state'
+printf 'ok - battery lid request suspends after readiness\n'
+
+new_case ac-lid
+SUSPEND_MODE=lid
+echo callback > "$CASE_DIR/gtk-mode"
+echo battery > "$CASE_DIR/bus-mode"
+echo ac > "$CASE_DIR/ac-mode"
+timed_lock_operation || fail 'AC lid request did not lock successfully'
+assert_acquisition_after_readiness
+if grep -q '^systemctl .*suspend' "$CASE_DIR/calls" || grep -q '^suspend ' "$CASE_DIR/events"; then fail 'AC lid request suspended'; fi
+printf 'ok - AC lid request locks without suspending\n'
+
+new_case docked-lid
+SUSPEND_MODE=lid
+echo callback > "$CASE_DIR/gtk-mode"
+echo docked > "$CASE_DIR/bus-mode"
+timed_lock_operation || fail 'docked lid request did not lock successfully'
+assert_acquisition_after_readiness
+if grep -q '^systemctl .*suspend' "$CASE_DIR/calls" || grep -q '^suspend ' "$CASE_DIR/events"; then fail 'docked lid request suspended'; fi
+printf 'ok - docked lid request locks without suspending\n'
+
+new_case dock-query-failure
+SUSPEND_MODE=lid
+echo callback > "$CASE_DIR/gtk-mode"
+echo fail > "$CASE_DIR/bus-mode"
+if timed_lock_operation; then fail 'Docked query failure was not reported'; fi
+assert_acquisition_after_readiness
+if grep -q '^systemctl .*suspend' "$CASE_DIR/calls" || grep -q '^suspend ' "$CASE_DIR/events"; then fail 'Docked query failure allowed suspend'; fi
+printf 'ok - failed Docked query leaves system awake\n'
+
+new_case dock-query-malformed
+SUSPEND_MODE=lid
+echo callback > "$CASE_DIR/gtk-mode"
+echo malformed > "$CASE_DIR/bus-mode"
+if timed_lock_operation; then fail 'malformed Docked property was not rejected'; fi
+assert_acquisition_after_readiness
+if grep -q '^systemctl .*suspend' "$CASE_DIR/calls" || grep -q '^suspend ' "$CASE_DIR/events"; then fail 'malformed Docked property allowed suspend'; fi
+printf 'ok - malformed Docked property leaves system awake\n'
+
+new_case ac-query-failure
+SUSPEND_MODE=idle
+echo callback > "$CASE_DIR/gtk-mode"
+echo fail > "$CASE_DIR/ac-mode"
+if timed_lock_operation; then fail 'AC state query failure was not reported'; fi
+assert_acquisition_after_readiness
+if grep -q '^systemctl .*suspend' "$CASE_DIR/calls" || grep -q '^suspend ' "$CASE_DIR/events"; then fail 'AC state query failure allowed suspend'; fi
+printf 'ok - failed AC query leaves system awake\n'
+
+new_case battery-idle
+SUSPEND_MODE=idle
+echo callback > "$CASE_DIR/gtk-mode"
+echo battery > "$CASE_DIR/ac-mode"
+timed_lock_operation || fail 'battery idle request did not lock then suspend'
+assert_acquisition_after_readiness
+assert_suspend_after_readiness
+printf 'ok - battery idle request suspends after readiness\n'
+
+new_case readiness-failure-suspend
+SUSPEND_MODE=lid
+echo fail > "$CASE_DIR/gtk-mode"
+echo fail > "$CASE_DIR/sway-mode"
+echo battery > "$CASE_DIR/bus-mode"
+if timed_lock_operation; then fail 'suspend request succeeded without lock readiness'; fi
+if grep -q '^systemctl .*suspend' "$CASE_DIR/calls" || grep -q '^suspend ' "$CASE_DIR/events"; then fail 'readiness failure allowed suspend'; fi
+printf 'ok - lock readiness failure leaves system awake\n'

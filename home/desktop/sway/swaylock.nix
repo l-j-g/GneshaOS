@@ -27,10 +27,28 @@ let
       gnesha_lock_acquire
     '';
   };
+  lockAndSuspend = pkgs.writeShellApplication {
+    name = "gnesha-lock-and-suspend";
+    runtimeInputs = [
+      pkgs.util-linux
+      pkgs.coreutils
+      pkgs.dbus
+      pkgs.gtklock
+      pkgs.swaylock
+      pkgs.acpi
+      pkgs.systemd
+    ];
+    text = ''
+      # shellcheck disable=SC1091
+      source ${../../shell/lock-readiness.sh}
+      gnesha_lock_and_suspend "$@"
+    '';
+  };
 in
 {
   home.packages = [
     lock
+    lockAndSuspend
     pkgs.gtklock
   ];
   xdg.configFile."gtklock/config.ini".text = ''
@@ -59,7 +77,7 @@ in
     button { border-radius: 0; }
   '';
   wayland.windowManager.sway.extraConfig = ''
-    bindswitch --locked lid:on exec ${lock}/bin/gnesha-lock
+    bindswitch --locked lid:on exec ${lockAndSuspend}/bin/gnesha-lock-and-suspend --lid
   '';
 
   # Retain a known fallback during migration to the new locker.
