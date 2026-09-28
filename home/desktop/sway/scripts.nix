@@ -27,6 +27,7 @@ let
   common = with pkgs; [ coreutils ];
   manifest = {
     "first-empty-workspace" = mkCommand "first-empty-workspace" ./scripts/first-empty-workspace python (with pkgs; [ python3 sway ]);
+    "calcurse-daemon-enabled" = mkCommand "calcurse-daemon-enabled" ./scripts/calcurse-daemon-enabled sh (with pkgs; [ gawk ]);
     "ghostty-font-size-notify" = mkCommand "ghostty-font-size-notify" (pkgs.writeText "ghostty-font-size-notify" ghosttyFontSizeNotifyScript) sh (common ++ (with pkgs; [ sway jq libnotify gnused ]));
     "gnesha-rofi" = mkCommand "gnesha-rofi" ./scripts/gnesha-rofi sh (common ++ (with pkgs; [ rofi ]));
     "inhibit-idle" = mkCommand "inhibit-idle" ./scripts/inhibit-idle python (with pkgs; [ python3 sway ]);

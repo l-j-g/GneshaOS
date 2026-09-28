@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+
+[ "$#" -eq 1 ] || exit 2
+[ -f "$1" ] && [ -r "$1" ] || exit 1
+
+exec awk '
+  function trim(value) {
+    sub(/^[[:space:]]+/, "", value)
+    sub(/[[:space:]]+$/, "", value)
+    return value
+  }
+  {
+    line = $0
+    sub(/[[:space:]]*#.*/, "", line)
+    separator = index(line, "=")
+    if (!separator) next
+    key = trim(substr(line, 1, separator - 1))
+    value = trim(substr(line, separator + 1))
+    if (key == "daemon.enable") enabled = value
+  }
+  END { exit enabled != "yes" }
+' "$1"

@@ -123,6 +123,7 @@ in
     };
     Service = {
       Type = "forking";
+      ExecCondition = "${config.home.homeDirectory}/.config/sway/scripts/calcurse-daemon-enabled %h/.calcurse/conf";
       ExecStart = "${pkgs.calcurse}/bin/calcurse --daemon";
       Restart = "on-failure";
       RestartSec = 5;

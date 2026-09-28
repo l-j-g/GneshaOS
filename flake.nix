@@ -524,7 +524,9 @@
       configurationCombinationChecks =
         let
           base = hostCheck null;
+          home = (homeConfiguration "cf-fv1").config;
           arrUnit = base.config.systemd.services.docker-compose;
+          calcurseCondition = home.systemd.user.services.calcurse-daemon.Service.ExecCondition;
           forwardedPort = systemParameters.systemSettings.airVpn.forwardedPort;
           mediaComposeFile = base.config.environment.etc."arr/compose.json".source;
           ghostProxyOff = hostCheckGhostfolioProxyOff.config;
@@ -533,6 +535,10 @@
           nixDaemonUnitUnset = base.config.systemd.services.nix-daemon.serviceConfig.UnsetEnvironment;
         in
         assert base.config.services.gnesha.airvpn.enable;
+        assert nixpkgs.lib.hasInfix "calcurse-daemon-enabled" calcurseCondition;
+        assert nixpkgs.lib.hasInfix
+          "${home.home.homeDirectory}/.config/sway/scripts/calcurse-daemon-enabled"
+          calcurseCondition;
         assert !base.config.services.gnesha.airvpn.autostart;
         assert !base.config.services.gnesha.ghostfolio.enable;
         assert base.config.services.gnesha.ghostfolio.secretsFile
@@ -594,6 +600,7 @@
             for script in \
               ${./home/shell/airvpn-profile} \
               ${./home/desktop/sway/scripts/vpn-toggle} \
+              ${./home/desktop/sway/scripts/calcurse-daemon-enabled} \
               ${./home/desktop/sway/scripts/recorder.sh} \
               ${./home/desktop/sway/scripts/sway-help} \
               ${./hosts/cf-fv1/services/update-network-ready.sh} \
@@ -608,6 +615,7 @@
             bash ${./checks/activation-helper-stubs.sh} ${./home/shell/activation-state.sh}
             bash ${./checks/update-review-stubs.sh} ${./home/shell/update-review.sh}
             bash ${./checks/update-network-readiness-stubs.sh} ${./hosts/cf-fv1/services/update-network-ready.sh}
+            bash ${./checks/calcurse-daemon-optin-stubs.sh} ${./home/desktop/sway/scripts/calcurse-daemon-enabled}
             bash ${./checks/lock-readiness-stubs.sh} ${./home/shell/lock-readiness.sh}
             touch "$out"
           '';

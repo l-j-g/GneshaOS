@@ -521,14 +521,13 @@ the NixOS build, and the Home Manager activation build passed; the latter used a
 disposable source snapshot because the checkout contains an unrelated untracked
 Fish file. No live activation was run. Commit: `7b69611`.
 
-Current-machine recovery state (read-only, 2026-09-29): `gnesha-rebuild --list`
-shows three unresolved attempts. One saved system build failed because its
-snapshot references the removed `hosts/cf-fv1/services` path; one system test
-activation failed after `sudo` timed out waiting for a password; one attempt is
-marked `blocked_stale_snapshot`. The guard blocks another activation while
-these remain unresolved. No attempt was resumed or discarded. This local
-recovery is pending operator review; the implementation and fixture status
-above remain complete.
+Current-machine recovery state (2026-09-29): the user approved discarding only
+`rebuild-20260927T060603Z-882468`, the failed saved build whose snapshot
+references the removed `hosts/cf-fv1/services` path. That record and its saved
+log/state were discarded. Two unresolved attempts remain untouched: one failed
+system activation after `sudo` timed out waiting for a password, and one
+`blocked_stale_snapshot` attempt. The activation guard still blocks another
+system activation until these are individually resolved.
 
 Non-activating Home Manager build (2026-09-29): the activation package builds
 with both the detailed attempt guidance and the source removal for
@@ -785,6 +784,13 @@ still reports wildcard host bindings for both TCP and UDP 64480. Rebooting into
 the existing generation did not apply the built source change; activation and
 container recreation are still required before the live exposure can be
 rechecked.
+
+Policy confirmation (2026-09-29): the user confirmed that forwarded port 64480
+must accept AirVPN-forwarded traffic only. The source removes Docker host
+publication and global firewall openings while retaining Gluetun's
+`FIREWALL_VPN_INPUT_PORTS=64480`. The live system/container state remains
+unchanged until a NixOS activation and container recreation; no system
+activation was run.
 
 ### [ ] AUTH-01 — Gate suspend on lock readiness and align PAM policy with the active locker
 
@@ -1214,14 +1220,11 @@ the host VPN stayed off, but does not exercise the current source helper's
 `stopped`/`active-unverified`/`healthy` states. Live behavior remains pending
 Home Manager activation and an authorized connectivity check.
 
-Current-source status check (2026-09-29): running
-`home/desktop/sway/scripts/vpn-toggle status` reports `stopped` with the
-direct-routes tooltip. The AirVPN profile is not active, so the read-only status
-path does not need privileged WireGuard access. This confirms the source helper
-distinguishes the present stopped state, while the installed Waybar still uses
-the older generation. Starting the tunnel and checking healthy-handshake,
-failed-start, and boot behavior remain pending an authorized connectivity check
-and Home Manager activation.
+Current-source and installed status check (2026-09-29): running the helper
+reports `stopped` with the direct-routes tooltip and valid JSON. Home Manager
+activation installed that helper; the AirVPN profile remains inactive. Starting
+the tunnel and checking healthy-handshake, failed-start, and boot behavior
+remain pending an authorized connectivity check.
 
 Implementation:
 1. Represent unavailable, stopped, starting, active-but-unverified, healthy, and
@@ -1518,34 +1521,31 @@ syntax, and `git diff --check` passed. No Home Manager activation or live
 recorder signal was run. Live Sway behavior, overlay termination, Calcurse
 behavior, and Kitty integration remain unverified.
 
-Calcurse preference recheck (2026-09-29): the upstream manual documents
-`daemon.enable` as defaulting to `no` and stores configuration at
-`~/.calcurse/conf`. That file is absent, and the generated
-`calcurse-daemon.service` is currently inactive. No Calcurse data was read or
-written. Whether the session service should require an explicit
-`daemon.enable=yes` opt-in remains a design decision; the user has been asked.
+Calcurse preference implementation (2026-09-29): per user decision, the daemon
+starts only when the last active `daemon.enable` setting in `~/.calcurse/conf`
+is `yes`; missing config and all other values skip startup. A stub fixture
+covers missing, disabled, enabled, comments, whitespace, and repeated values.
+The helper and service condition were installed by Home Manager. Systemd
+verification passed, and starting the unit with the config absent yielded
+`Result=exec-condition`; no Calcurse directory or data was created. The config
+was left untouched.
 
 Post-reboot workspace-icon report (2026-09-29): the user reported app-based
 workspace icons returned. The user journal confirms the old
 `swayest-workstyle.service` started at 23:13 and ran for about two minutes. The
 repository source no longer declares that service; the current user unit is
-masked and inactive. Live Sway reports workspace names `1` and `2`, and the
-generated Waybar format is `{name}`. The active Home Manager generation still
-contains the older service setup because the updated generation has not been
-activated, so persistence through a Home Manager rebuild is not yet verified.
-The rebuilt, non-activating Home Manager package has no workstyle unit and keeps
-the numeric workspace-name format; the live profile remains on the old
-generation pending activation.
+masked and inactive. Live Sway reports numeric workspace names and Waybar uses
+`{name}`. Home Manager has since been activated successfully; the active
+generation contains no workstyle unit or target-wants link. No system
+activation was needed for this user-level change.
 
 Live correction (2026-09-29): removed the stale
 `sway-session.target.wants/swayest-workstyle.service` symlink from the active
-user configuration and reloaded the user manager. The unit remains masked and
-inactive, and the target no longer has an enablement link to start at login.
-The active Home Manager generation is still old; its next activation should
-reconcile the generated unit files with the source that no longer declares the
-service. Sway currently reports numeric workspace names and Waybar is set to
-`{name}`. A user screenshot is still needed if other unexpected workspace
-icons remain visible.
+user configuration and reloaded the user manager. Home Manager activation
+reconciled the generated unit files with the source that no longer declares the
+service. The unit remains masked and inactive, the target has no enablement
+link, Sway reports numeric workspace names, and Waybar uses `{name}`. If
+unexpected icons remain visible, capture a screenshot to identify their source.
 
 ## Validation coverage, documentation, and repository hygiene
 
