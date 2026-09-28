@@ -118,6 +118,39 @@ assert_log "Saved $test_root/videos/recording_fixture-time.webm"
 [[ -s "$test_root/videos/recording_fixture-time.webm" ]] || { echo 'successful recording output is absent or empty' >&2; exit 1; }
 [[ ! -e "$XDG_RUNTIME_DIR/gneshaos/success-session/recorder/recorder.pid" ]] || { echo 'recorder PID state was not cleaned up' >&2; exit 1; }
 
+# Escape's stop-only action with no recording must not open a region selector
+# or fall through to starting a new recording.
+reset_fixture
+export SLURP_RESULT=select RECORDER_MODE=write
+if invoke_recorder stop-empty-session "$test_root/videos" --stop >"$test_root/stop-empty.out" 2>&1; then :; else
+  echo 'stop-only action with no recording returned failure' >&2; cat "$test_root/stop-empty.out" >&2; exit 1
+fi
+if grep -Fq 'slurp' "$STUB_LOG" || grep -Fq 'wf-recorder' "$STUB_LOG"; then
+  echo 'stop-only action with no recording entered the start flow' >&2; cat "$STUB_LOG" >&2; exit 1
+fi
+assert_log 'No recording is active in this Sway session'
+
+# A stale PID reused by an unrelated process must not be signaled.
+reset_fixture
+export SLURP_RESULT=select RECORDER_MODE=write
+session_state="$XDG_RUNTIME_DIR/gneshaos/stop-target-session/recorder"
+mkdir -p "$session_state"
+"$SYSTEM_SLEEP" 30 &
+other_pid=$!
+printf '%s\n' "$other_pid" > "$session_state/recorder.pid"
+if invoke_recorder stop-target-session "$test_root/videos" --stop >"$test_root/stop-target.out" 2>&1; then :; else
+  kill -TERM "$other_pid" 2>/dev/null || true
+  echo 'stop-only action could not stop the session recorder' >&2; cat "$test_root/stop-target.out" >&2; exit 1
+fi
+if ! kill -0 "$other_pid" 2>/dev/null; then
+  wait "$other_pid" 2>/dev/null || true
+  echo 'stop action signaled a stale PID that now belongs to another process' >&2; exit 1
+fi
+kill -TERM "$other_pid"
+wait "$other_pid" 2>/dev/null || true
+assert_log 'No recording is active in this Sway session'
+[[ ! -e "$session_state/recorder.pid" ]] || { echo 'stale session PID file was not removed' >&2; exit 1; }
+
 # Hold one recorder action inside the stub selection UI. Another action in the
 # same Sway session must observe the lock; a different session remains usable.
 reset_fixture

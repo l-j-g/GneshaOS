@@ -12,6 +12,10 @@ session=${SWAYSOCK##*/}
 case "$session" in
     ""|*[!A-Za-z0-9_.-]*) notify-send "Recording" "No safe Sway session identifier is available"; exit 1 ;;
 esac
+case "${1:-}" in
+    ""|-a|--stop) ;;
+    *) notify-send "Recording" "Usage: recorder.sh [-a|--stop]"; exit 2 ;;
+esac
 state="$runtime/gneshaos/$session/recorder"
 mkdir -p "$state" || exit 1
 chmod 700 "$state"
@@ -41,10 +45,10 @@ if [ -s "$pidfile" ]; then
     rm -f "$pidfile" "$stopfile"
 fi
 
-case "${1:-}" in
-    ""|-a) ;;
-    *) notify-send "Recording" "Usage: recorder.sh [-a]"; exit 2 ;;
-esac
+if [ "${1:-}" = --stop ]; then
+    notify-send "Recording" "No recording is active in this Sway session"
+    exit 0
+fi
 target=$(xdg-user-dir VIDEOS 2>/dev/null || printf '%s\n' "$HOME/Videos")
 if ! mkdir -p "$target"; then
     notify-send "Recording" "Could not create $target"

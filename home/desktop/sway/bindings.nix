@@ -165,7 +165,7 @@ in
   # Screenshot / recording / shutdown / scratchpad / resize modes
   "Print" = "mode \"screenshot (o/p)\"";
   "${m}+Shift+r" = "mode recording";
-  "${m}+Escape" = "exec killall -SIGINT wf-recorder";
+  "${m}+Escape" = "exec recorder.sh --stop";
   "${m}+Shift+e" = "mode shutdown";
   "${m}+minus" = "scratchpad show";
   "${m}+Shift+minus" = "move scratchpad";
