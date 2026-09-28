@@ -1399,7 +1399,7 @@ parent path. Development docs describe `cfn`, build-only `nixbuild`, temporary
 docs accurately identify the CF-FV1 `acpi_call` quiet-profile request and do not
 claim general fan control. All 12 checked Markdown files have valid local links.
 
-### [ ] DOC-02 — Document stateful-app recovery boundaries and restore drills
+### [x] DOC-02 — Document stateful-app recovery boundaries and restore drills
 
 Priority: P2. Type: missing operational procedure.
 Files: media/Ghostfolio docs, `docs/install.md`, optional `docs/recovery.md`.
@@ -1409,8 +1409,8 @@ Implementation:
    credentials, image locks, and Nix/Home Manager generation references.
 2. For each, document ownership, location, consistency requirements, and restore
    procedure. Separate Nix generation rollback from application data rollback.
-3. Record whether the operator wants off-disk backups. Do not configure a
-   destination, retention policy, or transfer without that choice.
+3. Honor the operator's decision: no off-disk backups, destination, retention,
+   schedule, or transfer.
 4. Run an authorized restore drill into temporary/disposable paths and record
    evidence before proposing any production migration or deletion.
 
@@ -1436,9 +1436,14 @@ is file-level recovery evidence only; application consistency and service-start
 restore remain unverified. A read-only metadata check found the Arr `.env`
 owned by the user with mode `0644`; its contents were not read. Its parent
 `/home/lg` is mode `0700`, so other unprivileged users cannot traverse to the
-file; no permissions were changed. Keep DOC-02 open until
-remaining databases, runtime credentials, media coverage, and supported
-export/restore procedures are documented to this selected scope.
+file; no permissions were changed. The recovery runbook now documents the read-only mounts and versions, per-service
+state locations and upstream recovery procedures, database consistency limits,
+credential handling, media boundaries, Nix generation boundaries, the absent
+Ghostfolio source, and the Audiobookshelf `/metadata` persistence gap. It records
+that `/media` has no snapshot coverage and no off-disk backup is wanted. DOC-02
+is complete for documentation and the safe file-level drill. Application-level
+service-start restores remain unverified; Audiobookshelf metadata persistence
+and Ghostfolio import readiness remain separate follow-up work.
 
 ### [x] HYGIENE-01 — Remove tracked scratch output and clarify local-only inputs
 

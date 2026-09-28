@@ -67,6 +67,37 @@ Do not copy credentials or keys into this repository or into ordinary test
 artifacts. The configured Ghostfolio secrets file is currently absent; do not
 fabricate its contents. This runbook does not create a second copy of secrets.
 
+## Application data and supported recovery
+
+The live container mounts were rechecked on 2026-09-28. All seven application
+configuration roots are under `/home/lg/src/arr/config/`; the specific mounts
+below are the current Compose contract. `/media` contains the actual download
+and library files. No restore was performed for these services in this review.
+
+| Service | Persisted host data | Recovery boundary and procedure |
+| --- | --- | --- |
+| qBittorrent | `config/qbittorrent` mounted at `/config`; downloads and torrent payloads live separately under `/media/downloads` and `/media/torrents`. | qBittorrent's Linux settings and data directories contain preferences and torrent state. With the container stopped, preserve the full `/config` tree; restore it with the same paths and then verify/recheck payload files. The configuration alone does not contain downloaded data. See the [qBittorrent FAQ](https://github.com/qbittorrent/qBittorrent/wiki/Frequently-Asked-Questions#where-does-qbittorrent-save-its-settings) and [LinuxServer container paths](https://docs.linuxserver.io/images/docker-qbittorrent/). |
+| Gluetun | `config/gluetun` mounted at `/gluetun/wireguard`. | This contains generated WireGuard profile material and must be treated as a credential. Preserve and restore it only as a secret, with restrictive ownership and permissions. Do not print it or put it in the repository. The image lock is only a reference to an image digest; it does not contain or back up the profile. |
+| Lidarr | `config/lidarr` mounted at `/config`; music is under `/media/music`, with downloads under `/media/downloads`. | Prefer Lidarr's **System → Backup** ZIP and **System → Backup → Restore**. For a file-level copy, stop Lidarr first and copy the complete `/config` tree, including any SQLite journal/WAL files. Restore with the same path mappings and a compatible application version. See the [official Lidarr backup FAQ](https://wiki.servarr.com/lidarr/faq). |
+| Prowlarr | `config/prowlarr` mounted at `/config`. | Use **System → Backup** to create a backup and the same page to restore it. The official API documents listing and restoring system backups, including uploaded archives. A stopped-container copy of the complete `/config` tree is the file-level fallback. Treat the archive and config as sensitive because indexer credentials and API keys may be included. See the [Prowlarr API documentation](https://prowlarr.com/docs/api/). |
+| SABnzbd | `config/sabnzbd` mounted at `/config`; completed and in-progress downloads are on `/media/downloads`. | Use **Config → General → Create backup** and SABnzbd's **Restore backup** control. The backup includes configuration and databases and contains passwords and API keys. Check the configured Backup Folder before creating one; no folder or schedule was changed here. See [SABnzbd's backup instructions](https://sabnzbd.org/wiki/configuration/5.1/general). |
+| Audiobookshelf | `config/audiobookshelf` mounted at `/config`; books and podcasts are under `/media/audiobooks` and `/media/podcasts`. | `/config` persists the SQLite database and migrations. The configured Compose service does **not** mount `/metadata`; that path is currently in the container's writable layer. Its built-in backups default to `/metadata/backups`, so they are not durable across container replacement. A read-only check found only small generated log/cache structure there, not a host backup set. Before relying on Audiobookshelf backups or recreating this container, plan a data-preserving `/metadata` mount migration. The official backup includes the database and some metadata images, not library media or covers stored with library items; restore through **Settings → Backups** or follow the [manual restore steps](https://audiobookshelf.org/docs/documentation/server-management/backups). See also [Docker data paths](https://audiobookshelf.org/docs/documentation/install/docker/). |
+| Emby | `config/emby` mounted at `/config`; `/media` is mounted read-only into Emby. | Emby's manual procedure copies its complete ProgramData while Emby is stopped; the server dashboard identifies the data directory. Its Backup & Restore plugin can restore server configuration, users, user data and plugin settings, but requires Emby Premiere and does not back up library media. Preserve the same media paths on restore and run a library scan. See [manual backup and migration](https://support.emby.media/support/articles/Backup-Manual-Backups.html) and the [Backup & Restore plugin guide](https://emby.media/support/articles/Backup-Using-Plugin.html). |
+
+The LinuxServer apps' `/config` host directories hold application-specific
+settings and databases, but a directory copy is only consistent after its
+container is stopped. Prefer each application's supported logical backup for
+database state; do not restore across incompatible application versions or
+different media paths. These services' UI exports and config files may contain
+credentials. Keep any restore copy private and do not commit it.
+
+Ghostfolio is not running and has no configured runtime data directory or
+secrets file. Its future import is not recoverable until the source database,
+export format, and matching PostgreSQL restore have been identified and tested
+under GF-01. The Arr `images.lock.json` and saved Nix generations are useful for
+recreating software versions, but neither contains application databases,
+secrets, downloads, or library files.
+
 ## Restore boundaries
 
 - **NixOS generation rollback** restores a prior configuration and package
