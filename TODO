@@ -611,7 +611,7 @@ remains pending those interface-level checks and confirmation that Emby 8096,
 Samba, and other direct service ports are blocked remotely while tailnet HTTPS
 remains reachable.
 
-### [ ] AUTH-01 — Verify lock completion and align PAM policy with the active locker
+### [ ] AUTH-01 — Gate suspend on lock readiness and align PAM policy with the active locker
 
 Priority: P1. Type: verification gap and naming/policy inconsistency.
 Files: `home/desktop/sway/swaylock.nix`, `daemons.nix`,
@@ -654,6 +654,17 @@ to the expected missing-compositor error. The Home Manager activation-package
 build passes. No lock, password, suspend, activation, or reboot scenario was
 triggered. This task remains pending interactive verification with a recovery
 session available.
+
+Implementation status (2026-09-28): gtklock and swaylock now require positive
+readiness acknowledgment; battery lid-close, battery idle suspend, and the
+explicit Sway suspend key route through the bounded lock-then-suspend helper.
+logind lid actions are lock-only, and the host README describes the Sway-present
+and Sway-absent behavior and the limits of `before-sleep`. The fast fixture,
+flake check, NixOS build, and Home Manager activation-package build passed for
+the implementation. No activation or live lock, authentication, lid, or suspend
+test was performed. AUTH-01 remains open pending those interactive checks with
+a recovery session available; the optional owning-module rename also remains
+separate cleanup.
 
 ## Structure and refactoring
 

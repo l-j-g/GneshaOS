@@ -33,10 +33,10 @@
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
   services.fwupd.enable = true;
-  # Keep services running on AC, but request a session lock on lid closure.
-  # Sway also handles the lid switch so this works with external displays.
+  # Sway owns battery lid-close suspend after locker readiness; logind only
+  # requests a lock so it cannot bypass that gate. AC/docked closure lock only.
   services.logind.settings.Login = {
-    HandleLidSwitch = "suspend";
+    HandleLidSwitch = "lock";
     HandleLidSwitchExternalPower = "lock";
     HandleLidSwitchDocked = "lock";
   };
