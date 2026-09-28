@@ -666,6 +666,20 @@ test was performed. AUTH-01 remains open pending those interactive checks with
 a recovery session available; the optional owning-module rename also remains
 separate cleanup.
 
+Follow-up implementation (2026-09-28): review found that a second lid/idle
+suspend request queued behind the first could issue another suspend after the
+first request returned. The helper now coalesces requests for the same live,
+acknowledged locker for ten seconds, clears the marker on a reported
+`systemctl suspend` failure, and permits a new request after expiry. Fixtures
+cover queued requests, marker expiry, and retry after failure. The scoped and
+full-branch reviews passed. The direct fixture, ShellCheck, Bash syntax,
+`git diff --check`, and flake check passed; after merge, flake check,
+`nixos-rebuild build --flake .#cf-fv1 --no-write-lock-file`, and the Home
+Manager activation-package build passed. Commits: `584a129`, `232a446`,
+`34e270c`, and `52fea40`, merged to `main` by `ba29a32`. No activation or live
+lock, authentication, lid, or suspend test was performed; AUTH-01 remains open
+pending an authorized interactive verification with a recovery session.
+
 ## Structure and refactoring
 
 These tasks are deliberately separate from behavior changes. Do not build a
