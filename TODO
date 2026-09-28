@@ -1072,6 +1072,12 @@ states that host traffic uses direct routes. This verifies the current stopped
 state display, but manual toggle, healthy-handshake, failed-start, and boot
 behavior remain pending.
 
+Read-only post-reboot check (2026-09-29): the machine booted at 23:13 on
+2026-09-28. The status helper reports `disconnected`; NetworkManager has no
+active AirVPN connection and `airvpn-wg` is absent. This confirms the host VPN
+remained off across this reboot. Manual toggle, healthy-handshake, and
+failed-start behavior still require an authorized connectivity check.
+
 Implementation:
 1. Represent unavailable, stopped, starting, active-but-unverified, healthy, and
    failed states without claiming a handshake from systemd state alone.
