@@ -1395,6 +1395,13 @@ syntax, and `git diff --check` passed. No Home Manager activation or live
 recorder signal was run. Live Sway behavior, overlay termination, Calcurse
 behavior, and Kitty integration remain unverified.
 
+Calcurse preference recheck (2026-09-29): the upstream manual documents
+`daemon.enable` as defaulting to `no` and stores configuration at
+`~/.calcurse/conf`. That file is absent, and the generated
+`calcurse-daemon.service` is currently inactive. No Calcurse data was read or
+written. Whether the session service should require an explicit
+`daemon.enable=yes` opt-in remains a design decision; the user has been asked.
+
 Post-reboot workspace-icon report (2026-09-29): the user reported app-based
 workspace icons returned. The user journal confirms the old
 `swayest-workstyle.service` started at 23:13 and ran for about two minutes. The
