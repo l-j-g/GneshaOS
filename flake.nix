@@ -439,6 +439,7 @@
             nativeBuildInputs = [
               checkPkgs.bash
               checkPkgs.coreutils
+              checkPkgs.fish
               checkPkgs.gawk
               checkPkgs.gnused
               checkPkgs.jq
@@ -455,6 +456,9 @@
               bash -n "$script"
             done
             bash -n ${./home/shell/lock-readiness.sh} ${./checks/lock-readiness-stubs.sh}
+            fish --no-execute ${./home/shell/nix-workflow.fish}
+            fish --no-execute ${./checks/nix-workflow-status.fish}
+            fish ${./checks/nix-workflow-status.fish} ${./home/shell/nix-workflow.fish}
             bash ${./checks/activation-helper-stubs.sh} ${./home/shell/activation-state.sh}
             bash ${./checks/update-review-stubs.sh} ${./home/shell/update-review.sh}
             bash ${./checks/lock-readiness-stubs.sh} ${./home/shell/lock-readiness.sh}
