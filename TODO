@@ -1159,7 +1159,7 @@ Pending: identify and record the actual source service/database/export owner,
 complete a disposable restore with the intended PostgreSQL major, and approve
 the data plan before enabling.
 
-### [ ] GF-02 — Bound and make Ghostfolio import/update retries safe
+### [x] GF-02 — Bound and make Ghostfolio import/update retries safe
 
 Priority: P1 before enabling Ghostfolio. Type: confirmed migration risks.
 Files: `modules/ghostfolio.nix`.
@@ -1168,8 +1168,8 @@ Evidence: previously, PostgreSQL readiness had no deadline, a partial SQL
 import could be retried into the same target, and Compose used moving image tags.
 The implementation now bounds readiness and Docker operations, records import
 states, blocks retries after an uncertain/failed import, and uses reviewed image
-digests. Actual source-database restore and interruption behavior remain
-unverified; Ghostfolio stays disabled pending the GF-01 migration gate.
+digests. Real source-database restore remains unverified and is gated by GF-01;
+Ghostfolio stays disabled pending that separate migration plan.
 
 Implementation:
 1. Add bounded readiness waits that include useful service status on timeout.
@@ -1182,19 +1182,21 @@ Implementation:
 4. Test interruption before import, mid-import, after import before marker,
    missing credentials, unavailable registry, and retry.
 
-Progress (2026-09-28): Nix parsing, flake checking, the disabled host build, and
-an enabled synthetic host build pass. A focused flake fixture evaluates the
-generated `ghostfolio up -d` command with a test-only Docker package, synthetic
-credentials and SQL, and a temporary runtime tree. It verifies `imported`
-finalization without replaying SQL, a fresh synthetic import after readiness,
-`psql` failure transitioning to `failed`, retry refusal before further Docker
-calls, pre-seeded `importing`/`failed` refusal, PostgreSQL readiness timeout with
-final container-state reporting before any SQL call, post-import service
-readiness timeout with final per-service states, and explicit Compose operation
-bounds for stack startup and SQL import. The focused fixture build passes. No live data, Docker stack, credentials, or migration target were
-touched. Forced process termination before/mid/after SQL, source export, and
-actual PostgreSQL restore remain unverified; Ghostfolio stays disabled pending
-the GF-01 migration gate.
+Completed (2026-09-29): the focused flake fixture uses only synthetic
+credentials, SQL, a temporary runtime root, and a test Docker package. It
+verifies an interruption before import leaves a retryable `ready` state; a
+synthetic process kill after SQL input is consumed leaves `importing` and blocks
+replay; `imported` finalizes marker/dump state without another SQL call; and a
+reported `psql` failure writes `failed` and blocks retry. Missing credentials,
+PostgreSQL-major mismatch, unavailable registry during refresh, and every retry
+path fail before unsafe work. Successful refresh publishes reviewed digests,
+retains the previous manifest and rollback tags, and Compose receives the image
+lock. Bounded pre-import and post-import readiness timeouts report container
+states, while Compose startup and SQL import commands use explicit timeout
+limits. The focused fixture build and full `nix flake check` pass. No real
+credentials, daemon, database, or migration target were accessed. Real source
+dump validation and restore remain pending under GF-01; Ghostfolio stays
+disabled until that separate gate passes.
 
 Done when: the import recovery cases are fixture-verified, no retry silently
 corrupts/duplicates data, commands terminate within known bounds, and

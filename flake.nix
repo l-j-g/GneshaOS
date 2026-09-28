@@ -286,6 +286,27 @@
         printf '%s\n' "$*" >> "$GHOSTFOLIO_FIXTURE_ROOT/docker-calls"
         case "$1" in
           info) exit 0 ;;
+          pull)
+            if [ "''${GHOSTFOLIO_PULL_FAIL:-0}" = 1 ]; then
+              count_file="$GHOSTFOLIO_FIXTURE_ROOT/pull-count"
+              count=0
+              if [ -f "$count_file" ]; then read -r count < "$count_file"; fi
+              count=$((count + 1))
+              printf '%s\n' "$count" > "$count_file"
+              if [ "$count" -eq 2 ]; then echo 'synthetic registry unavailable' >&2; exit 42; fi
+            fi
+            exit 0
+            ;;
+          image)
+            case "$2" in
+              inspect)
+                image="''${@: -1}"
+                printf '["%s@sha256:%064d"]\n' "$image" 0
+                ;;
+              tag) exit 0 ;;
+              *) echo "unexpected Docker image fixture invocation: $*" >&2; exit 73 ;;
+            esac
+            ;;
           compose)
             case " $* " in
               *" config --quiet "*) exit 0 ;;
@@ -295,13 +316,27 @@
                 ;;
               *" exec -T postgres psql "*)
                 cat > "$GHOSTFOLIO_FIXTURE_ROOT/psql-input"
+                if [ "''${GHOSTFOLIO_INTERRUPT:-}" = sql-consumed ]; then
+                  kill -KILL "''${GHOSTFOLIO_MAIN_PID:?synthetic Ghostfolio PID was not provided}"
+                fi
                 if [ "''${GHOSTFOLIO_PSQL_FAIL:-0}" = 1 ]; then exit 42; fi
                 exit 0
                 ;;
               *" ps -q postgres "*) echo postgres-container ;;
               *" ps -q redis "*) echo redis-container ;;
               *" ps -q ghostfolio "*) echo ghostfolio-container ;;
-              *" up "*) exit 0 ;;
+              *" up "*)
+                if [ "''${GHOSTFOLIO_INTERRUPT:-}" = before-import ]; then
+                  kill -KILL "''${GHOSTFOLIO_MAIN_PID:?synthetic Ghostfolio PID was not provided}"
+                  exit 0
+                fi
+                case " $* " in
+                  *" up -d postgres redis "*)
+                    printf '17\n' > "$GHOSTFOLIO_FIXTURE_ROOT/ghostfolio/postgres/PG_VERSION"
+                    ;;
+                esac
+                exit 0
+                ;;
               *) echo "unexpected docker compose fixture invocation: $*" >&2; exit 70 ;;
             esac
             ;;
@@ -344,6 +379,11 @@
           package: package.name == "ghostfolio"
         ) ghostfolioFixtureConfig.config.environment.systemPackages
       );
+      ghostfolioPinFixturePackage = builtins.head (
+        builtins.filter (
+          package: package.name == "ghostfolio-pin"
+        ) ghostfolioFixtureConfig.config.environment.systemPackages
+      );
       ghostfolioImportRecoveryCheck =
         checkPkgs.runCommand "gnesha-ghostfolio-import-recovery-check"
           {
@@ -351,11 +391,13 @@
               checkPkgs.bash
               checkPkgs.coreutils
               checkPkgs.gnugrep
+              checkPkgs.jq
             ];
           }
           ''
             bash ${./checks/ghostfolio-import-recovery-stubs.sh} \
               ${ghostfolioFixturePackage}/bin/ghostfolio \
+              ${ghostfolioPinFixturePackage}/bin/ghostfolio-pin \
               ${ghostfolioFixtureRoot}
             touch "$out"
           '';
