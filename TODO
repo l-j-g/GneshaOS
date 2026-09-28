@@ -1189,9 +1189,9 @@ credentials and SQL, and a temporary runtime tree. It verifies `imported`
 finalization without replaying SQL, a fresh synthetic import after readiness,
 `psql` failure transitioning to `failed`, retry refusal before further Docker
 calls, pre-seeded `importing`/`failed` refusal, PostgreSQL readiness timeout with
-final container-state reporting before any SQL call, and post-import service
-readiness timeout with final per-service states. The focused fixture build
-passes. No live data, Docker stack, credentials, or migration target were
+final container-state reporting before any SQL call, post-import service
+readiness timeout with final per-service states, and explicit Compose operation
+bounds for stack startup and SQL import. The focused fixture build passes. No live data, Docker stack, credentials, or migration target were
 touched. Forced process termination before/mid/after SQL, source export, and
 actual PostgreSQL restore remain unverified; Ghostfolio stays disabled pending
 the GF-01 migration gate.
