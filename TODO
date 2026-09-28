@@ -1370,7 +1370,7 @@ parent path. Development docs describe `cfn`, build-only `nixbuild`, temporary
 docs accurately identify the CF-FV1 `acpi_call` quiet-profile request and do not
 claim general fan control. All 12 checked Markdown files have valid local links.
 
-### [ ] DOC-02 — Document independent backups and restore drills for stateful apps
+### [ ] DOC-02 — Document stateful-app recovery boundaries and restore drills
 
 Priority: P2. Type: missing operational procedure.
 Files: media/Ghostfolio docs, `docs/install.md`, optional `docs/recovery.md`.
@@ -1380,25 +1380,35 @@ Implementation:
    credentials, image locks, and Nix/Home Manager generation references.
 2. For each, document ownership, location, consistency requirements, and restore
    procedure. Separate Nix generation rollback from application data rollback.
-3. Define an operator-selected off-disk backup destination and retention policy;
-   do not invent credentials, subscribe to storage, or start transfers.
+3. Record whether the operator wants off-disk backups. Do not configure a
+   destination, retention policy, or transfer without that choice.
 4. Run an authorized restore drill into temporary/disposable paths and record
    evidence before proposing any production migration or deletion.
 
 Done when: the user can identify what a snapshot does and does not cover, and
 at least one safe restore drill proves the documented application-data path.
-Automated backup scheduling is a separate change after destination approval.
+Automated backup scheduling is a separate change and is not authorized.
 
 Progress (2026-09-27): added [`docs/recovery.md`](docs/recovery.md) and linked
 it from the documentation index. It records the read-only container and mount
 inventory, separates Nix generations from app configuration, databases, secrets,
-and media, and describes a disposable restore drill. The off-disk destination,
-retention, deployed-version consistency/export procedures, and drill remain
-pending; no backup or restore was performed. Keep this task open until those
-choices and a successful isolated drill are documented. Follow-up commit
-`55c6be5` links Arr configuration under `/home` to local `@home` Snapper
-snapshots and the selected-file restore steps; it does not claim
-application consistency or an off-disk backup.
+and media, and describes a disposable restore drill. Follow-up commit `55c6be5`
+links Arr configuration under `/home` to local `@home` Snapper snapshots and
+the selected-file restore steps; it does not claim application consistency or
+an off-disk backup.
+
+Operator decision (2026-09-28): no off-disk backups are wanted. Do not add a
+destination, retention policy, schedule, or transfer. Local restore drill
+(2026-09-28): copied the Lidarr config, SQLite database, WAL, and SHM files
+from Home Snapper snapshot `369` to a private temporary directory on tmpfs;
+copied bytes matched, XML parsed, and SQLite `quick_check` returned `ok`. The
+source and live service paths were untouched, and no service was started. This
+is file-level recovery evidence only; application consistency and service-start
+restore remain unverified. A read-only metadata check found the Arr `.env`
+owned by the user with mode `0644`; its contents were not read, and its
+permissions remain unchanged for separate review. Keep DOC-02 open until
+remaining databases, runtime credentials, media coverage, and supported
+export/restore procedures are documented to this selected scope.
 
 ### [x] HYGIENE-01 — Remove tracked scratch output and clarify local-only inputs
 

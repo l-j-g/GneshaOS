@@ -1,10 +1,10 @@
 # Stateful application backup and recovery
 
-This runbook records the currently verified Docker inventory and the recovery
-work that still needs an operator-selected backup destination and a disposable
-restore drill. It does not configure or schedule backups. Do not treat a
-successful Nix build, a local snapshot, or a copied configuration directory as
-proof that application data can be restored.
+This runbook records the verified Docker inventory, local snapshot recovery,
+and the limits of the current setup. The operator has chosen not to use
+off-disk backups. This document does not configure or schedule backups. Do not
+treat a successful Nix build, a local snapshot, or a copied configuration
+directory as proof that an application can be restored and started.
 
 ## Verified inventory
 
@@ -35,6 +35,16 @@ absent during the read-only inventory. Do not create or restore a live
 Ghostfolio database based on this document. Its proposed PostgreSQL import
 requires identifying and validating a real source export first.
 
+The Arr runtime root is `/home/lg/src/arr`. Its `.env` contains runtime
+credentials and its `images.lock.json` records image references; neither file
+contains the application configuration or media payload. On 2026-09-28, the
+`.env` metadata was observed as user-owned with mode `0644`; its contents were
+not read, and the permission has not been changed. The Arr configuration files
+and databases are under `config/`. The system and
+Home Manager profile links resolve to Nix store generations, which restore
+configuration/package closures but not Compose bind-mounted state. Do not
+assume the pinned image manifest is a backup of the images or application data.
+
 This inventory does not establish which application directories contain
 databases, whether copying them while running is consistent, which supported
 export tool or flags each application requires, or which configuration files
@@ -44,22 +54,17 @@ For database-backed services, use the application's documented logical export
 or a documented quiesced/consistent snapshot procedure. A raw live directory
 copy is not assumed to be restorable.
 
-## Independent backup destination and secrets
+## Backup scope and secrets
 
-No off-disk backup destination has been selected, and no retention policy has
-been approved. Select a different physical device or remote system, record its
-identity and mount point, and prove it is mounted before any backup or restore
-operation. Do not silently write to an unmounted destination path on the root
-filesystem. Choose retention only after estimating the sizes and recovery
-needs of `/media`, service configuration, and any database exports.
+The operator has chosen not to keep off-disk backups. None are configured or
+scheduled, and no destination or retention policy should be added to this
+configuration. The local `@home` Snapper snapshots and `/home` are on the same
+Btrfs storage; they help recover selected files but do not protect against loss
+of that storage. They also do not cover `/media`.
 
-Back up credentials and keys only when they are needed for recovery. Encrypt
-secret-bearing backup material before it leaves the host, restrict access to
-the backup and its decryption key, and keep the key or recovery phrase in a
-separate protected location. Test that authorized recovery access works
-without placing secrets, private keys, password hashes, or recovery keys in
-this repository, logs, or ordinary unencrypted backup archives. The configured
-Ghostfolio secrets file is currently absent; do not fabricate its contents.
+Do not copy credentials or keys into this repository or into ordinary test
+artifacts. The configured Ghostfolio secrets file is currently absent; do not
+fabricate its contents. This runbook does not create a second copy of secrets.
 
 ## Restore boundaries
 
@@ -92,43 +97,37 @@ to inspect or recover selected files. This is same-device rollback coverage;
 it does not make a live application database consistent or replace an
 independent backup.
 
-## Safe restore-drill procedure
+## Local snapshot restore drill
 
-The restore drill is **pending**. No off-disk destination is selected, and no
-restore drill has been performed. Once an operator selects a destination and
-the drill is authorized, use an isolated disposable host or VM and
-temporary paths that cannot overlap `/home/lg/src/arr`, `/media`, or live
-container names/networks:
+A limited file-level drill was completed on 2026-09-28 using Home Snapper
+snapshot `369` as the read-only source. The selected Lidarr `config.xml`,
+SQLite database, WAL, and SHM files were copied to a private temporary directory
+on `/run/user/1000` (tmpfs). The copied files matched the snapshot source,
+the XML parsed, and SQLite `PRAGMA quick_check` returned `ok`. The source
+snapshot and live service paths were untouched, and no container or service was
+started.
 
-1. Record the backup source identity, mount, date, inventory, and checksums.
-   Confirm the source is read-only for the drill and that a separate current
-   copy exists before testing.
-2. Create a fresh isolated environment with no access to production bind
-   mounts. Use the documented application and database versions and prevent
-   network exposure or automatic connections to production services.
-3. Restore a representative service configuration and its corresponding
-   documented database export into temporary directories. Decrypt secrets
-   only into protected temporary storage with restrictive permissions.
-4. Start only the isolated service using distinct names, ports, and networks.
-   Confirm its documented health checks and inspect representative records or
-   files using read-only application functions.
-5. Record the exact application versions, export/restore commands, elapsed
-   time, checks performed, and any data or permission issues. Destroy only the
-   disposable environment and its temporary data after preserving the report.
-6. Revise this runbook with evidence from the completed drill before treating
-   the backup method as verified.
+This verifies that the selected snapshot files can be copied and inspected. It
+does not prove that a live database snapshot is transactionally consistent,
+that Lidarr can start from the copy, or that the configuration and database
+constitute a supported application restore. It does not test `/media` or
+Ghostfolio. A live application restore remains unverified; do not overwrite
+the live config or database from a snapshot based only on this drill.
 
-Do not perform this drill against the live containers or original data paths.
-Do not run a restore command until the selected destination, backup contents,
-and isolated target have been positively identified.
+For future file-level recovery, inspect the chosen Home snapshot first, copy
+only selected files into an isolated temporary path, verify copied bytes and
+parse/check the copied data there, then confirm application-specific ownership
+and version requirements before any authorized live restore. Never point the
+temporary path at `/home/lg/src/arr`, `/media`, or a live container mount.
 
 ## Status
 
 Inventory: verified read-only for the seven running containers and the listed
-bind-mount roots. Off-disk destination and retention: pending operator
-selection. Per-application consistency/export procedures: pending verification
-for the deployed versions. Disposable restore drill: pending; no restore has
-been performed. Arr configuration under `/home/lg/src/arr/config` is covered by
-local `@home` Snapper snapshots, with the selected-file recovery instructions
-linked to `docs/install.md`; this does not establish app consistency or an
-off-disk backup.
+bind-mount roots. Off-disk backup: none by operator choice; no schedule or
+destination is configured. Local file-level restore drill: passed for the
+selected Lidarr snapshot files described above. Per-application
+consistency/export procedures and a service-start restore remain unverified.
+Arr configuration under `/home/lg/src/arr/config` is covered by local `@home`
+Snapper snapshots, with selected-file recovery instructions linked to
+`docs/install.md`; this does not protect against storage loss or establish
+application consistency.
