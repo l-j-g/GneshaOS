@@ -25,6 +25,7 @@ new_case() {
   : > "$CASE_DIR/gtk-mode"
   : > "$CASE_DIR/sway-mode"
   : > "$CASE_DIR/systemctl-mode"
+  : > "$CASE_DIR/dbus-mode"
   cat > "$CASE_DIR/bin/lock-ack" <<'STUB'
 #!/usr/bin/env bash
 touch -- "$GNESHA_LOCK_ACK_FILE"
@@ -60,6 +61,7 @@ case $(cat "$CASE_DIR/gtk-mode") in
     fi
     ;;
   timeout) sleep 30 ;;
+  ignore-term) trap '' TERM; while :; do sleep 1; done ;;
   fail) exit 1 ;;
 esac
 STUB
@@ -101,6 +103,9 @@ STUB
   cat > "$CASE_DIR/bin/dbus-send" <<'STUB'
 #!/usr/bin/env bash
 printf 'dbus-send %s\n' "$*" >> "$CASE_DIR/calls"
+case $(cat "$CASE_DIR/dbus-mode") in
+  delay) sleep 0.8 ;;
+esac
 STUB
   sed -i "1s|^#!/usr/bin/env bash$|#!$BASH|" "$CASE_DIR/bin/"*
   chmod +x "$CASE_DIR/bin/"*
@@ -170,6 +175,8 @@ printf 'ok - gtklock callback acknowledgment\n'
 new_case swaylock-fallback
 echo timeout > "$CASE_DIR/gtk-mode"
 echo ready > "$CASE_DIR/sway-mode"
+echo delay > "$CASE_DIR/dbus-mode"
+operation_started=$(date +%s%N)
 timed_lock_operation || fail 'swaylock readiness after gtklock timeout was rejected'
 read -r gtk_started sway_started returned < <(awk '
   /^gtk-start / { gtk=$2 }
@@ -179,8 +186,10 @@ read -r gtk_started sway_started returned < <(awk '
 ' "$CASE_DIR/events")
 gtk_elapsed_ms=$(( (sway_started - gtk_started) / 1000000 ))
 total_elapsed_ms=$(( (returned - gtk_started) / 1000000 ))
+operation_elapsed_ms=$(( (returned - operation_started) / 1000000 ))
 (( gtk_elapsed_ms <= 5500 )) || fail "gtklock attempt exceeded 5 seconds plus 500ms tolerance (${gtk_elapsed_ms}ms)"
 (( total_elapsed_ms <= 10500 )) || fail "combined gtklock and swaylock attempt exceeded 10 seconds plus 500ms tolerance (${total_elapsed_ms}ms)"
+(( operation_elapsed_ms <= 10500 )) || fail "full lock request exceeded 10 seconds plus 500ms tolerance (${operation_elapsed_ms}ms)"
 assert_acquisition_after_readiness
 assert_suspend_after_readiness
 assert_call_count 2
@@ -222,3 +231,39 @@ assert_acquisition_after_readiness
 assert_suspend_after_readiness
 assert_call_count 1
 printf 'ok - simultaneous requests launch only one locker\n'
+
+new_case contention
+echo callback > "$CASE_DIR/gtk-mode"
+mkdir -p "$XDG_RUNTIME_DIR/gnesha-lock"
+(
+  exec 9>"$XDG_RUNTIME_DIR/gnesha-lock/mutex"
+  flock -x 9
+  touch "$CASE_DIR/held"
+  sleep 12
+) & holder=$!
+for ((i=0; i<100; i++)); do
+  [[ -e $CASE_DIR/held ]] && break
+  sleep 0.01
+done
+[[ -e $CASE_DIR/held ]] || fail 'fixture could not establish lock contention'
+operation_started=$(date +%s%N)
+if timed_lock_operation; then fail 'contended lock unexpectedly succeeded'; fi
+operation_ended=$(date +%s%N)
+operation_elapsed_ms=$(( (operation_ended - operation_started) / 1000000 ))
+(( operation_elapsed_ms <= 10500 )) || fail "contended request exceeded 10 seconds plus 500ms tolerance (${operation_elapsed_ms}ms)"
+assert_call_count 0
+kill "$holder" 2>/dev/null || true
+wait "$holder" 2>/dev/null || true
+printf 'ok - lock contention is bounded\n'
+
+new_case stubborn-gtklock
+echo ignore-term > "$CASE_DIR/gtk-mode"
+echo ready > "$CASE_DIR/sway-mode"
+operation_started=$(date +%s%N)
+timed_lock_operation || fail 'SIGTERM-ignoring gtklock prevented fallback'
+operation_ended=$(date +%s%N)
+operation_elapsed_ms=$(( (operation_ended - operation_started) / 1000000 ))
+(( operation_elapsed_ms <= 10500 )) || fail "stubborn gtklock request exceeded 10 seconds plus 500ms tolerance (${operation_elapsed_ms}ms)"
+assert_acquisition_after_readiness
+assert_call_count 2
+printf 'ok - stubborn gtklock cleanup is bounded\n'
