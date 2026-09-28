@@ -465,6 +465,11 @@ newline; the built unit contains the corrected command. The same synthetic
 response check passes, as do Nix parsing, the full flake check, and the NixOS
 build. No ACPI call was sent to the live EC. The value `0xffff0500` remains
 unclassified, and quiet-profile behavior is still pending hardware review.
+The upstream `acpi_call` implementation formats integer ACPI return objects in
+hex and reports ACPI lookup/evaluation failures as `Error: ...`; therefore the
+observed value is an integer method result, not that module's generic error
+text. Its FV1-specific meaning and whether the EC applied the requested profile
+remain unknown. Source: <https://github.com/nix-community/acpi_call/blob/master/acpi_call.c>.
 
 ### [x] BUILD-01 — Make system/Home Manager activation recoverable and serialized
 
