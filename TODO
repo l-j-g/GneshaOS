@@ -1324,6 +1324,15 @@ syntax, and `git diff --check` passed. No Home Manager activation or live
 recorder signal was run. Live Sway behavior, overlay termination, Calcurse
 behavior, and Kitty integration remain unverified.
 
+Post-reboot workspace-icon report (2026-09-29): the user reported app-based
+workspace icons returned. The user journal confirms the old
+`swayest-workstyle.service` started at 23:13 and ran for about two minutes. The
+repository source no longer declares that service; the current user unit is
+masked and inactive. Live Sway reports workspace names `1` and `2`, and the
+generated Waybar format is `{name}`. The active Home Manager generation still
+contains the older service setup because the updated generation has not been
+activated, so persistence through a Home Manager rebuild is not yet verified.
+
 ## Validation coverage, documentation, and repository hygiene
 
 ### [x] CHECK-01 — Add focused flake checks for Home Manager and feature combinations
