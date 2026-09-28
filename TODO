@@ -515,6 +515,13 @@ these remain unresolved. No attempt was resumed or discarded. This local
 recovery is pending operator review; the implementation and fixture status
 above remain complete.
 
+Non-activating Home Manager build (2026-09-29): the activation package builds
+with both the detailed attempt guidance and the source removal for
+`swayest-workstyle`. The package's generated user units contain no workstyle
+service or target-wants link, and Waybar uses `{name}`. The active profile still
+points to the older generation, so neither change is live. No activation was
+performed.
+
 ### [x] BUILD-02 — Tighten background-update apply and stale-candidate behavior
 
 Priority: P1. Type: recovery and concurrency gap.
@@ -1360,6 +1367,9 @@ masked and inactive. Live Sway reports workspace names `1` and `2`, and the
 generated Waybar format is `{name}`. The active Home Manager generation still
 contains the older service setup because the updated generation has not been
 activated, so persistence through a Home Manager rebuild is not yet verified.
+The rebuilt, non-activating Home Manager package has no workstyle unit and keeps
+the numeric workspace-name format; the live profile remains on the old
+generation pending activation.
 
 ## Validation coverage, documentation, and repository hygiene
 
