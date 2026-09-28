@@ -441,6 +441,15 @@ execution and a non-error method response, but does not prove the EC applied
 the requested profile or that its fan behavior is correct. No EC write or
 stress test was issued. POWER-01 remains open for a safe behavior check.
 
+Read-only recheck (2026-09-28): the service remains inactive after a successful
+exit. Its timer is enabled but `active (elapsed)` with no next trigger. The
+journal contains two further successful service runs, at 20:33 and 21:50, each
+logging `0xffff0500` alongside Bash's ignored-NUL-byte warning. Current readable
+temperature sensors ranged from 39 C to 43 C; no fan RPM value was available.
+Unprivileged access to `/proc/acpi/call` is denied. These observations neither
+identify the response encoding nor prove the EC applied the quiet profile, so
+POWER-01 remains pending the hardware behavior check.
+
 ### [x] BUILD-01 — Make system/Home Manager activation recoverable and serialized
 
 Priority: P1. Type: reliability gap.
@@ -565,6 +574,13 @@ older boot generation, so they do not measure startup after the change. BOOT-01
 remains open until boot/login and readiness are measured after rebooting into
 the active generation.
 
+Read-only recheck (2026-09-28): the manager still reports 90s start/stop
+deadlines and no failed system units. `systemd-analyze time` is unchanged at
+32.362s, with `graphical.target` reached 5.120s into userspace. The active
+system is still the 2026-09-22 generation and the booted generation is still
+2026-09-20, so this does not measure a boot into the changed configuration.
+BOOT-01 remains pending a reboot and post-boot readiness measurement.
+
 ### [ ] NET-01 — Make network exposure match the documented access boundary
 
 Priority: P1. Type: confirmed broad bindings; intended exposure needs decision.
@@ -610,6 +626,13 @@ no separate LAN or tailnet client was available for remote probes. NET-01
 remains pending those interface-level checks and confirmation that Emby 8096,
 Samba, and other direct service ports are blocked remotely while tailnet HTTPS
 remains reachable.
+
+Read-only recheck (2026-09-28): the six HTTPS listeners remain bound to the
+Tailscale addresses. SSH, Samba ports 139/445, and Emby 8096 listen on wildcard
+addresses. One Tailscale peer is online, but no remote probe was made; these
+listener observations do not establish firewall filtering or Samba's remote
+access behavior. NET-01 remains pending interface-level checks from an
+authorized LAN/tailnet client.
 
 ### [ ] AUTH-01 — Gate suspend on lock readiness and align PAM policy with the active locker
 
@@ -1008,6 +1031,12 @@ be newer than three minutes to show healthy. Host routing remains direct while
 AirVPN is off; no kill switch was added. The NixOS build, Home Manager
 activation-package build, and simulated state fixtures passed. Manual toggle
 and boot-disconnected behavior remain pending live activation and observation.
+
+Read-only check (2026-09-28): NetworkManager reports only Wi-Fi and Tailscale
+active; `airvpn-wg` is absent. Running the status helper reports `stopped` and
+states that host traffic uses direct routes. This verifies the current stopped
+state display, but manual toggle, healthy-handshake, failed-start, and boot
+behavior remain pending.
 
 Implementation:
 1. Represent unavailable, stopped, starting, active-but-unverified, healthy, and
