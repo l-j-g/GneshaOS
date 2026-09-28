@@ -1113,6 +1113,15 @@ active AirVPN connection and `airvpn-wg` is absent. This confirms the host VPN
 remained off across this reboot. Manual toggle, healthy-handshake, and
 failed-start behavior still require an authorized connectivity check.
 
+Read-only recheck after the 2026-09-29 reboot: the AirVPN NetworkManager
+connection remains configured but inactive, and `airvpn-wg` is absent. The
+installed status helper reports `disconnected` from the previous Home Manager
+generation; its resolved path is under
+`/nix/store/kpb8n9wn454735vpdkipdjlgs6iy4gs9-home-manager-files`. This confirms
+the host VPN stayed off, but does not exercise the current source helper's
+`stopped`/`active-unverified`/`healthy` states. Live behavior remains pending
+Home Manager activation and an authorized connectivity check.
+
 Implementation:
 1. Represent unavailable, stopped, starting, active-but-unverified, healthy, and
    failed states without claiming a handshake from systemd state alone.
