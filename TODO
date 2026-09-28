@@ -1272,6 +1272,14 @@ and `:gnesha-rollback` tags remain absent. `docker-compose.service` completed
 successfully at boot. No pull, update, restart, or other container mutation was
 performed; live update readiness and prior-generation retention remain pending.
 
+Live helper check (2026-09-29): ran the installed Docker-backed
+`arr-wait-ready` helper directly with a 30-second timeout and 2-second poll
+interval. It returned success and reported all seven configured containers as
+running, with Gluetun healthy. The helper only inspected container state; no
+image pull, update, restart, or other container mutation occurred. This verifies
+the readiness path against the current stack, but does not verify readiness
+after a live image update or rollback retention, so ARR-01 remains open.
+
 ### [x] ARR-02 — Remove remaining mount and WireGuard address assumptions
 
 Priority: P2. Type: portability/configuration consistency.
