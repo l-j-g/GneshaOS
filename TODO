@@ -1199,6 +1199,15 @@ the host VPN stayed off, but does not exercise the current source helper's
 `stopped`/`active-unverified`/`healthy` states. Live behavior remains pending
 Home Manager activation and an authorized connectivity check.
 
+Current-source status check (2026-09-29): running
+`home/desktop/sway/scripts/vpn-toggle status` reports `stopped` with the
+direct-routes tooltip. The AirVPN profile is not active, so the read-only status
+path does not need privileged WireGuard access. This confirms the source helper
+distinguishes the present stopped state, while the installed Waybar still uses
+the older generation. Starting the tunnel and checking healthy-handshake,
+failed-start, and boot behavior remain pending an authorized connectivity check
+and Home Manager activation.
+
 Implementation:
 1. Represent unavailable, stopped, starting, active-but-unverified, healthy, and
    failed states without claiming a handshake from systemd state alone.
