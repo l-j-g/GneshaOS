@@ -450,6 +450,14 @@ Unprivileged access to `/proc/acpi/call` is denied. These observations neither
 identify the response encoding nor prove the EC applied the quiet profile, so
 POWER-01 remains pending the hardware behavior check.
 
+Read-only recheck after reboot (2026-09-29): the oneshot again completed three
+times (23:13:17, 23:13:55, and 23:16:11), each logging response
+`0xffff0500` and Bash's ignored-NUL-byte warning. The service is inactive after
+success; the timer is active (elapsed) with no further trigger configured.
+Readable temperatures ranged from about 39 C to 46 C. This confirms repeated
+post-boot invocation, but the response meaning and actual fan-curve behavior
+remain unverified; no EC write or stress test was issued.
+
 ### [x] BUILD-01 — Make system/Home Manager activation recoverable and serialized
 
 Priority: P1. Type: reliability gap.
@@ -599,10 +607,13 @@ Priority: P1. Type: confirmed broad bindings; intended exposure needs decision.
 Files: `hosts/cf-fv1/media.nix`, `hosts/cf-fv1/services.nix`,
 `modules/hardening.nix`, `docs/user-parameters.md`.
 
-Evidence: most Compose ports use `HOST:CONTAINER` without a bind address;
-Emby uses host networking. Samba's comment says LAN-only but `hosts allow`
-contains `127. 192.` rather than the actual LAN CIDR. Shared hardening opens
-AirVPN port 64480 globally, even though that is a media-specific value.
+Initial audit evidence (pre-implementation): most Compose ports used
+`HOST:CONTAINER` without a bind address; Emby uses host networking. Samba's
+comment said LAN-only but `hosts allow` contained `127. 192.` rather than the
+actual LAN CIDR. Shared hardening opened AirVPN port 64480 globally, even
+though that is a media-specific value. The source changes below address the UI
+bindings, Samba policy, and firewall ownership; remaining ingress and runtime
+questions are recorded separately.
 
 Implementation:
 1. Inventory listeners and Docker publishing rules read-only. Record which UI
@@ -645,6 +656,17 @@ addresses. One Tailscale peer is online, but no remote probe was made; these
 listener observations do not establish firewall filtering or Samba's remote
 access behavior. NET-01 remains pending interface-level checks from an
 authorized LAN/tailnet client.
+
+Read-only source and listener recheck (2026-09-29): Nix evaluation reports
+global allowed ports TCP `[22, 64480]`, UDP `[64480]`, and Tailscale-interface
+TCP `[8443, 8444, 8445, 8446, 8447, 8448]`. `ss` shows the six Serve ports
+bound to the Tailscale addresses and media web backends on loopback; it also
+shows Emby 8096, Samba 139/445, and TCP/UDP 64480 on wildcard addresses. The
+LAN and Tailscale interfaces are up. These observations describe configured
+and listening endpoints, not remote firewall reachability. Port 64480 remains
+globally allowed and published by Docker without an address, so its required
+ingress path still needs resolution. NET-01 remains open; no remote probe or
+firewall-rule inspection was available.
 
 ### [ ] AUTH-01 — Gate suspend on lock readiness and align PAM policy with the active locker
 
@@ -1280,12 +1302,22 @@ keyed by the Sway session; concurrent state transitions use an atomic session
 lock. Calcurse's unsafe unconditional lock deletion was removed. The Kitty
 socket and consumers now use the session runtime directory. Home Manager builds
 the generated unit and Kitty configuration; generated output contains no
-Calcurse lock deletion. Still unverified: stop/termination of a live recorder or
-overlay wrapper, stale-versus-live PID ownership, Calcurse lock behavior, and
-Kitty/nnn/theme-preview remote control against a running Kitty instance. Also
-pending: decide whether to condition the Calcurse unit on the user's
-`daemon.enable` setting (default disabled, and existing config must not be
-overwritten). Leave this task open until remaining behavior is verified.
+Calcurse lock deletion. Still unverified: stop/termination of a live recorder
+or overlay wrapper, Calcurse lock behavior, and Kitty/nnn/theme-preview remote
+control against a running Kitty instance. Also pending: decide whether to
+condition the Calcurse unit on the user's `daemon.enable` setting (default
+disabled, and existing config must not be overwritten). Leave this task open
+until remaining behavior is verified.
+
+Additional source fix (2026-09-29): the Sway Escape binding now invokes
+`recorder.sh --stop`, which only targets the PID recorded for the current Sway
+session. The stop-only path reports when no recording is active and never opens
+the region selector. The fixture verifies that a stale PID now owned by an
+unrelated live process is left alone. `nix flake check
+--show-trace --no-write-lock-file` and the Home Manager activation-package
+build passed; no Home Manager activation or live recorder signal was run. The
+active recorder-stop path, PID reuse by another `wf-recorder`, overlay
+termination, Calcurse behavior, and Kitty integration remain unverified.
 
 ## Validation coverage, documentation, and repository hygiene
 
