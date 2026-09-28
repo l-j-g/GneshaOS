@@ -69,7 +69,8 @@ _gnesha_lock_attempt_gtk() {
   (( deadline > overall_deadline - 400000000 )) && deadline=$(( overall_deadline - 400000000 ))
   while (( $(date +%s%N) < deadline )); do
     if [[ -f $GNESHA_LOCK_ACK_FILE ]] &&
-      [[ $(_gnesha_lock_identity "$pid" 2>/dev/null) == "$start" ]]; then
+      [[ $(_gnesha_lock_identity "$pid" 2>/dev/null) == "$start" ]] &&
+      (( $(date +%s%N) < deadline )); then
       printf 'gtklock %s %s\n' "$pid" "$start" > "$state_dir/state"
       rm -rf -- "$attempt_dir"
       return 0
@@ -114,7 +115,8 @@ _gnesha_lock_attempt_sway() {
   left=$(_gnesha_lock_seconds_left "$deadline") || left=0
   if IFS= read -r -t "$left" ready <&8 &&
     [[ -z $ready ]] &&
-    [[ $(_gnesha_lock_identity "$pid" 2>/dev/null) == "$start" ]]; then
+    [[ $(_gnesha_lock_identity "$pid" 2>/dev/null) == "$start" ]] &&
+    (( $(date +%s%N) < deadline )); then
     printf 'swaylock %s %s\n' "$pid" "$start" > "$state_dir/state"
     exec 8>&-
     rm -rf -- "$attempt_dir"
@@ -142,27 +144,31 @@ gnesha_lock_acquire() (
   flock -x -w "$left" 9 || return 1
   if _gnesha_lock_existing "$state_dir"; then
     flock -u 9
-    return 0
+    _gnesha_lock_seconds_left "$overall_deadline" >/dev/null
+    return $?
   fi
   rm -f -- "$state_dir/state"
   seconds=${GNESHA_LOCK_TIMEOUT_SECONDS:-5}
   [[ $seconds =~ ^[1-5]$ ]] || seconds=5
   # Preserve the existing best-effort KeePassXC vault lock.
-  left=$(_gnesha_lock_seconds_left "$((overall_deadline - 1000000000))") || return 1
+  left=$(_gnesha_lock_seconds_left "$((overall_deadline - 1800000000))") || return 1
   timeout --kill-after=0.1s 0.8s dbus-send --session --print-reply --reply-timeout=800 \
     --dest=org.keepassxc.KeePassXC.MainWindow /keepassxc \
     org.keepassxc.KeePassXC.MainWindow.lockAllDatabases >/dev/null 2>&1 || true
+  left=$(_gnesha_lock_seconds_left "$((overall_deadline - 900000000))") || return 1
   if _gnesha_lock_attempt_gtk "$state_dir" "$seconds" "$overall_deadline"; then
     flock -u 9
-    return 0
+    _gnesha_lock_seconds_left "$overall_deadline" >/dev/null
+    return $?
   else
     status=$?
   fi
   (( status == 2 )) && return 1
-  left=$(_gnesha_lock_seconds_left "$((overall_deadline - 400000000))") || return 1
+  left=$(_gnesha_lock_seconds_left "$((overall_deadline - 900000000))") || return 1
   if _gnesha_lock_attempt_sway "$state_dir" "$seconds" "$overall_deadline"; then
     flock -u 9
-    return 0
+    _gnesha_lock_seconds_left "$overall_deadline" >/dev/null
+    return $?
   fi
   flock -u 9
   return 1

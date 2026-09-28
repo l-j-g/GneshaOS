@@ -113,6 +113,13 @@ STUB
 
 run_lock_operation() {
   source "$helper"
+  if [[ -n ${EXISTING_CHECK_DELAY:-} ]]; then
+    eval "$(declare -f _gnesha_lock_existing | sed '1s/_gnesha_lock_existing/_fixture_original_existing/')"
+    _gnesha_lock_existing() {
+      sleep "$EXISTING_CHECK_DELAY"
+      _fixture_original_existing "$@"
+    }
+  fi
   if declare -F gnesha_lock_and_suspend >/dev/null; then
     gnesha_lock_and_suspend
   else
@@ -267,3 +274,67 @@ operation_elapsed_ms=$(( (operation_ended - operation_started) / 1000000 ))
 assert_acquisition_after_readiness
 assert_call_count 2
 printf 'ok - stubborn gtklock cleanup is bounded\n'
+
+hold_mutex() {
+  local duration=$1
+  mkdir -p "$XDG_RUNTIME_DIR/gnesha-lock"
+  (
+    exec 9>"$XDG_RUNTIME_DIR/gnesha-lock/mutex"
+    flock -x 9
+    touch "$CASE_DIR/held"
+    sleep "$duration"
+  ) & holder=$!
+  for ((i=0; i<100; i++)); do
+    [[ -e $CASE_DIR/held ]] && break
+    sleep 0.01
+  done
+  [[ -e $CASE_DIR/held ]] || fail 'fixture could not establish near-deadline contention'
+}
+
+new_case near-deadline-existing
+echo callback > "$CASE_DIR/gtk-mode"
+export GNESHA_LOCK_ACK_FILE="$CASE_DIR/preexisting-ack"
+"$CASE_DIR/bin/gtklock" & existing_locker=$!
+for ((i=0; i<100; i++)); do
+  [[ -e $GNESHA_LOCK_ACK_FILE ]] && break
+  sleep 0.01
+done
+[[ -e $GNESHA_LOCK_ACK_FILE ]] || fail 'fixture could not establish an acknowledged locker'
+mkdir -p "$XDG_RUNTIME_DIR/gnesha-lock"
+existing_start=$(awk '{ print $22 }' "/proc/$existing_locker/stat")
+printf 'gtklock %s %s\n' "$existing_locker" "$existing_start" > "$XDG_RUNTIME_DIR/gnesha-lock/state"
+hold_mutex 9.6
+operation_started=$(date +%s%N)
+timed_lock_operation || fail 'existing acknowledged locker was rejected near the deadline'
+operation_ended=$(date +%s%N)
+operation_elapsed_ms=$(( (operation_ended - operation_started) / 1000000 ))
+(( operation_elapsed_ms <= 10500 )) || fail "existing locker request returned late (${operation_elapsed_ms}ms)"
+assert_call_count 1
+rm -f "$CASE_DIR/held"
+hold_mutex 9.45
+export EXISTING_CHECK_DELAY=0.65
+operation_started=$(date +%s%N)
+if timed_lock_operation; then fail 'existing locker succeeded after its deadline'; fi
+operation_ended=$(date +%s%N)
+operation_elapsed_ms=$(( (operation_ended - operation_started) / 1000000 ))
+(( operation_elapsed_ms <= 10500 )) || fail "late existing locker request exceeded timing tolerance (${operation_elapsed_ms}ms)"
+assert_call_count 1
+unset EXISTING_CHECK_DELAY
+kill "$existing_locker" 2>/dev/null || true
+kill "$holder" 2>/dev/null || true
+wait "$holder" 2>/dev/null || true
+printf 'ok - existing acknowledgment returns within deadline\n'
+
+new_case near-deadline-new
+echo callback > "$CASE_DIR/gtk-mode"
+hold_mutex 9.3
+operation_started=$(date +%s%N)
+if timed_lock_operation; then fail 'new locker succeeded after near-deadline contention'; fi
+operation_ended=$(date +%s%N)
+operation_elapsed_ms=$(( (operation_ended - operation_started) / 1000000 ))
+(( operation_elapsed_ms <= 10500 )) || fail "new locker request returned late (${operation_elapsed_ms}ms)"
+assert_call_count 0
+[[ ! -s $CASE_DIR/calls ]] || fail 'ancillary command ran without enough time for locking'
+kill "$holder" 2>/dev/null || true
+wait "$holder" 2>/dev/null || true
+printf 'ok - new locker does not start near deadline\n'
