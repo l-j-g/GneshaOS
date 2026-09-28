@@ -309,7 +309,9 @@
             case " $* " in
               *" postgres-container "*) echo 'running healthy' ;;
               *" redis-container "*) echo 'running healthy' ;;
-              *" ghostfolio-container "*) echo running ;;
+              *" ghostfolio-container "*)
+                if [ "''${GHOSTFOLIO_SERVICES_UNREADY:-0}" = 1 ]; then echo 'running starting'; else echo running; fi
+                ;;
               *) echo "unexpected docker inspect fixture invocation: $*" >&2; exit 71 ;;
             esac
             ;;

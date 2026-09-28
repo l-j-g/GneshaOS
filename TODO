@@ -1188,12 +1188,13 @@ generated `ghostfolio up -d` command with a test-only Docker package, synthetic
 credentials and SQL, and a temporary runtime tree. It verifies `imported`
 finalization without replaying SQL, a fresh synthetic import after readiness,
 `psql` failure transitioning to `failed`, retry refusal before further Docker
-calls, pre-seeded `importing`/`failed` refusal, and PostgreSQL readiness timeout
-with final container-state reporting before any SQL call. The focused fixture
-build passes. No live data, Docker stack, credentials, or migration target were
-touched. Forced process termination before/mid/after SQL, overall service
-readiness timeout behavior, source export, and actual PostgreSQL restore remain
-unverified; Ghostfolio stays disabled pending the GF-01 migration gate.
+calls, pre-seeded `importing`/`failed` refusal, PostgreSQL readiness timeout with
+final container-state reporting before any SQL call, and post-import service
+readiness timeout with final per-service states. The focused fixture build
+passes. No live data, Docker stack, credentials, or migration target were
+touched. Forced process termination before/mid/after SQL, source export, and
+actual PostgreSQL restore remain unverified; Ghostfolio stays disabled pending
+the GF-01 migration gate.
 
 Done when: the import recovery cases are fixture-verified, no retry silently
 corrupts/duplicates data, commands terminate within known bounds, and

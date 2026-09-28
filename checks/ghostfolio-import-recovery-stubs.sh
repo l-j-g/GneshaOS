@@ -148,4 +148,32 @@ grep -Fq 'exec -T postgres pg_isready' "$test_root/docker-calls"
 [[ "$(cat "$runtime_root/.database-import-state")" == ready ]]
 [[ -s "$runtime_root/initial-database.sql" ]]
 
+# The post-import application readiness loop is separately bounded and reports
+# each final service state even when Ghostfolio itself never becomes ready.
+reset_fixture
+write_prerequisites
+rm -f "$runtime_root/postgres/PG_VERSION"
+: > "$test_root/docker-calls"
+if BASH_ENV="$test_root/bash-env" GHOSTFOLIO_SERVICES_UNREADY=1 \
+  "$ghostfolio" up -d > "$test_root/services.stdout" 2> "$test_root/services.stderr"; then
+  echo "Ghostfolio unexpectedly accepted a service that never became ready" >&2
+  exit 1
+fi
+grep -Fq 'services did not become ready within 300 seconds' "$test_root/services.stderr" || {
+  echo 'overall service readiness timeout message was absent:' >&2
+  cat "$test_root/services.stdout" "$test_root/services.stderr" >&2
+  exit 1
+}
+for service in postgres redis ghostfolio; do
+  grep -Fq "$service:" "$test_root/services.stdout" || {
+    echo "overall service readiness report omitted $service" >&2
+    cat "$test_root/services.stdout" "$test_root/services.stderr" >&2
+    exit 1
+  }
+done
+grep -Fq 'ghostfolio: running starting' "$test_root/services.stdout"
+[[ -e "$runtime_root/.database-imported" ]]
+[[ -s "$runtime_root/initial-database.sql.imported" ]]
+grep -Fq 'exec -T postgres psql' "$test_root/docker-calls"
+
 echo "Ghostfolio import recovery stub checks passed"
