@@ -645,6 +645,20 @@ startup without failed units. It does not exercise slow-network startup or
 demonstrate optional-service readiness under delayed networking, so BOOT-01
 remains open for that behavior check.
 
+Isolated connectivity-loss boot check (2026-09-29): built the host's VM variant
+with only its hardware-specific Btrfs/LUKS filesystem assumptions overridden,
+then ran QEMU with external networking restricted. DNS resolution to
+`cache.nixos.org` timed out, while systemd reported `graphical.target` active
+15.222 seconds into userspace (21.474 seconds after kernel start); the local
+serial login was available. `NetworkManager-wait-online.service` remained
+masked, and the manager defaults were 90 seconds for start and stop. This
+confirms local login does not wait for usable external connectivity. The
+disposable guest reported expected hardware/state-specific failures for EC
+fan/CPU services, Snapper, and Tailscale Serve; these are not host failures and
+were not used as host service-readiness evidence. A delayed-but-eventually-
+working uplink and background update retry behavior were not tested, so
+BOOT-01 remains open for that readiness check.
+
 ### [ ] NET-01 — Make network exposure match the documented access boundary
 
 Priority: P1. Type: confirmed broad bindings; intended exposure needs decision.
