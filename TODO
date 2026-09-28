@@ -772,6 +772,15 @@ Manager activation-package build passed. Commits: `584a129`, `232a446`,
 lock, authentication, lid, or suspend test was performed; AUTH-01 remains open
 pending an authorized interactive verification with a recovery session.
 
+Post-reboot policy check (2026-09-29): `/run/current-system` and
+`/run/booted-system` resolve to the same generation. The effective
+`/etc/pam.d/gtklock` and `/etc/pam.d/swaylock` both include faillock preauth,
+authfail, and authsucc rules; `/etc/security/faillock.conf` sets deny=5,
+fail_interval=900, and unlock_time=600. This verifies the approved shared PAM
+policy is active in the booted generation. No lock, failed login, unlock,
+lid-close, or suspend behavior was exercised; AUTH-01 remains open for the
+interactive safety checks.
+
 ## Structure and refactoring
 
 These tasks are deliberately separate from behavior changes. Do not build a
