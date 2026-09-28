@@ -1309,15 +1309,20 @@ condition the Calcurse unit on the user's `daemon.enable` setting (default
 disabled, and existing config must not be overwritten). Leave this task open
 until remaining behavior is verified.
 
-Additional source fix (2026-09-29): the Sway Escape binding now invokes
-`recorder.sh --stop`, which only targets the PID recorded for the current Sway
-session. The stop-only path reports when no recording is active and never opens
-the region selector. The fixture verifies that a stale PID now owned by an
-unrelated live process is left alone. `nix flake check
---show-trace --no-write-lock-file` and the Home Manager activation-package
-build passed; no Home Manager activation or live recorder signal was run. The
-active recorder-stop path, PID reuse by another `wf-recorder`, overlay
-termination, Calcurse behavior, and Kitty integration remain unverified.
+Additional source and fixture update (2026-09-29): the Sway Escape binding
+invokes `recorder.sh --stop`. Its state records the process start time as well
+as its PID, and stop validates both that identity and the `wf-recorder` process
+name. Legacy PID-only and stale start-time entries fail closed. The stop-only
+path reports when no recording is active and never opens the region selector.
+A synthetic process fixture verifies the active stop handoff, bounded retry
+while the stop command releases its session lock, rejection of stale/same-name
+PID records, and that a second same-named recorder remains alive. Failure
+cleanup releases the blocked selector and reaps fixture children. The focused
+desktop check and full `nix flake check --show-trace --no-write-lock-file`
+passed; the Home Manager activation-package build passed. Nix parsing, shell
+syntax, and `git diff --check` passed. No Home Manager activation or live
+recorder signal was run. Live Sway behavior, overlay termination, Calcurse
+behavior, and Kitty integration remain unverified.
 
 ## Validation coverage, documentation, and repository hygiene
 

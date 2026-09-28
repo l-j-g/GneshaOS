@@ -1,22 +1,29 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-recorder=${1:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /path/to/sway-help /build/test-root}
-sway_help=${2:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /path/to/sway-help /build/test-root}
-test_root=${3:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /path/to/sway-help /build/test-root}
+recorder=${1:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /path/to/sway-help /build/test-root /path/to/recorder-stub.c}
+sway_help=${2:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /path/to/sway-help /build/test-root /path/to/recorder-stub.c}
+test_root=${3:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /path/to/sway-help /build/test-root /path/to/recorder-stub.c}
+recorder_stub_source=${4:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /path/to/sway-help /build/test-root /path/to/recorder-stub.c}
 case "$test_root" in
   /tmp/gnesha-desktop-helper-check|/build/gnesha-desktop-helper-check|/build/*/gnesha-desktop-helper-check) ;;
   *) echo "refusing to use a runtime root outside the dedicated build fixture" >&2; exit 2 ;;
 esac
-[[ -f $recorder && -f $sway_help ]] || { echo 'desktop helper source is missing' >&2; exit 2; }
+[[ -f $recorder && -f $sway_help && -f $recorder_stub_source ]] || { echo 'desktop helper source is missing' >&2; exit 2; }
 
 rm -rf -- "$test_root"
 mkdir -p "$test_root/bin" "$test_root/runtime" "$test_root/home"
+cc -O2 "$recorder_stub_source" -o "$test_root/wf-recorder-fixture"
+export RECORDER_PROCESS_STUB="$test_root/wf-recorder-fixture"
 stub_bin="$test_root/bin"
 export SYSTEM_SLEEP=$(command -v sleep)
 export TEST_ROOT="$test_root" STUB_LOG="$test_root/stub.log"
 export PATH="$stub_bin:$PATH"
 export XDG_RUNTIME_DIR="$test_root/runtime" HOME="$test_root/home"
+first_pid=
+recording_action_pid=
+target_pid=
+other_pid=
 
 cat > "$stub_bin/notify-send" <<'STUB'
 #!/bin/sh
@@ -38,8 +45,9 @@ printf '10,20 640x480\n'
 STUB
 cat > "$stub_bin/sleep" <<'STUB'
 #!/bin/sh
-# Recorder countdown is a no-op in the deterministic fixture.
-exit 0
+# Keep the countdown deterministic while allowing lock retries to yield.
+if [ "${1:-}" = 1 ]; then exit 0; fi
+exec "$SYSTEM_SLEEP" "$@"
 STUB
 cat > "$stub_bin/date" <<'STUB'
 #!/bin/sh
@@ -53,6 +61,7 @@ case "${RECORDER_MODE:-write}" in
   write) printf 'synthetic recording\n' > "$out"; exit 0 ;;
   empty) : > "$out"; exit 0 ;;
   fail) exit 17 ;;
+  block) exec "$RECORDER_PROCESS_STUB" ;;
   *) exit 99 ;;
 esac
 STUB
@@ -86,6 +95,22 @@ invoke_recorder() {
   shift 2
   SWAYSOCK="/run/user/fixture/$session" WAYLAND_DISPLAY=fixture-wayland VIDEO_DIR="$videos" sh "$recorder" "$@"
 }
+process_is_live() {
+  local state
+  state=$(awk '/^State:/ { print $2; exit }' "/proc/$1/status" 2>/dev/null || true)
+  [[ -n $state && $state != Z && $state != X ]]
+}
+cleanup_fixture() {
+  if [[ -n ${SLURP_RELEASE:-} ]]; then : > "$SLURP_RELEASE"; fi
+  local pid
+  for pid in "${first_pid:-}" "${recording_action_pid:-}" "${target_pid:-}" "${other_pid:-}"; do
+    [[ -n $pid ]] && kill -TERM "$pid" 2>/dev/null || true
+  done
+  for pid in "${first_pid:-}" "${recording_action_pid:-}" "${target_pid:-}" "${other_pid:-}"; do
+    [[ -n $pid ]] && wait "$pid" 2>/dev/null || true
+  done
+}
+trap cleanup_fixture EXIT
 
 # Cancellation is a successful user action, creates no recording, and says so.
 reset_fixture
@@ -142,14 +167,104 @@ if invoke_recorder stop-target-session "$test_root/videos" --stop >"$test_root/s
   kill -TERM "$other_pid" 2>/dev/null || true
   echo 'stop-only action could not stop the session recorder' >&2; cat "$test_root/stop-target.out" >&2; exit 1
 fi
-if ! kill -0 "$other_pid" 2>/dev/null; then
+if ! process_is_live "$other_pid"; then
   wait "$other_pid" 2>/dev/null || true
+  other_pid=
   echo 'stop action signaled a stale PID that now belongs to another process' >&2; exit 1
 fi
 kill -TERM "$other_pid"
 wait "$other_pid" 2>/dev/null || true
+other_pid=
 assert_log 'No recording is active in this Sway session'
 [[ ! -e "$session_state/recorder.pid" ]] || { echo 'stale session PID file was not removed' >&2; exit 1; }
+
+# A stale PID must not signal a live recorder process from another Sway session.
+reset_fixture
+export SLURP_RESULT=select RECORDER_MODE=write
+session_state="$XDG_RUNTIME_DIR/gneshaos/reused-pid-session/recorder"
+mkdir -p "$session_state"
+"$RECORDER_PROCESS_STUB" &
+other_pid=$!
+for _ in $(seq 1 200); do
+  [[ $(cat "/proc/$other_pid/comm" 2>/dev/null || true) = wf-recorder ]] && break
+  "$SYSTEM_SLEEP" 0.01
+done
+[[ $(cat "/proc/$other_pid/comm" 2>/dev/null || true) = wf-recorder ]] || { echo 'synthetic other-session recorder did not start' >&2; exit 1; }
+printf '%s 0\n' "$other_pid" > "$session_state/recorder.pid"
+if ! invoke_recorder reused-pid-session "$test_root/videos" --stop >"$test_root/reused-pid-stop.out" 2>&1; then
+  echo 'stop-only action failed on a stale same-name PID' >&2; cat "$test_root/reused-pid-stop.out" >&2; exit 1
+fi
+if ! process_is_live "$other_pid"; then
+  wait "$other_pid" 2>/dev/null || true
+  other_pid=
+  echo 'stop action signaled a same-name process with a different start time' >&2; exit 1
+fi
+printf '%s\n' "$other_pid" > "$session_state/recorder.pid"
+if ! invoke_recorder reused-pid-session "$test_root/videos" --stop >"$test_root/reused-pid-legacy-stop.out" 2>&1; then
+  echo 'stop-only action failed on a legacy PID file' >&2; cat "$test_root/reused-pid-legacy-stop.out" >&2; exit 1
+fi
+if ! process_is_live "$other_pid"; then
+  wait "$other_pid" 2>/dev/null || true
+  other_pid=
+  echo 'stop action signaled a same-named process from another session' >&2; exit 1
+fi
+kill -TERM "$other_pid"
+wait "$other_pid" 2>/dev/null || true
+other_pid=
+assert_log 'No recording is active in this Sway session'
+
+# Stopping one active recording leaves a same-named process from another
+# session untouched. Both recorder processes are synthetic fixture children.
+reset_fixture
+export SLURP_RESULT=select RECORDER_MODE=block
+session_state="$XDG_RUNTIME_DIR/gneshaos/live-stop-session/recorder"
+SWAYSOCK=/run/user/fixture/live-stop-session VIDEO_DIR="$test_root/videos" sh "$recorder" >"$test_root/live-stop-start.out" 2>&1 &
+recording_action_pid=$!
+target_pid=
+for _ in $(seq 1 200); do
+  if [[ -s "$session_state/recorder.pid" ]]; then
+    target_pid=$(awk '{ print $1 }' "$session_state/recorder.pid")
+    if [[ -r "/proc/$target_pid/comm" ]] && [[ $(cat "/proc/$target_pid/comm") = wf-recorder ]] && [[ ! -d "$session_state/lock" ]]; then
+      break
+    fi
+  fi
+  "$SYSTEM_SLEEP" 0.01
+done
+if [[ -z "$target_pid" ]] || [[ ! -r "/proc/$target_pid/comm" ]] || [[ $(cat "/proc/$target_pid/comm") != wf-recorder ]] || [[ -d "$session_state/lock" ]]; then
+  kill -TERM "$recording_action_pid" "$target_pid" 2>/dev/null || true
+  echo 'fixture recorder did not reach its active state' >&2; cat "$test_root/live-stop-start.out" >&2; exit 1
+fi
+"$RECORDER_PROCESS_STUB" &
+other_pid=$!
+for _ in $(seq 1 200); do
+  [[ $(cat "/proc/$other_pid/comm" 2>/dev/null || true) = wf-recorder ]] && break
+  "$SYSTEM_SLEEP" 0.01
+done
+if ! invoke_recorder live-stop-session "$test_root/videos" --stop >"$test_root/live-stop.out" 2>&1; then
+  kill -TERM "$recording_action_pid" "$target_pid" "$other_pid" 2>/dev/null || true
+  echo 'stop-only action failed for the active session recorder' >&2; cat "$test_root/live-stop.out" >&2; exit 1
+fi
+if wait "$recording_action_pid"; then :; else
+  recording_status=$?
+  kill -TERM "$other_pid" 2>/dev/null || true
+  wait "$other_pid" 2>/dev/null || true
+  echo "recording wrapper failed to report the requested stop (exit $recording_status)" >&2
+  cat "$test_root/live-stop-start.out" "$test_root/live-stop.out" >&2
+  cat "$STUB_LOG" >&2
+  exit 1
+fi
+recording_action_pid=
+target_pid=
+if ! process_is_live "$other_pid"; then
+  wait "$other_pid" 2>/dev/null || true
+  other_pid=
+  echo 'session stop action also stopped another same-named recorder process' >&2; exit 1
+fi
+kill -TERM "$other_pid"
+wait "$other_pid" 2>/dev/null || true
+other_pid=
+assert_log "Stopping this session's recording"
+[[ ! -e "$session_state/recorder.pid" ]] || { echo 'stopped recorder PID state was not cleaned up' >&2; exit 1; }
 
 # Hold one recorder action inside the stub selection UI. Another action in the
 # same Sway session must observe the lock; a different session remains usable.
@@ -168,6 +283,7 @@ unset SLURP_BLOCK
 invoke_recorder independent-session "$test_root/videos-b" >"$test_root/other-session.out" 2>&1
 : > "$SLURP_RELEASE"
 wait "$first_pid"
+first_pid=
 [[ -s "$test_root/videos-a/recording_fixture-time.webm" && -s "$test_root/videos-b/recording_fixture-time.webm" ]] || {
   echo 'independent session recording did not complete in its own output directory' >&2; exit 1;
 }

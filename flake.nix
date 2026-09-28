@@ -599,13 +599,20 @@
       desktopHelperStubCheck =
         checkPkgs.runCommand "gnesha-desktop-helper-stub-checks"
           {
-            nativeBuildInputs = [ checkPkgs.bash checkPkgs.coreutils checkPkgs.gnugrep checkPkgs.gnused ];
+            nativeBuildInputs = [
+              checkPkgs.bash
+              checkPkgs.coreutils
+              checkPkgs.gnugrep
+              checkPkgs.gnused
+              checkPkgs.stdenv.cc
+            ];
           }
           ''
             bash ${./checks/desktop-helper-stubs.sh} \
               ${./home/desktop/sway/scripts/recorder.sh} \
               ${./home/desktop/sway/scripts/sway-help} \
-              /build/gnesha-desktop-helper-check
+              /build/gnesha-desktop-helper-check \
+              ${./checks/desktop-wf-recorder-stub.c}
             touch "$out"
           '';
     in
