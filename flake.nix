@@ -549,6 +549,18 @@
             bash ${./checks/lock-readiness-stubs.sh} ${./home/shell/lock-readiness.sh}
             touch "$out"
           '';
+      desktopHelperStubCheck =
+        checkPkgs.runCommand "gnesha-desktop-helper-stub-checks"
+          {
+            nativeBuildInputs = [ checkPkgs.bash checkPkgs.coreutils checkPkgs.gnugrep checkPkgs.gnused ];
+          }
+          ''
+            bash ${./checks/desktop-helper-stubs.sh} \
+              ${./home/desktop/sway/scripts/recorder.sh} \
+              ${./home/desktop/sway/scripts/sway-help} \
+              /build/gnesha-desktop-helper-check
+            touch "$out"
+          '';
     in
     {
       formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt;
@@ -556,6 +568,7 @@
         inherit
           configurationCombinationChecks
           sourceScriptCheck
+          desktopHelperStubCheck
           ghostfolioImportRecoveryCheck
           arrWrapperCheck
           arrRuntimeStubCheck
