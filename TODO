@@ -1233,7 +1233,7 @@ not be overwritten). Leave this task open until these behaviors are verified.
 
 ## Validation coverage, documentation, and repository hygiene
 
-### [ ] CHECK-01 — Add focused flake checks for Home Manager and feature combinations
+### [x] CHECK-01 — Add focused flake checks for Home Manager and feature combinations
 
 Priority: P2. Type: validation coverage gap.
 Files: `flake.nix`, a small new `checks/` area, `docs/development.md`.
@@ -1292,8 +1292,21 @@ fixture and `nix flake check --show-trace` pass. Docker, systemctl, and update-
 review helper coverage is now partly covered by a separate helper fixture:
 busy-lock and missing-ready paths avoid tool calls, and valid review uses stub
 `diff`/`nvd` commands while preserving the candidate repository lock. The
-standalone fixture passed. A Docker wrapper constructor fixture and the
-systemctl status helper remain pending.
+standalone fixture passed. The synthetic Docker wrapper constructor fixture in
+`arrWrapperCheck` and the Fish `update-status` systemctl fixture in
+`sourceScriptCheck` close the remaining gaps.
+
+Completed (2026-09-28): the new Fish fixture asserts that `update-status`
+displays `systemctl status` output, checks the update unit's state, and reports
+an in-progress build. Removing the status invocation from a temporary source
+copy makes the fixture fail as expected. The flake now parses the workflow and
+fixture and runs the fixture with a stub `systemctl`; the Nix build sandbox
+does not access the live update unit. `nix flake check --show-trace
+--no-write-lock-file` passed, and Home Manager activation derivation evaluation
+returned `/nix/store/p0ldhg1al21k9cixddhwni3dy1la4k18-home-manager-generation.drv`.
+Full system and Home Manager closure builds remain explicit slower commands as
+approved. No activation was run. Commit: `35a7236` (`Cover update status helper
+in flake checks`).
 
 ### [x] CHECK-02 — Make formatting and routine verification reproducible
 
