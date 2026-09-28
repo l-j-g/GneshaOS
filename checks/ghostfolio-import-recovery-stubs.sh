@@ -27,7 +27,8 @@ reset_fixture() {
     "$runtime_root/secrets.env" \
     "$test_root/docker-calls" \
     "$test_root/docker-calls.before-retry" \
-    "$test_root/psql-input"
+    "$test_root/psql-input" \
+    "$test_root/timeout-calls"
 }
 
 mkdir -p "$runtime_root"
@@ -48,6 +49,20 @@ JSON
 }
 
 export GHOSTFOLIO_FIXTURE_ROOT="$test_root"
+cat > "$test_root/bash-env" <<'BASH_ENV'
+sleep() {
+  local delay=${1%s}
+  SECONDS=$((SECONDS + delay))
+}
+timeout() {
+  local limit=$1
+  shift
+  if [ -n "${GHOSTFOLIO_TIMEOUT_LOG:-}" ]; then
+    printf '%s %s\n' "$limit" "$*" >> "$GHOSTFOLIO_TIMEOUT_LOG"
+  fi
+  command timeout "$limit" "$@"
+}
+BASH_ENV
 
 # An interruption after psql succeeds but before marker finalization must finish
 # bookkeeping without replaying the SQL dump.
@@ -67,7 +82,9 @@ reset_fixture
 write_prerequisites
 rm -f "$runtime_root/postgres/PG_VERSION"
 : > "$test_root/docker-calls"
-"$ghostfolio" up -d
+BASH_ENV="$test_root/bash-env" \
+  GHOSTFOLIO_TIMEOUT_LOG="$test_root/timeout-calls" \
+  "$ghostfolio" up -d
 [[ -e "$runtime_root/.database-imported" ]]
 [[ ! -e "$runtime_root/.database-import-state" ]]
 [[ ! -e "$runtime_root/initial-database.sql" ]]
@@ -75,6 +92,8 @@ rm -f "$runtime_root/postgres/PG_VERSION"
 grep -Fq 'exec -T postgres pg_isready' "$test_root/docker-calls"
 grep -Fq 'exec -T postgres psql' "$test_root/docker-calls"
 grep -Fq 'SELECT 1;' "$test_root/psql-input"
+grep -Eq '^300s docker compose .* up ' "$test_root/timeout-calls"
+grep -Eq '^1800s docker compose .* exec -T postgres psql' "$test_root/timeout-calls"
 
 # A failed SQL command must retain the dump and mark the target failed. A
 # subsequent invocation must refuse before making any additional Docker calls.
@@ -120,12 +139,6 @@ done
 reset_fixture
 write_prerequisites
 rm -f "$runtime_root/postgres/PG_VERSION"
-cat > "$test_root/bash-env" <<'BASH_ENV'
-sleep() {
-  local delay=${1%s}
-  SECONDS=$((SECONDS + delay))
-}
-BASH_ENV
 : > "$test_root/docker-calls"
 if BASH_ENV="$test_root/bash-env" GHOSTFOLIO_READY_FAIL=1 \
   "$ghostfolio" up -d > "$test_root/readiness.stdout" 2> "$test_root/readiness.stderr"; then
