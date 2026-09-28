@@ -525,6 +525,8 @@
         let
           base = hostCheck null;
           arrUnit = base.config.systemd.services.docker-compose;
+          forwardedPort = systemParameters.systemSettings.airVpn.forwardedPort;
+          mediaComposeFile = base.config.environment.etc."arr/compose.json".source;
           ghostProxyOff = hostCheckGhostfolioProxyOff.config;
           ghostProxyOn = hostCheckGhostfolioProxyOn.config;
           dockerUnitUnset = base.config.systemd.services.docker.serviceConfig.UnsetEnvironment;
@@ -536,6 +538,8 @@
         assert base.config.services.gnesha.ghostfolio.secretsFile
           == "${base.config.services.gnesha.ghostfolio.runtimeDirectory}/secrets.env";
         assert base.config.networking.proxy.httpProxy == null;
+        assert !(builtins.elem forwardedPort base.config.networking.firewall.allowedTCPPorts);
+        assert !(builtins.elem forwardedPort base.config.networking.firewall.allowedUDPPorts);
         assert !(builtins.elem "multi-user.target" arrUnit.after);
         assert !(builtins.elem "multi-user.target" ghostProxyOn.systemd.services.ghostfolio-compose.after);
         assert builtins.all (name: builtins.elem name dockerUnitUnset) [
@@ -563,8 +567,13 @@
           ''
             cp ${ghostProxyOff.environment.etc."containers/ghostfolio-compose.json".source} proxy-off.json
             cp ${ghostProxyOn.environment.etc."containers/ghostfolio-compose.json".source} proxy-on.json
+            cp ${mediaComposeFile} media.json
             jq -e '.services.ghostfolio.environment.HTTP_PROXY == null and .services.ghostfolio.environment.HTTPS_PROXY == null' proxy-off.json >/dev/null
             jq -e '.services.ghostfolio.environment.HTTP_PROXY == "http://gluetun:8888" and .services.ghostfolio.environment.HTTPS_PROXY == "http://gluetun:8888"' proxy-on.json >/dev/null
+            jq -e --arg port "${toString forwardedPort}" '
+              (.services.gluetun.environment | index("FIREWALL_VPN_INPUT_PORTS=" + $port)) != null and
+              ([.services.gluetun.ports[] | select(test("(^|:)" + $port + "([:/]|$)"))] | length == 0)
+            ' media.json >/dev/null
             touch "$out"
           '';
       sourceScriptCheck =

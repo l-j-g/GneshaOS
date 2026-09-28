@@ -3,7 +3,6 @@
 let
   mediaMountPoint = params.systemSettings.mediaMountPoint;
   mediaMountUnit = "${utils.escapeSystemdPath mediaMountPoint}.mount";
-  forwardedPort = params.systemSettings.airVpn.forwardedPort;
   media = import ./media/compose.nix { inherit config lib pkgs params; };
   commands = import ./media/commands.nix {
     inherit lib pkgs;
@@ -90,11 +89,9 @@ in
     };
   };
 
-  # AirVPN's configured forwarded port reaches qBittorrent. Media web interfaces
-  # use loopback backends and Tailscale Serve for tailnet-only HTTPS access.
-  networking.firewall.allowedTCPPorts = [ forwardedPort ];
-  networking.firewall.allowedUDPPorts = [ forwardedPort ];
-
+  # Media web interfaces use loopback backends and Tailscale Serve for
+  # tailnet-only HTTPS access. Provider-forwarded torrent traffic stays inside
+  # Gluetun's VPN namespace and is not opened on host interfaces.
   networking.firewall.interfaces.${config.services.tailscale.interfaceName}.allowedTCPPorts = [
     8443 # Emby -> 127.0.0.1:8096
     8444 # qBittorrent -> 127.0.0.1:8080

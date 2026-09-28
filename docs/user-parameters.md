@@ -87,7 +87,7 @@ directory does not enable another platform.
 | `systemSettings.systemProxy.noProxy` | Comma-separated hosts/domains reached directly. | `"localhost,127.0.0.1,::1,cf-fv1,.local"` | NixOS and desktop proxy settings |
 | `systemSettings.airVpn.configPath` | User-selected path to a mode-600 WireGuard profile outside the repo and Nix store. It may be owned by the configured user inside their private home directory or root-owned elsewhere. The importer validates it and creates a root-only NetworkManager connection. | `"/home/lg/.config/vpn/host.conf"` on this host | system AirVPN module |
 | `systemSettings.airVpn.autostart` | Whether NetworkManager may connect the host profile automatically. Leave false while the host and Docker profiles share one AirVPN identity. | `false` | generated NetworkManager connection |
-| `systemSettings.airVpn.forwardedPort` | Provider-assigned AirVPN forwarded port used by Gluetun/qBittorrent and the host firewall. Keep it in sync with the registered provider profile. | `64480` | Compose and NixOS firewall |
+| `systemSettings.airVpn.forwardedPort` | Provider-assigned AirVPN forwarded port allowed inside Gluetun for qBittorrent. Keep it in sync with the registered provider profile. | `64480` | Compose VPN firewall |
 | `userSettings.userName` | POSIX login name. Must match the host's declared user. | `"lg"` | NixOS and Home Manager |
 | `userSettings.homeDirectory` | User home directory and `@home` volume location. | `"/home/lg"` | Home Manager |
 

@@ -754,6 +754,17 @@ supports the proposed VPN-only ingress path, but does not prove whether the
 current host-published port is reachable remotely. No rules or containers were
 changed; the binding decision and remote interface checks remain pending.
 
+Source boundary update (2026-09-29): removed TCP/UDP 64480 from Gluetun's
+Docker host publications and from the global NixOS firewall allowances, while
+retaining `FIREWALL_VPN_INPUT_PORTS=64480` inside Gluetun. The live qBittorrent
+configuration still listens on peer port 64480. The focused flake check now
+asserts the VPN-side rule remains, no host mapping is generated, and neither
+global firewall list includes the port. The generated Compose document passes
+`docker compose config --quiet`; `nix flake check`, the NixOS build, and the
+Home Manager activation-package build passed. No activation or container
+recreation was performed. NET-01 remains pending remote LAN/tailnet interface
+probes and a VPN-provider ingress check after an authorized activation.
+
 ### [ ] AUTH-01 — Gate suspend on lock readiness and align PAM policy with the active locker
 
 Priority: P1. Type: verification gap and naming/policy inconsistency.

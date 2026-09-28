@@ -33,7 +33,9 @@ let
           "TZ=\${TZ}"
         ] ++ lib.optional proxy.enable "HTTPPROXY=on";
         volumes = [ "./config/gluetun:/gluetun/wireguard" ];
-        ports = [ (uiPort 8080 8080) "${toString forwardedPort}:${toString forwardedPort}" "${toString forwardedPort}:${toString forwardedPort}/udp" ]
+        # Provider-forwarded BitTorrent traffic arrives through Gluetun's VPN
+        # interface; it does not need a host-facing Docker port publication.
+        ports = [ (uiPort 8080 8080) ]
           ++ lib.optional proxy.enable "127.0.0.1:${toString proxy.port}:8888/tcp";
         networks.default.aliases = [ "qbittorrent" ];
         restart = "unless-stopped";
