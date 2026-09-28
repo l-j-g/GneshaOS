@@ -712,6 +712,16 @@ globally allowed and published by Docker without an address, so its required
 ingress path still needs resolution. NET-01 remains open; no remote probe or
 firewall-rule inspection was available.
 
+Read-only container firewall check (2026-09-29): Gluetun's Docker
+`HostConfig.PortBindings` publishes TCP and UDP 64480 with an empty `HostIp`
+(all host interfaces). Inside Gluetun, INPUT policy is DROP and 64480 is
+explicitly accepted on `tun0`; no equivalent `eth0` rule is present. Upstream
+[Gluetun guidance](https://github.com/qdm12/gluetun-wiki/blob/main/setup/advanced/vpn-port-forwarding.md)
+says VPN-provider port forwarding is separate from Docker port mapping. This
+supports the proposed VPN-only ingress path, but does not prove whether the
+current host-published port is reachable remotely. No rules or containers were
+changed; the binding decision and remote interface checks remain pending.
+
 ### [ ] AUTH-01 — Gate suspend on lock readiness and align PAM policy with the active locker
 
 Priority: P1. Type: verification gap and naming/policy inconsistency.
