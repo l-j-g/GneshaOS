@@ -1220,13 +1220,22 @@ update/readiness cycle and confirm rollback tags against the running daemon.
 
 Read-only live snapshot (2026-09-29): the runtime `images.lock.json` parses
 with all seven configured services and valid sha256 digests. All seven
-containers are running, and each container's full image ID exactly matches its
-locked digest; Gluetun reports healthy. No previous lock file or
+containers are running, each container's configured image reference matches
+its locked digest reference, and resolving that reference yields the running
+container's image ID; Gluetun reports healthy. No previous lock file or
 `:gnesha-rollback` tags exist, so rollback retention cannot be confirmed from
 this single image generation. The installed readiness helper available in the
 store was fixture-built and routes Docker calls to a stub, so it is not valid
 live readiness evidence. No image update or container mutation was run. ARR-01
 remains pending a live update/readiness cycle and a prior generation to inspect.
+
+Read-only recheck after reboot (2026-09-29): the runtime lock still contains
+seven valid service digests. All seven containers are running; each
+`Config.Image` matches its locked digest reference and the resolved image ID
+matches the container's image ID. Gluetun reports healthy. The previous lock
+and `:gnesha-rollback` tags remain absent. `docker-compose.service` completed
+successfully at boot. No pull, update, restart, or other container mutation was
+performed; live update readiness and prior-generation retention remain pending.
 
 ### [x] ARR-02 — Remove remaining mount and WireGuard address assumptions
 
