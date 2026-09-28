@@ -389,6 +389,85 @@
               ${arrFixtureRoot}
             touch "$out"
           '';
+      arrRuntimeFixtureRoot = "/build/gnesha-arr-runtime-check";
+      arrRuntimeDockerStub = checkPkgs.writeShellScriptBin "docker" ''
+        set -eu
+        printf '%s\n' "$*" >> "$GNESHA_ARR_FIXTURE_LOG"
+        case "$1 $2" in
+          "container inspect")
+            service="''${@: -1}"
+            if [ "$service" = watchtower ]; then exit 1; fi
+            case "''${GNESHA_ARR_FIXTURE_MODE:-}" in
+              delayed-ready)
+                count_file="$GNESHA_ARR_FIXTURE_STATE/$service.count"
+                count=0
+                if [ -f "$count_file" ]; then read -r count < "$count_file"; fi
+                count=$((count + 1))
+                printf '%s\n' "$count" > "$count_file"
+                if [ "$count" -lt 2 ]; then echo 'running starting'; else echo 'running healthy'; fi
+                ;;
+              permanently-unready) echo 'running unhealthy' ;;
+              *) echo 'running healthy' ;;
+            esac
+            ;;
+          "pull "*)
+            if [ "''${GNESHA_ARR_FIXTURE_MODE:-}" = pull-fail ]; then
+              count_file="$GNESHA_ARR_FIXTURE_STATE/pulls.count"
+              count=0
+              if [ -f "$count_file" ]; then read -r count < "$count_file"; fi
+              count=$((count + 1))
+              printf '%s\n' "$count" > "$count_file"
+              if [ "$count" -eq 2 ]; then echo 'synthetic pull failure' >&2; exit 42; fi
+            fi
+            ;;
+          "image inspect")
+            image="''${@: -1}"
+            printf '["%s@sha256:%064d"]\n' "$image" 0
+            ;;
+          "image tag") ;;
+          "stop "*|"rm "*) ;;
+          *) echo "unexpected Docker fixture invocation: $*" >&2; exit 70 ;;
+        esac
+      '';
+      arrRuntimeFixtureConfig =
+        hostConfiguration "cf-fv1"
+          {
+            systemSettings.arrComposePath = "${arrRuntimeFixtureRoot}/arr/docker-compose.yml";
+          }
+          {
+            extraModules = [
+              {
+                nixpkgs.overlays = [
+                  (final: prev: { docker = arrRuntimeDockerStub; })
+                ];
+              }
+            ];
+          };
+      arrRuntimePackage = name:
+        builtins.head (
+          builtins.filter (package: package.name == name) arrRuntimeFixtureConfig.config.environment.systemPackages
+        );
+      arrRuntimePinPackage = arrRuntimePackage "arr-pin";
+      arrRuntimeUpdatePackage = arrRuntimePackage "arr-update";
+      arrRuntimeStubCheck =
+        checkPkgs.runCommand "gnesha-arr-runtime-stubs-check"
+          {
+            nativeBuildInputs = [
+              checkPkgs.bash
+              checkPkgs.coreutils
+              checkPkgs.gnugrep
+              checkPkgs.jq
+            ];
+          }
+          ''
+            arrWaitReady=$(grep -oE '/nix/store/[^[:space:]]*/bin/arr-wait-ready' ${arrRuntimeUpdatePackage}/bin/arr-update | head -n 1)
+            test -x "$arrWaitReady"
+            bash ${./checks/arr-runtime-stubs.sh} \
+              ${arrRuntimePinPackage}/bin/arr-pin \
+              "$arrWaitReady" \
+              "${arrRuntimeFixtureRoot}"
+            touch "$out"
+          '';
       configurationCombinationChecks =
         let
           base = hostCheck null;
@@ -473,6 +552,7 @@
           sourceScriptCheck
           ghostfolioImportRecoveryCheck
           arrWrapperCheck
+          arrRuntimeStubCheck
           ;
       };
 

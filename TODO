@@ -1078,15 +1078,18 @@ Done when: malformed/stale locks, partial pull failure, slow healthy startup,
 and permanently unhealthy startup have deterministic tested outcomes using
 fixtures/stubs; normal startup preserves pinned images and application data.
 
-Progress (2026-09-27): `arr-pin` validates exact service coverage and digest
+Progress (2026-09-28): `arr-pin` validates exact service coverage and digest
 syntax and rejects corrupt locks with recovery guidance. Refresh publishes only
 after all pulls resolve, saves the previous complete manifest, and retains that
 single prior image generation under `:gnesha-rollback` tags. Bounded readiness
 polling prints every service's final result before `arr-doctor`; ordinary
-`arr-doctor` remains immediate. The system build and stubs for corrupt locks,
-partial pulls, successful refresh, healthy/slow startup, and permanent
-unhealthy timeout passed. Docker's weekly system prune does not use `--all`, so
-named rollback images remain eligible for retention. Pending: verify a live
+`arr-doctor` remains immediate. The new synthetic Docker fixture verifies
+corrupt and stale locks make zero Docker calls, partial pull failure preserves
+the old lock, successful refresh publishes the prior manifest and rollback
+tags, delayed readiness is polled, and a permanent timeout reports every
+service. The focused fixture build, `nix flake check`, and non-activating
+NixOS build passed. Docker's weekly system prune does not use `--all`, so named
+rollback images remain eligible for retention. Pending: verify a live
 update/readiness cycle and confirm rollback tags against the running daemon.
 
 ### [x] ARR-02 — Remove remaining mount and WireGuard address assumptions
