@@ -471,6 +471,12 @@ observed value is an integer method result, not that module's generic error
 text. Its FV1-specific meaning and whether the EC applied the requested profile
 remain unknown. Source: <https://github.com/nix-community/acpi_call/blob/master/acpi_call.c>.
 
+Read-only firmware inspection (2026-09-29): DMI identifies the machine as
+`CFFV1-1`, but its DSDT/SSDT files are mode 0400 and owned by root; `iasl` and
+`acpidump` are not installed. No privileged command or EC operation was used,
+so this session could not inspect the model's AML or determine the firmware
+meaning of the method result.
+
 ### [x] BUILD-01 — Make system/Home Manager activation recoverable and serialized
 
 Priority: P1. Type: reliability gap.
