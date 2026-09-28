@@ -1282,6 +1282,11 @@ runtime state. Ghostfolio remains disabled and no secret or database was
 created. The source service/database owner and verified export method, as well
 as the disposable restore, remain pending.
 
+Source-owner recheck (2026-09-29): no PostgreSQL or Ghostfolio systemd service
+or container is present on cf-fv1. This confirms the source database is not
+locally discoverable here; it does not rule out a remote source. The service,
+database owner, and export method remain unidentified.
+
 ### [x] GF-02 — Bound and make Ghostfolio import/update retries safe
 
 Priority: P1 before enabling Ghostfolio. Type: confirmed migration risks.
