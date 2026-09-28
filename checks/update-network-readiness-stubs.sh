@@ -42,12 +42,16 @@ grep -Fq 'GitHub and the Nix cache are reachable' "$work/delayed.stdout"
 export CURL_CALLS="$work/offline.calls" CURL_URLS="$work/offline.urls"
 export CURL_ALWAYS_FAIL=1
 unset CURL_FAILS_BEFORE_SUCCESS || true
+offline_started=$SECONDS
 if UPDATE_NETWORK_READY_TIMEOUT=2 UPDATE_NETWORK_READY_INTERVAL=1 \
   bash "$helper" >"$work/offline.stdout" 2>"$work/offline.stderr"; then
   echo 'network readiness unexpectedly succeeded during a persistent outage' >&2
   exit 1
 fi
+offline_elapsed=$((SECONDS - offline_started))
+offline_calls=$(<"$CURL_CALLS")
 grep -Fq 'external connectivity was not ready within 2s' "$work/offline.stderr"
-[[ "$(<"$CURL_CALLS")" -ge 1 ]]
+[[ "$offline_calls" -ge 1 && "$offline_calls" -le 2 ]]
+[[ "$offline_elapsed" -le 3 ]]
 
 echo 'update network readiness stub checks passed'

@@ -677,6 +677,15 @@ successfully reached both the GitHub nixpkgs ref endpoint and the Nix cache.
 host can reach the configured endpoints, not that the update transaction or a
 delayed-link recovery succeeds. No candidate or repository state was created.
 
+Outage-fixture review follow-up (2026-09-29): the persistent-outage stub now
+asserts both a maximum of two curl attempts and an elapsed time of at most
+three seconds for its two-second configured deadline. The new assertion failed
+against an intentionally broken no-backoff helper that made 60 attempts, then
+passed against the real helper. `nix flake check --show-trace
+--no-write-lock-file` and `nixos-rebuild build --flake .#cf-fv1` passed. This
+strengthens the deadline regression check; delayed-link runtime behavior and a
+live update after activation remain pending.
+
 ### [ ] NET-01 — Make network exposure match the documented access boundary
 
 Priority: P1. Type: confirmed broad bindings; intended exposure needs decision.
