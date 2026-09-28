@@ -199,9 +199,20 @@ test Emby playback. No application-data migration was performed by these checks.
 
 `gnesha-lock` shows a simple palette-matched gtklock screen while applications
 keep running; swaylock remains a fallback. Sway locks after five minutes of
-inactivity, on lid close (including AC/docked), and before sleep. On battery,
-lid close suspends; on AC it locks while services continue running. Test manual
-lock and unlock before testing lid close after activation.
+inactivity and before sleep. Its battery idle-suspend, explicit Sway suspend,
+and battery lid-close paths first wait for gtklock's post-lock callback or
+swaylock's readiness-FD acknowledgment. They request suspend only after that
+acknowledgment. On AC, or when docked, lid close locks without suspending.
+logind's battery, external-power, and docked lid actions are all `lock`, so
+logind does not start an independent lid-close suspend.
+
+These routes require the active Sway session. Without Sway, lid close requests
+only a logind lock; battery lid-close suspend is unavailable. If neither locker
+confirms readiness, or the lock state cannot be checked, the Sway-owned request
+reports failure and leaves the machine awake. The `before-sleep` hook requests
+the same acknowledged lock for sleep initiated elsewhere, but it does not veto
+unrelated system sleep sources. Test manual lock and unlock before testing lid
+close after activation.
 
 Login/tuigreet, sudo, gtklock and swaylock share a per-user failed-password
 tally: five consecutive failures within 15 minutes pause authentication for
