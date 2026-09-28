@@ -1447,6 +1447,16 @@ The rebuilt, non-activating Home Manager package has no workstyle unit and keeps
 the numeric workspace-name format; the live profile remains on the old
 generation pending activation.
 
+Live correction (2026-09-29): removed the stale
+`sway-session.target.wants/swayest-workstyle.service` symlink from the active
+user configuration and reloaded the user manager. The unit remains masked and
+inactive, and the target no longer has an enablement link to start at login.
+The active Home Manager generation is still old; its next activation should
+reconcile the generated unit files with the source that no longer declares the
+service. Sway currently reports numeric workspace names and Waybar is set to
+`{name}`. A user screenshot is still needed if other unexpected workspace
+icons remain visible.
+
 ## Validation coverage, documentation, and repository hygiene
 
 ### [x] CHECK-01 — Add focused flake checks for Home Manager and feature combinations
