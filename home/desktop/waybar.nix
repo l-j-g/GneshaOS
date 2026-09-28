@@ -45,7 +45,7 @@ in
         "clock"
       ];
 
-      # swayest-workstyle renames workspaces to app icons, so {name} shows them.
+      # Keep Sway's workspace names unchanged.
       "sway/workspaces" = {
         format = "{name}";
         tooltip = false;
@@ -100,6 +100,7 @@ in
         on-click = "${config.home.homeDirectory}/.config/sway/scripts/vpn-toggle toggle";
         interval = 5;
         format = "{}";
+        return-type = "json";
         tooltip = true;
       };
 
@@ -201,8 +202,10 @@ in
 
       #network.disconnected, #bluetooth.disabled { color: ${v.warning}; }
 
-      #custom-vpn.connected { color: ${v.accent}; }
-      #custom-vpn.disconnected { color: ${v.subtle}; }
+      #custom-vpn.healthy { color: ${v.accent}; }
+      #custom-vpn.stopped { color: ${v.subtle}; }
+      #custom-vpn.starting, #custom-vpn.active-unverified { color: ${v.warning}; }
+      #custom-vpn.failed, #custom-vpn.unavailable { color: ${v.critical}; }
 
       #battery.warning { color: ${v.warning}; }
       #battery.critical { color: ${v.critical}; }

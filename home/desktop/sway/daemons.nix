@@ -84,21 +84,6 @@ in
     systemdTargets = [ sessionTarget ];
   };
 
-  # --- Workspace icons in waybar (renames workspaces to app icons).
-  systemd.user.services.swayest-workstyle = {
-    Unit = {
-      Description = "Swayest workstyle workspace icons";
-      PartOf = [ sessionTarget ];
-      After = [ sessionTarget ];
-    };
-    Service = {
-      ExecStart = "${pkgs.swayest-workstyle}/bin/sworkstyle -d -l error";
-      NonBlocking = true;
-      Restart = "on-failure";
-    };
-    Install.WantedBy = [ sessionTarget ];
-  };
-
   # --- Focus flash animation.
   systemd.user.services.flashfocus = {
     Unit = {
