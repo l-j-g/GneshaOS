@@ -575,6 +575,7 @@
               checkPkgs.coreutils
               checkPkgs.fish
               checkPkgs.gawk
+              checkPkgs.gnugrep
               checkPkgs.gnused
               checkPkgs.jq
               checkPkgs.util-linux
@@ -586,6 +587,8 @@
               ${./home/desktop/sway/scripts/vpn-toggle} \
               ${./home/desktop/sway/scripts/recorder.sh} \
               ${./home/desktop/sway/scripts/sway-help} \
+              ${./hosts/cf-fv1/services/update-network-ready.sh} \
+              ${./checks/update-network-readiness-stubs.sh} \
               ${./checks/arr-wrapper-stubs.sh}; do
               bash -n "$script"
             done
@@ -595,6 +598,7 @@
             fish ${./checks/nix-workflow-status.fish} ${./home/shell/nix-workflow.fish}
             bash ${./checks/activation-helper-stubs.sh} ${./home/shell/activation-state.sh}
             bash ${./checks/update-review-stubs.sh} ${./home/shell/update-review.sh}
+            bash ${./checks/update-network-readiness-stubs.sh} ${./hosts/cf-fv1/services/update-network-ready.sh}
             bash ${./checks/lock-readiness-stubs.sh} ${./home/shell/lock-readiness.sh}
             touch "$out"
           '';

@@ -659,6 +659,18 @@ were not used as host service-readiness evidence. A delayed-but-eventually-
 working uplink and background update retry behavior were not tested, so
 BOOT-01 remains open for that readiness check.
 
+Scoped update connectivity handling (2026-09-29): the background update build
+now waits up to 120 seconds for the GitHub nixpkgs ref and Nix cache before
+creating its candidate. Each request is bounded by the remaining deadline; a
+persistent outage exits with a clear message before candidate creation. The
+global `NetworkManager-wait-online` unit remains masked. Stub fixtures verify
+delayed recovery and persistent outage; `nix flake check`, the NixOS build,
+and the Home Manager activation-package build passed. Evaluation confirms the
+readiness helper runs before candidate creation, while the updater retains its
+six-hour build limit. No configuration was activated. BOOT-01 remains pending
+a live update attempt after activation and an eventually-working slow-link
+check.
+
 ### [ ] NET-01 — Make network exposure match the documented access boundary
 
 Priority: P1. Type: confirmed broad bindings; intended exposure needs decision.

@@ -7,6 +7,11 @@ let
   activationStateLib = ../../../home/shell/activation-state.sh;
   updateReviewLib = ../../../home/shell/update-review.sh;
   activationStateRoot = "${params.userSettings.homeDirectory}/.local/state/gnesha-activation";
+  updateNetworkReady = pkgs.writeShellApplication {
+    name = "gnesha-update-network-ready";
+    runtimeInputs = [ pkgs.coreutils pkgs.curl ];
+    text = builtins.readFile ./update-network-ready.sh;
+  };
   updateBuild = pkgs.writeShellApplication {
     name = "gnesha-update-build";
     runtimeInputs = [ pkgs.nix pkgs.git pkgs.jq pkgs.coreutils pkgs.util-linux ];
@@ -14,6 +19,7 @@ let
       state=${lib.escapeShellArg updateState}
       exec 9>"$state/lock"
       flock -n 9 || exit 0
+      ${updateNetworkReady}/bin/gnesha-update-network-ready
       candidate=$(mktemp -d "$state/candidate.XXXXXX")
       trap 'if [ -n "$candidate" ]; then rm -rf -- "$candidate"; fi' EXIT
       snapshot=$(nix flake metadata --json --no-write-lock-file ${lib.escapeShellArg params.systemSettings.flakePath} | jq -er .path)
