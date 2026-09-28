@@ -533,6 +533,8 @@
         assert base.config.services.gnesha.airvpn.enable;
         assert !base.config.services.gnesha.airvpn.autostart;
         assert !base.config.services.gnesha.ghostfolio.enable;
+        assert base.config.services.gnesha.ghostfolio.secretsFile
+          == "${base.config.services.gnesha.ghostfolio.runtimeDirectory}/secrets.env";
         assert base.config.networking.proxy.httpProxy == null;
         assert !(builtins.elem "multi-user.target" arrUnit.after);
         assert !(builtins.elem "multi-user.target" ghostProxyOn.systemd.services.ghostfolio-compose.after);

@@ -1234,6 +1234,17 @@ Pending: identify and record the actual source service/database/export owner,
 complete a disposable restore with the intended PostgreSQL major, and approve
 the data plan before enabling.
 
+Parameter reconciliation (2026-09-29): found that `system-parameters.nix`
+pointed secrets at `/home/lg/src/ghostfolio/secrets.env`, while the runtime
+directory, example parameters, and user-parameter documentation place the stack
+under `/home/lg/.config/containers/ghostfolio`. Both candidate secrets files
+and the runtime directory are absent; no Ghostfolio container or volume exists.
+Updated the configured path to `${containersDirectory}/ghostfolio/secrets.env`
+and added a host-composition assertion that the secrets path remains beside the
+runtime state. Ghostfolio remains disabled and no secret or database was
+created. The source service/database owner and verified export method, as well
+as the disposable restore, remain pending.
+
 ### [x] GF-02 — Bound and make Ghostfolio import/update retries safe
 
 Priority: P1 before enabling Ghostfolio. Type: confirmed migration risks.

@@ -39,7 +39,7 @@
     ghostfolioPostgresMajor = "17";
     ghostfolio = {
       enable = false;
-      secretsFile = "/home/lg/src/ghostfolio/secrets.env";
+      secretsFile = "/home/lg/.config/containers/ghostfolio/secrets.env";
     };
 
     # Mount point of the MooGoo drive used for user media directories.
