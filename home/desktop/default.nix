@@ -97,7 +97,6 @@ in
 
     # Manjaro Sway alignment
     rofi
-    swayest-workstyle
     flashfocus
     wl-clip-persist
     calcurse
