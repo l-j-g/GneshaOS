@@ -88,14 +88,17 @@ in
           ExecStart = pkgs.writeShellScript "letsnote-fan-eco" ''
             set -eu
             printf '\\_SB.PC00.LPCB.EC0.SEFM 0x01\n' > /proc/acpi/call
-            result=$(${pkgs.coreutils}/bin/cat /proc/acpi/call)
+            # /proc/acpi/call returns a NUL-terminated value. Strip the NUL
+            # before assigning it in Bash so the journal records the value
+            # without an ignored-NUL warning.
+            result=$(${pkgs.coreutils}/bin/tr -d '\000' < /proc/acpi/call)
             case "$result" in
               ""|"not called"|Error:*)
-                printf 'ACPI method failed: %s\\n' "$result" >&2
+                printf 'ACPI method failed: %s\n' "$result" >&2
                 exit 1
                 ;;
               *)
-                printf 'ACPI method returned: %s\\n' "$result"
+                printf 'ACPI method returned: %s\n' "$result"
                 ;;
             esac
           '';

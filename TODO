@@ -458,6 +458,14 @@ Readable temperatures ranged from about 39 C to 46 C. This confirms repeated
 post-boot invocation, but the response meaning and actual fan-curve behavior
 remain unverified; no EC write or stress test was issued.
 
+Result-log follow-up (2026-09-29): a NUL-terminated synthetic response
+reproduced both the Bash warning and literal `\\n` in the old journal message.
+The script now strips the ACPI result's NUL terminator and emits an actual
+newline; the built unit contains the corrected command. The same synthetic
+response check passes, as do Nix parsing, the full flake check, and the NixOS
+build. No ACPI call was sent to the live EC. The value `0xffff0500` remains
+unclassified, and quiet-profile behavior is still pending hardware review.
+
 ### [x] BUILD-01 — Make system/Home Manager activation recoverable and serialized
 
 Priority: P1. Type: reliability gap.
