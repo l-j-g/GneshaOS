@@ -1405,8 +1405,9 @@ copied bytes matched, XML parsed, and SQLite `quick_check` returned `ok`. The
 source and live service paths were untouched, and no service was started. This
 is file-level recovery evidence only; application consistency and service-start
 restore remain unverified. A read-only metadata check found the Arr `.env`
-owned by the user with mode `0644`; its contents were not read, and its
-permissions remain unchanged for separate review. Keep DOC-02 open until
+owned by the user with mode `0644`; its contents were not read. Its parent
+`/home/lg` is mode `0700`, so other unprivileged users cannot traverse to the
+file; no permissions were changed. Keep DOC-02 open until
 remaining databases, runtime credentials, media coverage, and supported
 export/restore procedures are documented to this selected scope.
 

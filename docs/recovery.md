@@ -39,8 +39,9 @@ The Arr runtime root is `/home/lg/src/arr`. Its `.env` contains runtime
 credentials and its `images.lock.json` records image references; neither file
 contains the application configuration or media payload. On 2026-09-28, the
 `.env` metadata was observed as user-owned with mode `0644`; its contents were
-not read, and the permission has not been changed. The Arr configuration files
-and databases are under `config/`. The system and
+not read, and the permission has not been changed. The parent `/home/lg`
+directory is mode `0700`, so other unprivileged users cannot traverse to it.
+The Arr configuration files and databases are under `config/`. The system and
 Home Manager profile links resolve to Nix store generations, which restore
 configuration/package closures but not Compose bind-mounted state. Do not
 assume the pinned image manifest is a backup of the images or application data.
