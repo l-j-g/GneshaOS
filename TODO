@@ -486,6 +486,16 @@ Read-only firmware inspection (2026-09-29): DMI identifies the machine as
 so this session could not inspect the model's AML or determine the firmware
 meaning of the method result.
 
+Model-specific upstream research (2026-09-29): an upstream Linux RFC analyzing
+CF-SR4-1 firmware describes `SEFM(0x01)` as manual/OSPM fan control, `SEFM(0x00)`
+as automatic, and a separate direct EC call for an S0ix-specific value. This is
+a different model and an RFC, so its semantics cannot establish what CF-FV1's
+`SEFM(0x01)` does. It does reinforce that calling the current request a quiet
+profile is unverified; no setting was changed. See
+<https://lists.openwall.net/linux-kernel/2026/07/29/392>. CF-FV1 AML or
+model-specific behavioral evidence is still required before adjusting the EC
+request or completing POWER-01.
+
 ### [x] BUILD-01 — Make system/Home Manager activation recoverable and serialized
 
 Priority: P1. Type: reliability gap.
@@ -675,6 +685,13 @@ successfully reached both the GitHub nixpkgs ref endpoint and the Nix cache.
 `gnesha-nixpkgs-update.service` remains inactive. This confirms the current
 host can reach the configured endpoints, not that the update transaction or a
 delayed-link recovery succeeds. No candidate or repository state was created.
+
+Read-only boot recheck (2026-09-29): `systemd-analyze time` now reports
+34.541s total and `graphical.target` 12.075s into userspace. The manager still
+uses 90s start/stop defaults, `NetworkManager-wait-online.service` is inactive,
+and `systemctl --failed` reports no failed units. This current-boot evidence
+confirms login continues without wait-online, but does not test a slow link that
+later recovers or a live background update transaction; both remain pending.
 
 Outage-fixture review follow-up (2026-09-29): the persistent-outage stub now
 asserts both a maximum of two curl attempts and an elapsed time of at most
