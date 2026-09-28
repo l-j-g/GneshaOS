@@ -293,6 +293,15 @@ AirVPN profile at `configPath` before host and Docker tunnels run together.
 Then schedule an authorized connectivity window for host-only, Docker-only,
 combined, disconnect, restart, and recovery checks.
 
+Candidate recheck (2026-09-29): `/media/downloads` contains an additional
+`AirVPN_All-servers_UDP-1637-Entry3.conf`. A secret-safe private-key comparison
+confirms this candidate, the earlier `nz.conf`, the configured host copy, and
+Docker's WireGuard profile all use the same device identity. The new candidate
+is not a replacement and was not installed. `/media` is exFAT mounted with
+`fmask=0022`, so downloaded profile files appear mode 755 there; the configured
+host copy remains in the mode-600 path under `~/.config/vpn`. No tunnel was
+started. VPN-01 still requires a separately registered profile.
+
 ### [x] REC-01 — Correct the installation and snapshot recovery runbook
 
 Priority: P1. Type: confirmed documentation inconsistencies; recovery untested.
