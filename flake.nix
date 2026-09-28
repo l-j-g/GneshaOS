@@ -439,6 +439,7 @@
             nativeBuildInputs = [
               checkPkgs.bash
               checkPkgs.coreutils
+              checkPkgs.gawk
               checkPkgs.gnused
               checkPkgs.jq
               checkPkgs.util-linux
@@ -453,8 +454,10 @@
               ${./checks/arr-wrapper-stubs.sh}; do
               bash -n "$script"
             done
+            bash -n ${./home/shell/lock-readiness.sh} ${./checks/lock-readiness-stubs.sh}
             bash ${./checks/activation-helper-stubs.sh} ${./home/shell/activation-state.sh}
             bash ${./checks/update-review-stubs.sh} ${./home/shell/update-review.sh}
+            bash ${./checks/lock-readiness-stubs.sh} ${./home/shell/lock-readiness.sh}
             touch "$out"
           '';
     in

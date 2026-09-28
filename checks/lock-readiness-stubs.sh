@@ -25,9 +25,13 @@ new_case() {
   : > "$CASE_DIR/gtk-mode"
   : > "$CASE_DIR/sway-mode"
   : > "$CASE_DIR/systemctl-mode"
+  cat > "$CASE_DIR/bin/lock-ack" <<'STUB'
+#!/usr/bin/env bash
+touch -- "$GNESHA_LOCK_ACK_FILE"
+STUB
   cat > "$XDG_CONFIG_HOME/gtklock/config.ini" <<EOF
 [main]
-lock-command=touch '$XDG_RUNTIME_DIR/gnesha-lock.ack'
+lock-command=$CASE_DIR/bin/lock-ack
 EOF
   export SWAYSOCK="$CASE_DIR/sway-ipc.sock"
   : > "$SWAYSOCK"
@@ -51,7 +55,8 @@ case $(cat "$CASE_DIR/gtk-mode") in
     if [[ -n $lock_command ]]; then
       sleep "${READY_DELAY:-0.2}"
       printf 'gtklock-ready %s\n' "$(date +%s%N)" >> "$CASE_DIR/events"
-      bash -c "$lock_command"
+      "$lock_command"
+      sleep 30
     fi
     ;;
   timeout) sleep 30 ;;
@@ -97,6 +102,7 @@ STUB
 #!/usr/bin/env bash
 printf 'dbus-send %s\n' "$*" >> "$CASE_DIR/calls"
 STUB
+  sed -i "1s|^#!/usr/bin/env bash$|#!$BASH|" "$CASE_DIR/bin/"*
   chmod +x "$CASE_DIR/bin/"*
 }
 
