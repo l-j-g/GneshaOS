@@ -179,6 +179,32 @@ _gnesha_lock_take_mutex() {
   }
 }
 
+_gnesha_lock_take_mutex_or_reuse() {
+  local runtime_dir=$1 deadline=$2 state_dir left
+  [[ -n ${SWAYSOCK:-} && -n $runtime_dir ]] || {
+    printf 'gnesha-lock: Sway session or XDG_RUNTIME_DIR is unavailable\n' >&2
+    return 1
+  }
+  state_dir=$runtime_dir/gnesha-lock
+  mkdir -p -- "$state_dir" || return 1
+  chmod 700 -- "$state_dir" || return 1
+  exec 9>"$state_dir/mutex"
+  while :; do
+    if _gnesha_lock_existing "$state_dir"; then
+      _gnesha_lock_seconds_left "$deadline" >/dev/null || return 1
+      return 10
+    fi
+    left=$(_gnesha_lock_seconds_left "$deadline") || {
+      printf 'gnesha-lock: timed out waiting for another lock request\n' >&2
+      return 1
+    }
+    if flock -n -x 9; then
+      return 0
+    fi
+    sleep 0.05
+  done
+}
+
 gnesha_lock_acquire() (
   local state_dir overall_deadline status
   overall_deadline=$(( $(date +%s%N) + 10000000000 ))
@@ -193,7 +219,13 @@ gnesha_lock_acquire() (
     _gnesha_lock_seconds_left "$overall_deadline" >/dev/null
     return $?
   fi
-  _gnesha_lock_take_mutex "$XDG_RUNTIME_DIR" "$overall_deadline" || return 1
+  if _gnesha_lock_take_mutex_or_reuse "$XDG_RUNTIME_DIR" "$overall_deadline"; then
+    :
+  else
+    status=$?
+    (( status == 10 )) && return 0
+    return "$status"
+  fi
   if _gnesha_lock_acquire_locked "$state_dir" "$overall_deadline"; then
     status=0
   else

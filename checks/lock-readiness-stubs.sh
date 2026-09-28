@@ -54,7 +54,11 @@ EOF
 printf 'gtklock %s\n' "$*" >> "$CASE_DIR/calls"
 printf 'gtk-start %s\n' "$(date +%s%N)" >> "$CASE_DIR/events"
 case $(cat "$CASE_DIR/gtk-mode") in
-  callback)
+  callback|callback-delayed)
+    touch "$CASE_DIR/gtk-started"
+    if [[ $(cat "$CASE_DIR/gtk-mode") == callback-delayed ]]; then
+      while [[ ! -e $CASE_DIR/allow-gtk-ack ]]; do sleep 0.02; done
+    fi
     # Gtklock reads its post-lock callback from lock-command in config.ini.
     # Support both its default XDG path and an explicitly selected config.
     config_path="${XDG_CONFIG_HOME:-$HOME/.config}/gtklock/config.ini"
@@ -109,6 +113,11 @@ if [[ ${1:-} == suspend ]]; then
     printf 'suspend-mutex-missing\n' >> "$CASE_DIR/events"
   else
     printf 'suspend-mutex-held\n' >> "$CASE_DIR/events"
+  fi
+  if [[ -e $CASE_DIR/hold-systemctl-return ]]; then
+    touch "$CASE_DIR/systemctl-entered"
+    while [[ ! -e $CASE_DIR/release-systemctl ]]; do sleep 0.02; done
+    printf 'suspend-return %s\n' "$(date +%s%N)" >> "$CASE_DIR/events"
   fi
   if [[ -e $CASE_DIR/before-sleep-callback ]]; then
     if timeout --kill-after=0.1s 0.5s bash -c 'source "$GNESHA_LOCK_HELPER"; gnesha_lock_acquire'; then
@@ -293,6 +302,59 @@ grep -q '^before-sleep-returned$' "$CASE_DIR/events" || fail 'before-sleep lock 
 assert_suspend_after_readiness
 assert_call_count 1
 printf 'ok - before-sleep reuses live acknowledged lock\n'
+
+new_case callback-coalescing
+echo callback-delayed > "$CASE_DIR/gtk-mode"
+touch "$CASE_DIR/hold-systemctl-return"
+(timed_lock_operation) & first_suspend=$!
+for ((i=0; i<250; i++)); do
+  [[ -e $CASE_DIR/gtk-started ]] && break
+  sleep 0.02
+done
+[[ -e $CASE_DIR/gtk-started ]] || fail 'first suspend request did not start gtklock'
+(
+  source "$helper"
+  gnesha_lock_acquire || exit 1
+  printf 'coalesced-lock-return %s\n' "$(date +%s%N)" >> "$CASE_DIR/events"
+) & second_lock=$!
+sleep 0.15
+if grep -q '^coalesced-lock-return ' "$CASE_DIR/events"; then
+  touch "$CASE_DIR/release-systemctl"
+  wait "$first_suspend" || true
+  wait "$second_lock" || true
+  fail 'second lock callback returned before any locker acknowledged readiness'
+fi
+touch "$CASE_DIR/allow-gtk-ack"
+for ((i=0; i<250; i++)); do
+  [[ -e $CASE_DIR/systemctl-entered ]] && break
+  sleep 0.02
+done
+[[ -e $CASE_DIR/systemctl-entered ]] || {
+  touch "$CASE_DIR/release-systemctl"
+  wait "$first_suspend" || true
+  wait "$second_lock" || true
+  fail 'first suspend request did not reach systemctl'
+}
+for ((i=0; i<250; i++)); do
+  [[ -n $(grep '^coalesced-lock-return ' "$CASE_DIR/events" || true) ]] && break
+  sleep 0.02
+done
+if ! grep -q '^coalesced-lock-return ' "$CASE_DIR/events"; then
+  touch "$CASE_DIR/release-systemctl"
+  wait "$first_suspend" || true
+  wait "$second_lock" || true
+  fail 'second lock callback did not coalesce before suspend returned'
+fi
+assert_call_count 1
+touch "$CASE_DIR/release-systemctl"
+wait "$first_suspend" || fail 'first suspend request failed after coalescing'
+wait "$second_lock" || fail 'second lock callback failed after coalescing'
+[[ $(grep -c '^coalesced-lock-return ' "$CASE_DIR/events") == 1 ]] || fail 'second callback did not return exactly once'
+[[ $(grep -c '^suspend-return ' "$CASE_DIR/events") == 1 ]] || fail 'suspend stub did not return exactly once'
+coalesced_return=$(awk '/^coalesced-lock-return / { print $2 }' "$CASE_DIR/events")
+suspend_return=$(awk '/^suspend-return / { print $2 }' "$CASE_DIR/events")
+(( coalesced_return < suspend_return )) || fail 'second lock callback returned after systemctl suspend returned'
+printf 'ok - in-progress locker acknowledgment coalesces lock callback\n'
 
 new_case stale-state-contention
 ACQUIRE_ONLY=1
