@@ -9,7 +9,8 @@ if [[ ! -f $helper ]]; then
 fi
 
 helper=$(realpath "$helper")
-export GNESHA_LOCK_HELPER=$helper
+GNESHA_REAL_FLOCK=$(command -v flock)
+export GNESHA_LOCK_HELPER=$helper GNESHA_REAL_FLOCK
 fixture_root=$(mktemp -d)
 trap 'rm -rf "$fixture_root"' EXIT
 
@@ -126,6 +127,7 @@ if [[ ${1:-} == suspend ]]; then
       printf 'before-sleep-blocked\n' >> "$CASE_DIR/events"
     fi
   fi
+  [[ $(cat "$CASE_DIR/systemctl-mode") != fail ]] || exit 1
 fi
 STUB
   cat > "$CASE_DIR/bin/busctl" <<'STUB'
@@ -137,6 +139,23 @@ case $(cat "$CASE_DIR/bus-mode") in
   malformed) printf 'false\n' ;;
   fail) exit 1 ;;
 esac
+STUB
+  cat > "$CASE_DIR/bin/flock" <<'STUB'
+#!/usr/bin/env bash
+if [[ -e $CASE_DIR/observe-mutex-wait && -e $CASE_DIR/systemctl-entered &&
+  ${1:-} == -x && ${2:-} == -w ]]; then
+  if "$GNESHA_REAL_FLOCK" -n -x -E 73 "$XDG_RUNTIME_DIR/gnesha-lock/mutex" -c true; then
+    touch "$CASE_DIR/second-mutex-not-blocked"
+  else
+    probe_status=$?
+    if [[ $probe_status == 73 ]]; then
+      touch "$CASE_DIR/second-mutex-waiting"
+    else
+      touch "$CASE_DIR/second-mutex-probe-failed"
+    fi
+  fi
+fi
+exec "$GNESHA_REAL_FLOCK" "$@"
 STUB
   cat > "$CASE_DIR/bin/acpi" <<'STUB'
 #!/usr/bin/env bash
@@ -355,6 +374,57 @@ coalesced_return=$(awk '/^coalesced-lock-return / { print $2 }' "$CASE_DIR/event
 suspend_return=$(awk '/^suspend-return / { print $2 }' "$CASE_DIR/events")
 (( coalesced_return < suspend_return )) || fail 'second lock callback returned after systemctl suspend returned'
 printf 'ok - in-progress locker acknowledgment coalesces lock callback\n'
+
+new_case queued-suspend-coalescing
+echo callback > "$CASE_DIR/gtk-mode"
+touch "$CASE_DIR/hold-systemctl-return" "$CASE_DIR/observe-mutex-wait"
+(timed_lock_operation) & first_suspend=$!
+for ((i=0; i<250; i++)); do
+  [[ -e $CASE_DIR/systemctl-entered ]] && break
+  sleep 0.02
+done
+[[ -e $CASE_DIR/systemctl-entered ]] || fail 'first suspend request did not enter systemctl'
+grep -q '^suspend-mutex-held$' "$CASE_DIR/events" || fail 'first suspend stub did not confirm the mutex is held'
+(timed_lock_operation) & second_suspend=$!
+for ((i=0; i<250; i++)); do
+  [[ -e $CASE_DIR/second-mutex-waiting ]] && break
+  sleep 0.02
+done
+if [[ ! -e $CASE_DIR/second-mutex-waiting ]]; then
+  touch "$CASE_DIR/release-systemctl"
+  wait "$first_suspend" || true
+  wait "$second_suspend" || true
+  fail 'real flock probe did not confirm the second request is blocked on the held mutex'
+fi
+[[ $(grep -c '^systemctl suspend\( \|$\)' "$CASE_DIR/calls" || true) == 1 ]] || {
+  touch "$CASE_DIR/release-systemctl"
+  wait "$first_suspend" || true
+  wait "$second_suspend" || true
+  fail 'second suspend was not queued behind the first'
+}
+touch "$CASE_DIR/release-systemctl"
+wait "$first_suspend" || fail 'first suspend request failed'
+wait "$second_suspend" || fail 'second suspend request failed'
+[[ $(grep -c '^systemctl suspend\( \|$\)' "$CASE_DIR/calls" || true) == 1 ]] || fail 'queued request invoked systemctl suspend more than once'
+[[ $(grep -c '^suspend ' "$CASE_DIR/events" || true) == 1 ]] || fail 'queued request recorded more than one suspend'
+assert_call_count 1
+printf 'ok - queued suspend request is coalesced\n'
+read -r lock_kind lock_pid lock_start < "$XDG_RUNTIME_DIR/gnesha-lock/state"
+expired_marker_time=$(( $(date +%s%N) - 11000000000 ))
+printf '%s %s %s %s\n' "$expired_marker_time" "$lock_kind" "$lock_pid" "$lock_start" > "$XDG_RUNTIME_DIR/gnesha-lock/suspend-request"
+timed_lock_operation || fail 'expired suspend request marker blocked an independent request'
+[[ $(grep -c '^systemctl suspend\( \|$\)' "$CASE_DIR/calls" || true) == 2 ]] || fail 'expired marker failed to permit a new suspend request'
+printf 'ok - expired suspend request marker permits a new request\n'
+
+new_case suspend-failure-clears-marker
+echo callback > "$CASE_DIR/gtk-mode"
+echo fail > "$CASE_DIR/systemctl-mode"
+if timed_lock_operation; then fail 'systemctl suspend failure was reported as success'; fi
+[[ ! -e $XDG_RUNTIME_DIR/gnesha-lock/suspend-request ]] || fail 'failed suspend left a dedup marker'
+echo success > "$CASE_DIR/systemctl-mode"
+timed_lock_operation || fail 'suspend retry failed after the failed request marker was cleared'
+[[ $(grep -c '^systemctl suspend\( \|$\)' "$CASE_DIR/calls" || true) == 2 ]] || fail 'failed suspend marker prevented a retry'
+printf 'ok - failed suspend clears its dedup marker\n'
 
 new_case stale-state-contention
 ACQUIRE_ONLY=1

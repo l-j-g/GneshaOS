@@ -239,6 +239,8 @@ gnesha_lock_acquire() (
 
 _gnesha_lock_suspend_locked() {
   local mode=$1 state_dir=$2 overall_deadline=$3 docked power_status
+  local lock_kind lock_pid lock_start marker_file marker_time marker_kind marker_pid marker_start
+  local now marker_tmp status dedup_window_ns=10000000000
   _gnesha_lock_acquire_locked "$state_dir" "$overall_deadline" || {
     printf 'gnesha-lock-and-suspend: lock readiness failed; leaving the machine awake\n' >&2
     return 1
@@ -274,7 +276,33 @@ _gnesha_lock_suspend_locked() {
     printf 'gnesha-lock-and-suspend: locker exited before suspend; leaving the machine awake\n' >&2
     return 1
   }
-  systemctl suspend
+  IFS=' ' read -r lock_kind lock_pid lock_start < "$state_dir/state" || return 1
+  marker_file=$state_dir/suspend-request
+  now=$(date +%s%N) || return 1
+  if [[ -r $marker_file ]] &&
+    read -r marker_time marker_kind marker_pid marker_start < "$marker_file" &&
+    [[ $marker_time =~ ^[0-9]+$ && $marker_pid =~ ^[0-9]+$ && $marker_start =~ ^[0-9]+$ ]] &&
+    [[ $marker_kind == "$lock_kind" && $marker_pid == "$lock_pid" && $marker_start == "$lock_start" ]] &&
+    (( marker_time <= now && now - marker_time < dedup_window_ns )); then
+    return 0
+  fi
+  marker_tmp=$(mktemp "$state_dir/suspend-request.XXXXXXXX") || {
+    printf 'gnesha-lock-and-suspend: could not record the pending suspend request\n' >&2
+    return 1
+  }
+  if ! printf '%s %s %s %s\n' "$now" "$lock_kind" "$lock_pid" "$lock_start" > "$marker_tmp" ||
+    ! mv -f -- "$marker_tmp" "$marker_file"; then
+    rm -f -- "$marker_tmp"
+    printf 'gnesha-lock-and-suspend: could not record the pending suspend request\n' >&2
+    return 1
+  fi
+  if systemctl suspend; then
+    return 0
+  else
+    status=$?
+    rm -f -- "$marker_file"
+    return "$status"
+  fi
 }
 
 gnesha_lock_and_suspend() (
