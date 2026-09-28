@@ -113,4 +113,39 @@ for state in importing failed; do
   [[ ! -s "$test_root/docker-calls" ]]
 done
 
+# PostgreSQL readiness failures terminate at the deadline with container
+# state, without calling psql or publishing import-complete state. BASH_ENV
+# supplies a deterministic sleep function so the 180-second contract elapses
+# immediately inside this isolated fixture.
+reset_fixture
+write_prerequisites
+rm -f "$runtime_root/postgres/PG_VERSION"
+cat > "$test_root/bash-env" <<'BASH_ENV'
+sleep() {
+  local delay=${1%s}
+  SECONDS=$((SECONDS + delay))
+}
+BASH_ENV
+: > "$test_root/docker-calls"
+if BASH_ENV="$test_root/bash-env" GHOSTFOLIO_READY_FAIL=1 \
+  "$ghostfolio" up -d > "$test_root/readiness.stdout" 2> "$test_root/readiness.stderr"; then
+  echo "Ghostfolio unexpectedly continued after PostgreSQL readiness timed out" >&2
+  exit 1
+fi
+grep -Fq 'PostgreSQL did not become ready within 180 seconds' "$test_root/readiness.stderr" || {
+  echo 'PostgreSQL readiness timeout message was absent:' >&2
+  cat "$test_root/readiness.stdout" "$test_root/readiness.stderr" >&2
+  exit 1
+}
+grep -Fq 'container state: running healthy' "$test_root/readiness.stderr" || {
+  echo 'PostgreSQL readiness diagnostic omitted container state:' >&2
+  cat "$test_root/readiness.stdout" "$test_root/readiness.stderr" >&2
+  exit 1
+}
+grep -Fq 'exec -T postgres pg_isready' "$test_root/docker-calls"
+! grep -Fq 'exec -T postgres psql' "$test_root/docker-calls"
+[[ ! -e "$runtime_root/.database-imported" ]]
+[[ "$(cat "$runtime_root/.database-import-state")" == ready ]]
+[[ -s "$runtime_root/initial-database.sql" ]]
+
 echo "Ghostfolio import recovery stub checks passed"
