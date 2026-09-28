@@ -765,6 +765,12 @@ Home Manager activation-package build passed. No activation or container
 recreation was performed. NET-01 remains pending remote LAN/tailnet interface
 probes and a VPN-provider ingress check after an authorized activation.
 
+Post-build live state check (2026-09-29): `/run/current-system` still points
+to the previous generation, and running Gluetun still publishes TCP and UDP
+64480 with an empty `HostIp` (all host interfaces). The source change has not
+reached the live firewall or containers. No activation or container recreation
+was performed; remote interface and VPN ingress tests remain pending.
+
 ### [ ] AUTH-01 — Gate suspend on lock readiness and align PAM policy with the active locker
 
 Priority: P1. Type: verification gap and naming/policy inconsistency.
