@@ -1623,6 +1623,12 @@ links Arr configuration under `/home` to local `@home` Snapper snapshots and
 the selected-file restore steps; it does not claim application consistency or
 an off-disk backup.
 
+Install-runbook correction (2026-09-29): removed wording that implied a
+verified external backup already exists. The install preflight now records
+that no off-disk backup is configured and requires stopping before destructive
+reinstall if wanted data has no verified separate restore source. The `/media`
+restore and post-install checks likewise no longer claim a backup source exists.
+
 Operator decision (2026-09-28): no off-disk backups are wanted. Do not add a
 destination, retention policy, schedule, or transfer. Local restore drill
 (2026-09-28): copied the Lidarr config, SQLite database, WAL, and SHM files

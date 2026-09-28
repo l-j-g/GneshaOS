@@ -2,8 +2,10 @@
 
 Target: Panasonic Let's Note CF-FV1. This runbook describes a destructive
 reinstall; use the recovery procedures below when you only need to restore a
-generation or data. Never run a formatting command until the target and backup
-preconditions have been checked and the exact command has been reviewed.
+generation or data. No off-disk backup is configured. Treat existing data as
+the only copy unless you identify and verify a separate restore source; stop
+before destructive work if any data must be retained and no such source exists.
+Review the target preconditions and exact commands before formatting.
 
 ## Hardware notes
 
@@ -32,10 +34,11 @@ Before any partition-table or filesystem operation:
    information and `lsblk -o NAME,PATH,MODEL,SERIAL,SIZE,TYPE,FSTYPE,MOUNTPOINTS`.
    Check `findmnt` and ensure none of the target's partitions are mounted or
    used as swap. Recheck immediately before each destructive operation.
-2. Prove that a current backup exists on a different physical device or remote
-   system. Inspect its date, contents, and readability; confirm the files
-   needed to reinstall and restore are present. A snapshot on this target does
-   not count as a backup.
+2. No off-disk backup is configured. Identify which existing data must survive
+   the reinstall. For any such data, identify a separate restore source and
+   verify its date, contents, and readability; a snapshot on this target does
+   not count as a separate source. If no verified source exists, stop rather
+   than destroy data that must be retained.
 3. Write down the exact target-specific destructive command(s), verify every
    device path against the recorded identity, and have another person review
    them where possible. If identity, backup, or command is uncertain, stop.
@@ -88,7 +91,8 @@ install so on-device rebuilds use the same configuration.
 Before leaving the installer, establish a working login credential and SSH
 access if needed, and test network access. Do not lose installer access until
 you have confirmed first-login access on the installed system. Restore data to
-`/media` only after verifying the mounted destination and backup source.
+`/media` only if a separate restore source exists and both it and the mounted
+destination have been verified. No such source is currently configured.
 
 ## First boot: credentials and TPM
 
@@ -151,11 +155,11 @@ guarantee application or database consistency.
 ### External media restore (`/media`)
 
 `/media` is a separate exFAT filesystem and is not covered by the Btrfs
-snapper configurations. Restore it from the verified external backup, after
-checking source and destination mounts, free space, and representative backup
-file readability. Same-disk Btrfs snapshots are not independent backups, do
-not cover `/media`, and do not guarantee database-consistent exports. Keep
-database backups made with the application's supported export/backup method.
+Snapper configurations. No off-disk backup or alternate restore source is
+configured, so these snapshots cannot restore `/media`. Same-disk Btrfs
+snapshots are not independent backups, do not cover `/media`, and do not
+guarantee database-consistent exports. Do not proceed with a restore unless a
+separate source is available and its contents have been checked.
 
 ## Snapshots around a risky change
 
@@ -186,7 +190,8 @@ The flake discovers hosts from `hosts/`. Stable machine values belong in
 ## Post-install checks
 
 - Test the charge limit through the configured Panasonic EC interface.
-- Verify `/media` mounts read/write and restore data from the external backup.
+- Verify `/media` mounts read/write. Its contents are not covered by host
+  snapshots, and no external restore source is configured.
 - Configure LTE if present; identify hardware with `lsusb`/`lspci` first.
 - Do not enable general fan-speed control for the CF-FV1. The existing EC quiet
   profile request is model-specific and should not be treated as broad fan
