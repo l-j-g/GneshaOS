@@ -581,6 +581,18 @@ system is still the 2026-09-22 generation and the booted generation is still
 2026-09-20, so this does not measure a boot into the changed configuration.
 BOOT-01 remains pending a reboot and post-boot readiness measurement.
 
+Read-only post-reboot measurement (2026-09-29): `/run/current-system` and
+`/run/booted-system` both resolve to
+`/nix/store/fad866hw4k9ibf6d9crkiril1c7p7nbj-nixos-system-cf-fv1-26.11.20260922.6774f7b`.
+The manager reports the configured 90s start/stop defaults, and
+`systemctl --failed` is empty. `systemd-analyze time` reports 32.127s total
+(11.967s firmware, 1.856s loader, 998ms kernel, 4.790s initrd, 12.515s
+userspace); `graphical.target` was reached 12.515s into userspace. This is a
+measurement from a booted current generation and confirms local graphical
+startup without failed units. It does not exercise slow-network startup or
+demonstrate optional-service readiness under delayed networking, so BOOT-01
+remains open for that behavior check.
+
 ### [ ] NET-01 — Make network exposure match the documented access boundary
 
 Priority: P1. Type: confirmed broad bindings; intended exposure needs decision.
