@@ -780,6 +780,12 @@ to the previous generation, and running Gluetun still publishes TCP and UDP
 reached the live firewall or containers. No activation or container recreation
 was performed; remote interface and VPN ingress tests remain pending.
 
+Post-reboot recheck (2026-09-29): Gluetun is running and healthy, but Docker
+still reports wildcard host bindings for both TCP and UDP 64480. Rebooting into
+the existing generation did not apply the built source change; activation and
+container recreation are still required before the live exposure can be
+rechecked.
+
 ### [ ] AUTH-01 — Gate suspend on lock readiness and align PAM policy with the active locker
 
 Priority: P1. Type: verification gap and naming/policy inconsistency.
