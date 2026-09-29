@@ -302,6 +302,13 @@ is not a replacement and was not installed. `/media` is exFAT mounted with
 host copy remains in the mode-600 path under `~/.config/vpn`. No tunnel was
 started. VPN-01 still requires a separately registered profile.
 
+Current candidate audit (2026-09-29): re-parsed the configured host profile,
+Docker profile, and both available downloaded profiles using the repository's
+strict profile parser. A secret-safe private-key comparison again confirms all
+four share one device identity. No new AirVPN profile is present; no profile was
+copied and no tunnel was started. VPN-01 remains pending the operator supplying
+a separately registered device profile.
+
 ### [x] REC-01 — Correct the installation and snapshot recovery runbook
 
 Priority: P1. Type: confirmed documentation inconsistencies; recovery untested.
