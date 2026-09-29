@@ -57,7 +57,7 @@ let
 
   # Launcher (Manjaro: rofi combi = drun + run).
   rofiLauncher = "${config.home.homeDirectory}/.config/sway/scripts/gnesha-rofi";
-  menu = "${rofiLauncher} -show combi -combi-modes \"drun,run\" -terminal ${term} -show-icons -lines 10";
+  menu = "${rofiLauncher} -modes combi -show combi -combi-modes \"drun,run\" -terminal ${term} -show-icons -lines 10";
 
   # Clipboard picker (rofi + cliphist).
   clipboard = "cliphist list | ${rofiLauncher} -dmenu -p \"Select item to copy\" -lines 10 | cliphist decode | wl-copy";

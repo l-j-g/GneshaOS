@@ -121,16 +121,13 @@ GC roots and logs remain after failure. Retry the exact saved closures with
 `activation-resume ATTEMPT_ID`; this does not re-evaluate the source. Use
 `activation-list` to find an ID and `activation-discard ID` only when you
 explicitly want to release its roots and remove its log. The system retains the
-five newest completed attempts and allows at most three unresolved attempts
-before asking you to resume or discard one. Attempt creation reserves capacity
-under the same lock. After building outside the lock, a rebuild rechecks its
-saved source snapshot under the lock and refuses to activate if the source
-changed while it was building. When the three-attempt limit blocks a new
-activation, the command lists each unresolved ID, phase, and run-log path
-with a phase-specific next step. Failed activation phases require live-state
-inspection before retry; stale-snapshot attempts cannot safely resume and
-should only be discarded when you choose to abandon their saved roots. The
-guard never resumes or discards attempts automatically.
+five newest completed attempts and does not block new activations because
+older attempts remain unresolved. After building outside the lock, a rebuild
+rechecks its saved source snapshot under the lock and refuses to activate if
+the source changed while it was building. Failed activation phases require
+live-state inspection before retry; stale-snapshot attempts cannot safely
+resume and should only be discarded when you choose to abandon their saved
+roots. The helper never resumes or discards attempts automatically.
 
 System and Home Manager activation is sequential, not atomic. A failed Home
 Manager activation can leave the new system generation active; inspect the
