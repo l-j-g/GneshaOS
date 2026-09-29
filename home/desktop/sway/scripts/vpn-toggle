@@ -16,7 +16,11 @@ nmcli_bounded() {
 }
 
 is_active() {
-  nmcli_bounded --terse --fields NAME connection show --active 2>/dev/null \
+  local active_connections
+  if ! active_connections=$(nmcli_bounded --terse --fields NAME connection show --active 2>/dev/null); then
+    return 2
+  fi
+  printf '%s\n' "$active_connections" \
     | grep --fixed-strings --line-regexp --quiet "$connection"
 }
 
@@ -34,8 +38,15 @@ status() {
     emit "󰒄" "unavailable" "AirVPN connection is not configured"
     return
   fi
-  if ! is_active; then
-    emit "󰒄" "stopped" "AirVPN is stopped; host traffic uses direct routes"
+  if is_active; then
+    :
+  else
+    local active_result=$?
+    if (( active_result == 2 )); then
+      emit "󰒄" "unavailable" "Could not read active NetworkManager connections"
+    else
+      emit "󰒄" "stopped" "AirVPN is stopped; host traffic uses direct routes"
+    fi
     return
   fi
 
@@ -78,6 +89,11 @@ toggle() {
       return 1
     fi
   else
+    local active_result=$?
+    if (( active_result == 2 )); then
+      emit "󰒄" "failed" "Could not read active NetworkManager connections; connection was not changed"
+      return 1
+    fi
     if ! nmcli_bounded connection up id "$connection"; then
       emit "󰒄" "failed" "Could not connect AirVPN; check NetworkManager details"
       return 1

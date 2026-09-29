@@ -616,6 +616,7 @@
             bash ${./checks/update-review-stubs.sh} ${./home/shell/update-review.sh}
             bash ${./checks/update-network-readiness-stubs.sh} ${./hosts/cf-fv1/services/update-network-ready.sh}
             bash ${./checks/calcurse-daemon-optin-stubs.sh} ${./home/desktop/sway/scripts/calcurse-daemon-enabled}
+            bash ${./checks/vpn-toggle-stubs.sh} ${./home/desktop/sway/scripts/vpn-toggle}
             bash ${./checks/lock-readiness-stubs.sh} ${./home/shell/lock-readiness.sh}
             touch "$out"
           '';

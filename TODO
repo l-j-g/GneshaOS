@@ -1265,6 +1265,18 @@ activation installed that helper; the AirVPN profile remains inactive. Starting
 the tunnel and checking healthy-handshake, failed-start, and boot behavior
 remain pending an authorized connectivity check.
 
+Active-query failure fix (2026-09-29): if NetworkManager listed the AirVPN
+profile but the bounded active-connection query failed, the helper previously
+misreported it as stopped; the toggle could then try to connect without knowing
+the current state. It now reports that active state is unavailable and refuses
+to change the connection. A fixture reproduced the incorrect `stopped` result
+before the fix and now verifies both status and fail-closed toggle behavior.
+The fixture is wired into the source-script flake check. `nix flake check`, the
+Home Manager activation-package build, Bash syntax, and the focused fixture
+passed. No active NM connection was toggled and no activation was run. Live
+healthy-handshake, failed-start, manual toggle, and boot behavior remain pending
+an authorized connectivity check.
+
 Implementation:
 1. Represent unavailable, stopped, starting, active-but-unverified, healthy, and
    failed states without claiming a handshake from systemd state alone.
