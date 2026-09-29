@@ -124,7 +124,15 @@ in
 
   wayland.windowManager.sway = {
     enable = true;
-    package = pkgs.sway;
+    # Keep Home Manager's default wrapper so greetd launches Sway with the
+    # same Qt theme and plugin paths as a login shell. Otherwise Dolphin
+    # falls back to a white palette despite the generated KDE colour files.
+    extraSessionCommands = ''
+      # The user profile is absent during the sandboxed Sway config check.
+      if [ -r "${config.home.profileDirectory}/etc/profile.d/hm-session-vars.sh" ]; then
+        . "${config.home.profileDirectory}/etc/profile.d/hm-session-vars.sh"
+      fi
+    '';
     systemd.enable = true;
     config = {
       modifier = mod;
