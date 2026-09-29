@@ -16,6 +16,7 @@
   brightnessUp,
   brightnessDown,
   themePicker,
+  scaleScript,
 }:
 let
   m = mod;
@@ -134,9 +135,9 @@ in
   "${m}+Shift+f" = "fullscreen global";
 
   # Scaling
-  "Mod1+plus" = "exec scale.sh up";
-  "Mod1+minus" = "exec scale.sh down";
-  "${m}+equal" = "exec scale.sh default";
+  "Mod1+plus" = "exec ${scaleScript} up";
+  "Mod1+minus" = "exec ${scaleScript} down";
+  "${m}+equal" = "exec ${scaleScript} default";
 
   # Ghostty handles the font-size change natively; release bindings only
   # display the resulting size without stealing the key from the terminal.

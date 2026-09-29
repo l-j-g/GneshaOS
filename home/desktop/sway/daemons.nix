@@ -60,6 +60,8 @@ in
     settings = {
       # Use explicit scales instead of DPI-based auto-scaling.
       AUTO_SCALE = false;
+      # The scale shortcut reports the factor without a verbose display toast.
+      CALLBACK_CMD = "";
 
       # The BenQ's native scale makes UI text too small in practice.
       SCALE = [

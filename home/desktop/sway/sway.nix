@@ -65,6 +65,7 @@ let
   # Use an absolute path because Sway may be launched before Home Manager's
   # sessionPath is loaded into its environment.
   themePicker = "${config.home.homeDirectory}/.config/sway/scripts/theme-picker";
+  scaleScript = "${config.home.homeDirectory}/.config/sway/scripts/scale.sh";
 
   # SwayOSD owns volume/brightness changes and displays the matching OSD.
   volumeUp = "swayosd-client --output-volume raise";
@@ -89,6 +90,7 @@ let
       brightnessUp
       brightnessDown
       themePicker
+      scaleScript
       ;
   };
 in
