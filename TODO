@@ -546,6 +546,15 @@ system activation after `sudo` timed out waiting for a password, and one
 `blocked_stale_snapshot` attempt. The activation guard still blocks another
 system activation until these are individually resolved.
 
+Failed-attempt inspection (2026-09-29): `rebuild-20260927T062450Z-903831`
+records identical old and candidate NixOS and Home Manager generations. Its
+log shows system activation stopped because `sudo` timed out waiting for a
+password; `/run/current-system` and `/run/booted-system` still match the
+recorded old system generation, and `systemctl --failed` is empty. This
+indicates no generation change occurred, but the attempt was preserved as
+requested and not resumed or discarded. `rebuild-20260927T120801Z-1084346`
+remains `blocked_stale_snapshot` and untouched.
+
 Non-activating Home Manager build (2026-09-29): the activation package builds
 with both the detailed attempt guidance and the source removal for
 `swayest-workstyle`. The package's generated user units contain no workstyle
