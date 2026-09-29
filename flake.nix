@@ -143,7 +143,6 @@
             variables.idleDimSec
             variables.idleLockSec
             variables.idleOffSec
-            variables.idleSuspendSec
           ];
         in
         builtins.isInt variables.terminalFontSize
@@ -156,9 +155,13 @@
         && isNumber variables.browserDefaultZoom
         && variables.browserDefaultZoom > 0
         && builtins.all (value: builtins.isInt value && value > 0) idleValues
+        && (
+          variables.idleSuspendSec == null
+          || (builtins.isInt variables.idleSuspendSec && variables.idleSuspendSec > variables.idleOffSec)
+        )
         && variables.idleDimSec < variables.idleLockSec
         && variables.idleLockSec < variables.idleOffSec
-        && variables.idleOffSec < variables.idleSuspendSec
+        && builtins.isBool variables.lidCloseSuspendOnBattery
         && builtins.isInt variables.idleDimPercent
         && variables.idleDimPercent >= 0
         && variables.idleDimPercent <= 100
@@ -207,7 +210,7 @@
           || throw "${hostName}/home-variables.nix must use known Home Manager preference names and matching types";
         assert
           validHomeVariables variables
-          || throw "Home Manager preferences need positive font/scale/zoom values, absolute paths, and idleDim < idleLock < idleOff < idleSuspend";
+          || throw "Home Manager preferences need positive font/scale/zoom values, absolute paths, ordered idle timers, and boolean lidCloseSuspendOnBattery";
         {
           inherit
             hostName

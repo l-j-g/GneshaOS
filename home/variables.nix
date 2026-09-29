@@ -51,12 +51,13 @@
   # to another 0x0-compatible endpoint or leave it unchanged to keep uploads.
   screenshotUploadUrl = "https://x0.at/";
 
-  # Lock on either power source; suspend remains battery-only.
-  idleLockSec = 300;
-  # Seconds before Sway dims the display, turns it off, and suspends on battery.
-  idleDimSec = 240;
-  idleOffSec = 600;
-  idleSuspendSec = 900;
+  # Idle timers in seconds. Set idleSuspendSec to null to disable idle suspend.
+  idleDimSec = 900;
+  idleLockSec = 1200;
+  idleOffSec = 1800;
+  idleSuspendSec = null;
+  # Lock and suspend on battery when the lid closes; AC closes only lock.
+  lidCloseSuspendOnBattery = true;
 
   # Brightness percentage used during the idle dim step.
   idleDimPercent = 10;

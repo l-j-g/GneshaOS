@@ -34,6 +34,8 @@ in
         command = "${pkgs.sway}/bin/swaymsg \"output * power off\"";
         resumeCommand = "${pkgs.sway}/bin/swaymsg \"output * power on\"";
       }
+    ]
+    ++ lib.optionals (variables.idleSuspendSec != null) [
       {
         timeout = variables.idleSuspendSec;
         command = "${config.home.profileDirectory}/bin/gnesha-lock-and-suspend";
@@ -46,6 +48,7 @@ in
       before-sleep = "${config.home.profileDirectory}/bin/gnesha-lock";
       lock = "${config.home.profileDirectory}/bin/gnesha-lock";
       after-resume = "${pkgs.sway}/bin/swaymsg 'output * power on'";
+      unlock = "${pkgs.sway}/bin/swaymsg 'output * power on'";
     };
     systemdTargets = [ sessionTarget ];
   };
@@ -160,8 +163,8 @@ in
     Install.WantedBy = [ sessionTarget ];
   };
 
-  # --- Auto split orientation.
-  systemd.user.services.autotiling = {
+  # --- Optional auto split orientation.
+  systemd.user.services.autotiling = lib.mkIf variables.autotilingEnabled {
     Unit = {
       Description = "Autotiling for Sway";
       PartOf = [ sessionTarget ];

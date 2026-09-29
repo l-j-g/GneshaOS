@@ -4,6 +4,7 @@
   config,
   pkgs,
   lib,
+  variables,
   ...
 }:
 
@@ -77,7 +78,12 @@ in
     button { border-radius: 0; }
   '';
   wayland.windowManager.sway.extraConfig = ''
-    bindswitch --locked lid:on exec ${lockAndSuspend}/bin/gnesha-lock-and-suspend --lid
+    bindswitch --locked lid:on exec ${
+      if variables.lidCloseSuspendOnBattery then
+        "${lockAndSuspend}/bin/gnesha-lock-and-suspend --lid"
+      else
+        "${lock}/bin/gnesha-lock"
+    }
   '';
 
   # Retain a known fallback during migration to the new locker.
