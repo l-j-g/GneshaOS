@@ -1414,6 +1414,15 @@ or container is present on cf-fv1. This confirms the source database is not
 locally discoverable here; it does not rule out a remote source. The service,
 database owner, and export method remain unidentified.
 
+Live preflight check (2026-09-29): the active system's `ghostfolio-preflight`
+fails safely before Docker or data work because its generation still points to
+`/home/lg/src/ghostfolio/secrets.env`. The current source points to
+`/home/lg/.config/containers/ghostfolio/secrets.env`; that runtime path remains
+absent, and no Ghostfolio container exists. No secret values were read or
+printed, and no files or containers were changed. The path correction requires
+a later NixOS activation; source-owner discovery and a disposable restore are
+still external prerequisites.
+
 ### [x] GF-02 — Bound and make Ghostfolio import/update retries safe
 
 Priority: P1 before enabling Ghostfolio. Type: confirmed migration risks.
