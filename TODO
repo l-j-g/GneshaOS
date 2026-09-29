@@ -1331,6 +1331,15 @@ image pull, update, restart, or other container mutation occurred. This verifies
 the readiness path against the current stack, but does not verify readiness
 after a live image update or rollback retention, so ARR-01 remains open.
 
+Current-stack revalidation (2026-09-29): `arr-doctor` exits successfully. All
+seven services are running, Gluetun is healthy, qBittorrent shares Gluetun's
+network namespace, all six local HTTP endpoints return accepted status codes,
+and the Gluetun HTTPS proxy check passes. The lock JSON has seven service
+entries, and each running container's configured image reference and resolved
+image ID match its lock entry. No previous manifest or `:gnesha-rollback` tags
+exist. No pull or container mutation was performed; live update readiness and
+rollback retention remain unverified.
+
 ### [x] ARR-02 — Remove remaining mount and WireGuard address assumptions
 
 Priority: P2. Type: portability/configuration consistency.
