@@ -816,6 +816,12 @@ publication and global firewall openings while retaining Gluetun's
 unchanged until a NixOS activation and container recreation; no system
 activation was run.
 
+Current live binding check (2026-09-29): read-only Docker inspection still
+reports TCP and UDP 64480 published with an empty `HostIp`, while
+`docker-compose.service` is active on the prior system generation. The source
+policy has not reached the running containers. No firewall or container
+changes were made; NixOS activation and container recreation remain pending.
+
 ### [ ] AUTH-01 — Gate suspend on lock readiness and align PAM policy with the active locker
 
 Priority: P1. Type: verification gap and naming/policy inconsistency.
