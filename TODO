@@ -1563,6 +1563,12 @@ verification passed, and starting the unit with the config absent yielded
 `Result=exec-condition`; no Calcurse directory or data was created. The config
 was left untouched.
 
+Calcurse revalidation (2026-09-29): the standalone opt-in fixture passed again,
+and the active user unit reports `LoadState=loaded`, `ActiveState=inactive`,
+`SubState=dead`, `Result=exec-condition`. `~/.calcurse/conf` remains absent and
+no Calcurse process is running. The desktop helper flake check also builds; its
+recorder/overlay behaviors remain fixture-only pending a safe live session.
+
 Post-reboot workspace-icon report (2026-09-29): the user reported app-based
 workspace icons returned. The user journal confirms the old
 `swayest-workstyle.service` started at 23:13 and ran for about two minutes. The
