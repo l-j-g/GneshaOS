@@ -1,6 +1,7 @@
 # Dictation
 
-The CF-FV1's **変換** key immediately right of Space toggles recording.
+The CF-FV1's **変換** key immediately right of Space (reported by Sway as
+`XF86Tools`) toggles recording.
 Press once, speak, then press again. **Shift+変換** cancels without typing.
 This replaces the old hold-for-HJKL-arrows layer. 無変換 remains Escape.
 

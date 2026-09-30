@@ -71,6 +71,8 @@ in
 
   wayland.windowManager.sway.config.keybindings = {
     "--no-repeat F13" = "exec ${lib.getExe pkgs.voxtype} record toggle";
+    "--no-repeat XF86Tools" = "exec ${lib.getExe pkgs.voxtype} record toggle";
     "Shift+F13" = "exec ${lib.getExe pkgs.voxtype} record cancel";
+    "Shift+XF86Tools" = "exec ${lib.getExe pkgs.voxtype} record cancel";
   };
 }
