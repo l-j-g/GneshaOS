@@ -45,7 +45,7 @@ in
       notification = {
         on_recording_start = true;
         on_recording_stop = true;
-        on_transcription = false;
+        on_transcription = true;
       };
       post_process = {
         command = "${cleanupCommand}";

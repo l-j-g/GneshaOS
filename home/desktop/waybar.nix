@@ -128,6 +128,8 @@ in
       };
 
       "pulseaudio#microphone" = {
+        format = "{format_source}";
+        target = "source";
         format-source = "󰍬";
         format-source-muted = "󰍭";
         tooltip-format = "Microphone: {source_desc}\n{source_volume}%";
