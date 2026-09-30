@@ -28,7 +28,7 @@ in
     state_file = "auto";
     hotkey.enabled = false;
     audio = {
-      device = "default";
+      device = "pipewire";
       max_duration_secs = 120;
     };
     whisper = {
@@ -38,7 +38,7 @@ in
       on_demand_loading = true;
     };
     output = {
-      mode = "type";
+      mode = "paste";
       auto_submit = false;
       shift_enter_newlines = true;
       fallback_to_clipboard = true;

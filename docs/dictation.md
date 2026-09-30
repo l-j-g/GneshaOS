@@ -10,8 +10,9 @@ Voxtype transcribes locally with Whisper, then OpenCode Go's
 sent to OpenCode's API using the existing credential in
 `~/.local/share/opencode/auth.json`; it is typed into the focused app and
 never automatically submitted. Keep the destination focused until typing
-finishes. If cleanup fails or takes over 25 seconds, Voxtype uses the
-original transcription. Review model output before sending it.
+finishes. Voxtype pastes the result and keeps a clipboard fallback. If
+cleanup fails or takes over 25 seconds, it uses the original transcription.
+Review model output before sending it.
 
 Preferences are in `home/variables.nix`, under `dictation`. The defaults
 are English `base.en` speech recognition and OpenCode Go
