@@ -16,7 +16,7 @@ in
     enable = true;
     settings = {
       anchor = "top-right";
-      width = 560;
+      width = 0;
       height = 220;
       default-timeout = 5000;
       background-color = v.bg;
