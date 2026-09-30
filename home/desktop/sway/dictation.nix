@@ -52,6 +52,7 @@ in
         timeout_ms = 30000;
       };
     };
+    osd.enabled = false;
   };
 
   systemd.user.services.voxtype = {

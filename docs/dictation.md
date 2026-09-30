@@ -18,9 +18,10 @@ are English `base.en` speech recognition and OpenCode Go
 recognition while using the subscription's hosted model.
 
 After an explicitly approved system/Home Manager activation, the first
-session start downloads the models into user-owned storage. Allow several
-minutes and network access for that first start. Subsequent starts reuse
-the downloaded models. Recording notifications indicate start and stop.
+session start downloads the speech model into user-owned storage. Allow
+network access for that first start. Desktop notifications indicate start
+and stop; the optional Voxtype waveform OSD is disabled because the packaged
+daemon does not include an OSD frontend.
 The microphone's existing mute state is respected; unmute it with the
 microphone mute key or the audio controls before dictating.
 
