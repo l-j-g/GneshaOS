@@ -40,6 +40,7 @@ in
         "battery"
         "backlight"
         "pulseaudio"
+        "pulseaudio#microphone"
         "memory"
         "cpu"
         "clock"
@@ -124,6 +125,14 @@ in
         };
         on-click = "pavucontrol";
         scroll-step = 2;
+      };
+
+      "pulseaudio#microphone" = {
+        format-source = "󰍬";
+        format-source-muted = "󰍭";
+        tooltip-format = "Microphone: {source_desc}\n{source_volume}%";
+        tooltip-format-source-muted = "Microphone muted\nClick to unmute";
+        on-click = "swayosd-client --input-volume mute-toggle";
       };
 
       battery = {
