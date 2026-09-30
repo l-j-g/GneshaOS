@@ -5,9 +5,17 @@
 # Stable machine values belong in ../system-parameters.nix instead.
 
 {
+  # Local dictation: 変換 (right of Space) toggles recording; Shift cancels.
+  # Larger speech/cleanup models trade latency and memory for accuracy.
+  dictation = {
+    speechModel = "base.en";
+    language = "en";
+    cleanupModel = "glm-5.3-flash";
+  };
+
   # Base16 theme name. Use "matrix-green" or any scheme exposed by
   # nix-colors, such as "ayu-dark", "dracula", or "nord".
-  themeName = "ashes";
+  themeName = "phd";
 
   # Default webpage zoom for Firefox and LibreWolf (1.5 = 150%). Browser UI
   # scaling and any saved per-site zoom choices remain independent.
@@ -27,11 +35,15 @@
   # Sway output scale. "1" is 100%, "2" is 200% HiDPI. Fractional values
   # such as "1.5" are also accepted by Sway. The scale helper's "default"
   # command resets to this value.
-  displayScale = "2";
+  displayScale = "1";
 
   # Inner and outer gaps between Sway windows, in pixels.
   gapsInner = 5;
   gapsOuter = 5;
+
+  # Automatically choose split orientation in Sway. Disable to keep manual
+  # split direction keybindings in control.
+  autotilingEnabled = false;
 
   # Font family used by Kitty. The generic alias resolves to bitmap Terminus
   # through modules/fonts.nix.

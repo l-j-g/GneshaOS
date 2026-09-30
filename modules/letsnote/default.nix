@@ -17,7 +17,7 @@ in
     '';
     jisKeys = lib.mkEnableOption ''
       keyd remap for the dead JIS keys (無変換/変換/かな) that have no US-layout
-      binding: 無変換 -> Escape, 変換 (held) -> HJKL arrows layer,
+      binding: 無変換 -> Escape, 変換 -> F13 (desktop dictation),
       かな -> Right Alt.
     '';
   };
@@ -56,16 +56,10 @@ in
             main = {
               # 無変換 (left of space) -> Escape
               muhenkan = "escape";
-              # 変換 (right of space) held -> arrow layer
-              henkan = "layer(arrows)";
+              # 変換 (right of space) -> dedicated desktop dictation key
+              henkan = "f13";
               # かな -> Right Alt (AltGr symbols)
               katakanahiragana = "layer(altgr)";
-            };
-            arrows = {
-              h = "left";
-              j = "down";
-              k = "up";
-              l = "right";
             };
           };
         };

@@ -7,5 +7,6 @@
     ./swaylock.nix
     ./daemons.nix
     ./scripts.nix
+    ./dictation.nix
   ];
 }
