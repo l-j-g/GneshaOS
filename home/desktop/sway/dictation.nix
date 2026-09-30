@@ -35,7 +35,9 @@ in
       model = cfg.speechModel;
       language = cfg.language;
       threads = 4;
-      on_demand_loading = true;
+      # Keep the 147 MiB Whisper model resident so every utterance avoids
+      # paying the model startup cost again.
+      on_demand_loading = false;
     };
     output = {
       mode = "paste";
