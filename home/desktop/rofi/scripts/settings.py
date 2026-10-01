@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Rofi editor for literal preferences in home/variables.nix."""
+"""Rofi editor for literal preferences in home/variables.nix.
+
+Rows come from the preference file itself: the key gives the label, the comment
+above the assignment is the description, and the saved value decides how a new
+one is asked for. A preference nothing reads is hidden, because editing it would
+change nothing.
+"""
 import fcntl
-import json
 import html
-import math
+import json
 import os
 from pathlib import Path
 import re
@@ -11,39 +16,9 @@ import subprocess
 import sys
 import tempfile
 
-# key: (label, short help, input kind). Saved values always come from Nix.
-FIELDS = {
-    'terminalFontFamily': ('Monospace font', 'Fontconfig family for terminals and desktop text', 'font'),
-    'terminalFontSize': ('Font size', 'Points; Terminus supports 12,14,16,18,20,22,24,28,32', 'int'),
-    'stackedViewFontSize': ('Window title size', 'Font size in points for stacked and tabbed titles', 'int'),
-    'themeName': ('Theme', 'Base16 colour scheme', 'theme'),
-    'displayScale': ('Display scale', 'Scale factor, for example 1, 1.25, 1.5 or 2', 'scale'),
-    'browserDefaultZoom': ('Browser zoom', 'Webpage zoom factor from 0.3 to 5.0, for example 1.5', 'float'),
-    'gapsInner': ('Inner gaps', 'Pixels between windows; zero removes gaps', 'int'),
-    'gapsOuter': ('Outer gaps', 'Pixels around workspaces; zero removes gaps', 'int'),
-    'autotilingEnabled': ('Automatic tiling', 'Auto-orient new windows to their shape', 'bool'),
-    'autoBrightness': ('Automatic brightness', 'Let wluma learn brightness from ambient light', 'bool'),
-    'idleDimSec': ('Dim after', 'Idle seconds before dimming; must precede locking', 'int'),
-    'idleLockSec': ('Lock after', 'Idle seconds before locking; between dim and screen off', 'int'),
-    'idleOffSec': ('Screen off after', 'Idle seconds before powering displays off', 'int'),
-    'idleSuspendSec': ('Suspend after', 'Idle seconds after screen off, or disabled', 'nullable-int'),
-    'idleDimPercent': ('Dim brightness', 'Brightness level from 0 to 100 percent', 'int'),
-    'lidCloseSuspendOnBattery': ('Suspend on lid close', 'Suspend on battery when the lid closes', 'bool'),
-    'terminal': ('Terminal', 'Default terminal application', 'terminal'),
-    'screenshotDir': ('Screenshot folder', 'Absolute path for screenshots', 'path'),
-    'screenshotUploadUrl': ('Screenshot upload URL', 'Anonymous image upload service URL', 'text'),
-    'gitUserName': ('Git name', 'Author name for commits', 'text'),
-    'gitUserEmail': ('Git email', 'Author email for commits', 'text'),
-    'publicKeyFile': ('Public key file', 'Absolute path to your public PGP key', 'path'),
-    'dictation.speechModel': ('Dictation speech model', 'Installed Voxtype speech model name', 'text'),
-    'dictation.language': ('Dictation language', 'Speech language code, for example en or ja', 'text'),
-    'dictation.cleanupModel': ('Dictation cleanup model', 'Cleanup model name; does not install models', 'text'),
-    'hermesMacTunnelEnable': ('Hermes tunnel', 'Enable the SSH tunnel and its launcher', 'bool'),
-    'hermesSshHost': ('Hermes SSH host', 'Trusted SSH host alias', 'text'),
-    'hermesLocalPort': ('Hermes local port', 'Local listening port, 1–65535', 'int'),
-    'hermesRemotePort': ('Hermes remote port', 'Remote service port, 1–65535', 'int'),
-}
-NATIVE_SIZES = [12, 14, 16, 18, 20, 22, 24, 28, 32]
+COMMENT = re.compile(r'^\s*#\s?(.*)$')
+ASSIGNMENT = re.compile(r'^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?);\s*$')
+REFERENCE = re.compile(r'\bvariables\.((?:[A-Za-z_][A-Za-z0-9_]*\.)*[A-Za-z_][A-Za-z0-9_]*)')
 
 
 def read_values(path):
@@ -59,6 +34,92 @@ def get_value(values, key):
     return values
 
 
+def flatten(values, prefix=''):
+    keys = []
+    for name, value in values.items():
+        key = prefix + name
+        keys.extend(flatten(value, key + '.') if isinstance(value, dict) else [key])
+    return keys
+
+
+def documented(source):
+    """Map each preference to the comment block written directly above it.
+
+    The comment is the description, so a preference is documented in exactly one
+    place: the file that stores it.
+    """
+    docs, pending = {}, []
+    for line in source.splitlines():
+        comment = COMMENT.match(line)
+        if comment:
+            pending.append(comment.group(1).strip())
+        elif assignment := ASSIGNMENT.match(line):
+            docs[assignment.group(1)] = ' '.join(pending).strip()
+            pending = []
+        elif line.strip():
+            pending = []
+    return docs
+
+
+def referenced_keys(repo):
+    """Preferences some module still reads, or None if the tree is unreadable."""
+    try:
+        root = Path(repo)
+        preferences = root / 'home/variables.nix'
+        used = set()
+        for path in root.rglob('*.nix'):
+            if path == preferences or '.git' in path.parts:
+                continue
+            used.update(REFERENCE.findall(path.read_text()))
+        return used
+    except OSError:
+        return None
+
+
+def kind_of(value):
+    """How to ask for a new value, decided by the saved one."""
+    if isinstance(value, bool):
+        return 'bool'
+    if value is None:
+        return 'nullable-int'
+    if isinstance(value, int):
+        return 'int'
+    if isinstance(value, float):
+        return 'float'
+    if isinstance(value, str):
+        try:
+            float(value)
+        except ValueError:
+            return 'text'
+        # A quoted number is a scale factor, kept as text so "1.5" survives a save.
+        return 'scale'
+    return 'text'
+
+
+def catalog(path, values):
+    """Preference rows in file order, with their help text and input kinds."""
+    docs = documented(path.read_text())
+    return [{
+        'key': key,
+        'help': docs.get(key.split('.')[-1], ''),
+        'kind': kind_of(get_value(values, key)),
+    } for key in flatten(values)]
+
+
+def visible_keys(entries, used=None):
+    """Rows whose value a module still reads. All of them when `used` is None.
+
+    A module that reads a whole group, such as `variables.dictation`, counts for
+    every preference inside it.
+    """
+    if used is None:
+        return [entry['key'] for entry in entries]
+    def read(key):
+        parts = key.split('.')
+        return any('.'.join(parts[:depth]) in used for depth in range(len(parts), 0, -1))
+    return [entry['key'] for entry in entries if read(entry['key'])]
+
+
 def encode(value):
     if isinstance(value, str):
         if not all(c.isprintable() for c in value):
@@ -68,8 +129,6 @@ def encode(value):
 
 
 def replace_value(source, key, value):
-    if key not in FIELDS:
-        raise ValueError('Unknown preference.')
     leaf = key.split('.')[-1]
     # Deliberately support only a unique, one-line literal assignment. Refuse
     # expressions or ambiguous keys instead of trying to rewrite arbitrary Nix.
@@ -83,52 +142,47 @@ def replace_value(source, key, value):
     return source[:match.start(2)] + encode(value) + source[match.end(2):]
 
 
-def validate(values):
-    for key, (_, _, kind) in FIELDS.items():
-        value = get_value(values, key)
-        if kind == 'bool' and type(value) is not bool:
+def check_value(entry, value):
+    """One saved value against the kind its own literal implies."""
+    key, kind = entry['key'], entry['kind']
+    if kind == 'bool':
+        if type(value) is not bool:
             raise ValueError(f'{key} must be on or off.')
-        if kind in ('int', 'nullable-int'):
-            if kind == 'nullable-int' and value is None:
-                continue
-            minimum = 0 if key in ('gapsInner', 'gapsOuter', 'idleDimPercent') else 1
-            if type(value) is not int or value < minimum:
-                raise ValueError(f'{key} must be an integer of at least {minimum}.')
-        if kind in ('scale', 'float'):
-            try:
-                number = json.loads(value) if kind == 'scale' else value
-                if type(number) not in (int, float):
-                    raise ValueError()
-            except (TypeError, ValueError):
-                raise ValueError(f'{key} must be a positive number.') from None
-            if not math.isfinite(number) or number <= 0:
-                raise ValueError(f'{key} must be a positive finite number.')
-        if kind not in ('bool', 'int', 'nullable-int', 'float'):
-            if not isinstance(value, str) or not value or not all(c.isprintable() for c in value):
-                raise ValueError(f'{key} must be nonempty, single-line text.')
-        if kind == 'path' and not Path(value).is_absolute():
-            raise ValueError(f'{key} needs an absolute path beginning with /.')
-    if not 0.3 <= values['browserDefaultZoom'] <= 5.0:
-        raise ValueError('Browser zoom must be between 0.3 and 5.0.')
+    elif kind in ('int', 'nullable-int'):
+        if value is None:
+            if kind != 'nullable-int':
+                raise ValueError(f'{key} must not be empty.')
+        elif type(value) is not int:
+            raise ValueError(f'{key} must be a whole number.')
+        elif value < 0:
+            raise ValueError(f'{key} cannot be negative.')
+    elif kind in ('float', 'scale'):
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            raise ValueError(f'{key} must be a number.') from None
+        if number != number or number in (float('inf'), float('-inf')):
+            raise ValueError(f'{key} must be a finite number.')
+        if number <= 0:
+            raise ValueError(f'{key} must be greater than zero.')
+    elif not isinstance(value, str) or not value or not all(c.isprintable() for c in value):
+        raise ValueError(f'{key} must be nonempty, single-line text.')
+
+
+def validate(entries, values, font_sizes=()):
+    for entry in entries:
+        check_value(entry, get_value(values, entry['key']))
     if not values['idleDimSec'] < values['idleLockSec'] < values['idleOffSec']:
         raise ValueError('Idle times must increase: dim < lock < screen off.')
     if values['idleSuspendSec'] is not None and values['idleSuspendSec'] <= values['idleOffSec']:
         raise ValueError('Suspend must be later than screen off, or disabled.')
-    if values['idleDimPercent'] > 100:
-        raise ValueError('Dim brightness must be between 0 and 100.')
-    if any(values[k] > 65535 for k in ('hermesLocalPort', 'hermesRemotePort')):
-        raise ValueError('Ports must be between 1 and 65535.')
-    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*', values['hermesSshHost']):
-        raise ValueError('Use an SSH host alias containing letters, numbers, dots, underscores or hyphens.')
-    if not re.fullmatch(r'https?://[A-Za-z0-9._~:/?#\[\]@%+,=-]+', values['screenshotUploadUrl']):
-        raise ValueError('Use an http(s) upload URL; percent-encode spaces and special characters.')
     if values['terminalFontFamily'] in ('monospace', 'sans-serif', 'serif'):
         raise ValueError('Select a real font family; Fontconfig supplies the monospace alias.')
-    if values['terminalFontFamily'] == 'Terminus' and values['terminalFontSize'] not in NATIVE_SIZES:
-        raise ValueError('Terminus needs one of these sizes: ' + ', '.join(map(str, NATIVE_SIZES)))
+    if font_sizes and values['terminalFontFamily'] == 'Terminus' and values['terminalFontSize'] not in font_sizes:
+        raise ValueError('Terminus needs one of these sizes: ' + ', '.join(map(str, font_sizes)))
 
 
-def save_value(path, original, key, value, state_root):
+def save_value(path, original, key, value, state_root, entries, font_sizes=()):
     state_root.mkdir(mode=0o700, parents=True, exist_ok=True)
     with (state_root/'activation.lock').open('a') as lock:
         try:
@@ -145,7 +199,7 @@ def save_value(path, original, key, value, state_root):
                 stream.write(updated)
             candidate.chmod(path.stat().st_mode & 0o777)
             evaluated = read_values(candidate)
-            validate(evaluated)
+            validate(entries, evaluated, font_sizes)
             if get_value(evaluated, key) != value:
                 raise ValueError('The edited assignment did not change the expected preference.')
             if path.read_text() != original:
@@ -178,30 +232,45 @@ def menu(rows, prompt, message='', custom=False, initial=''):
     raise ValueError('Rofi returned an invalid selection.')
 
 
-def choose_value(key, current, config):
-    label, description, kind = FIELDS[key]
-    rows = []
-    if kind == 'font':
+# Preferences with a menu instead of a prompt, because the candidates come from
+# somewhere the editor can read: the installed font families, the generated theme
+# catalog, and the terminals this configuration actually enables.
+MENUS = {
+    'terminalFontFamily': 'fonts',
+    'themeName': 'themeNames',
+    'terminal': 'terminals',
+}
+
+
+def candidate_rows(entry, config):
+    offered = MENUS.get(entry['key'])
+    if offered == 'fonts':
         output = subprocess.check_output(['fc-list', '-f', '%{family}\n'], text=True)
-        rows = sorted({s.strip() for line in output.splitlines() for s in line.split(',') if s.strip()}, key=str.casefold)
-    elif kind == 'theme':
-        rows = Path(config['themeNames']).read_text().splitlines()
-    elif kind == 'bool':
-        rows = ['On', 'Off']
-    elif kind == 'terminal':
-        rows = ['ghostty', 'kitty']
+        return sorted({s.strip() for line in output.splitlines() for s in line.split(',') if s.strip()}, key=str.casefold)
+    if offered == 'themeNames':
+        return Path(config['themeNames']).read_text().splitlines()
+    if offered == 'terminals':
+        return list(config['terminals'])
+    if entry['kind'] == 'bool':
+        return ['On', 'Off']
+    return []
+
+
+def choose_value(entry, current, config):
+    label, kind = entry['key'], entry['kind']
+    rows = candidate_rows(entry, config)
     if rows:
-        index = menu(rows, label, description + f' • Saved: {current}')
+        index = menu(rows, label, entry['help'] + f' • Saved: {current}')
         if index is None:
             return None, False
         return ((index == 0) if kind == 'bool' else rows[index]), True
-    raw = menu([], label, description, custom=True, initial='disabled' if current is None else str(current))
+    raw = menu([], label, entry['help'], custom=True, initial='disabled' if current is None else str(current))
     if raw is None:
         return None, False
     if kind == 'nullable-int' and raw.strip().lower() in ('disabled', 'null', 'off'):
         return None, True
     try:
-        value = int(raw) if kind in ('int', 'nullable-int') else float(raw) if kind == 'float' else raw
+        value = int(raw) if kind in ('int', 'nullable-int') else float(raw) if kind in ('float', 'scale') else raw
     except ValueError:
         raise ValueError('Enter a valid number.') from None
     return value, True
@@ -215,11 +284,14 @@ def launch_apply(config):
 def run(config):
     path = Path(config['repo'])/'home/variables.nix'
     state_root = Path(config['stateRoot'])
-    keys = list(FIELDS)
+    font_sizes = config.get('fontSizes', [])
     while True:
         original = path.read_text()
         values = read_values(path)
-        rows = [f'{FIELDS[k][0]}  [{get_value(values, k)}] — {FIELDS[k][1]} ({k})' for k in keys]
+        entries = catalog(path, values)
+        by_key = {entry['key']: entry for entry in entries}
+        keys = visible_keys(entries, referenced_keys(config['repo']))
+        rows = [f'{by_key[k]["key"]}  [{get_value(values, k)}] — {by_key[k]["help"]} ({k})' for k in keys]
         rows.append('Apply saved settings — Build and activate Home Manager')
         index = menu(rows, 'Settings', 'Search by name or description • Values shown are saved preferences')
         if index is None:
@@ -241,18 +313,18 @@ def run(config):
                     pass
                 else:
                     raise ValueError(f'This preference is overridden in {override}; edit that file instead.')
-            value, selected = choose_value(key, get_value(values, key), config)
+            value, selected = choose_value(by_key[key], get_value(values, key), config)
             if not selected or value == get_value(values, key):
                 continue
             action = menu(['Save only', 'Save and apply', 'Cancel'], 'Save setting',
-                          f'{FIELDS[key][0]}: {get_value(values, key)} → {value}\nApply rebuilds the saved Home Manager configuration, including other pending edits.')
+                          f'{by_key[key]["key"]}: {get_value(values, key)} → {value}\nApply rebuilds the saved Home Manager configuration, including other pending edits.')
             if action is None or action == 2:
                 continue
-            save_value(path, original, key, value, state_root)
+            save_value(path, original, key, value, state_root, entries, font_sizes)
             if action == 1:
                 launch_apply(config)
                 return
-            subprocess.run(['notify-send', 'Setting saved', FIELDS[key][0] + ' — apply with home-rebuild when ready'], check=False)
+            subprocess.run(['notify-send', 'Setting saved', by_key[key]['key'] + ' — apply with home-rebuild when ready'], check=False)
         except (ValueError, OSError, subprocess.SubprocessError) as error:
             subprocess.run(['gnesha-rofi', '-e', html.escape(str(error))], check=False)
 

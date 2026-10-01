@@ -8,8 +8,11 @@
   # Local dictation: hold 変換 (right of Space) to record; Shift cancels.
   # Larger speech/cleanup models trade latency and memory for accuracy.
   dictation = {
+    # Name of a Whisper speech model that `voxtype setup` has downloaded.
     speechModel = "base.en";
+    # Language code passed to the speech model, for example en or ja.
     language = "en";
+    # Model used to clean up dictated text; larger models are more accurate.
     cleanupModel = "glm-5.3-flash";
   };
 
@@ -23,6 +26,7 @@
 
   # Name and email written into commits made with the configured Git client.
   gitUserName = "lg";
+  # Email address recorded in commits alongside the author name.
   gitUserEmail = "lg@lgreve.com";
 
   # Public PGP key file shown and optionally copied by the `pubkey` command.
@@ -37,8 +41,9 @@
   # command resets to this value.
   displayScale = "1";
 
-  # Inner and outer gaps between Sway windows, in pixels.
+  # Gap between Sway windows, in pixels; zero removes the gap entirely.
   gapsInner = 5;
+  # Gap around the workspace edge, in pixels; zero removes the gap entirely.
   gapsOuter = 5;
 
   # Automatically choose split orientation in Sway for newly mapped windows.
@@ -66,10 +71,14 @@
   # to another 0x0-compatible endpoint or leave it unchanged to keep uploads.
   screenshotUploadUrl = "https://x0.at/";
 
-  # Idle timers in seconds. Set idleSuspendSec to null to disable idle suspend.
+  # Idle timers in seconds, which must increase in this order.
+  # Dim the screen this long after the last input.
   idleDimSec = 900;
+  # Lock the screen this long after the last input.
   idleLockSec = 1200;
+  # Power the displays off this long after the last input.
   idleOffSec = 1800;
+  # Suspend this long after the displays go off; null disables idle suspend.
   idleSuspendSec = null;
   # Lock and suspend on battery when the lid closes; AC closes only lock.
   lidCloseSuspendOnBattery = true;
@@ -84,7 +93,10 @@
   # Start the Hermes tunnel and show its launcher together. SSH must have a
   # trusted known_hosts entry for this alias before the tunnel can connect.
   hermesMacTunnelEnable = true;
+  # SSH host alias of the MacBook, as known to ssh on this machine.
   hermesSshHost = "mac";
+  # Local port the tunnel listens on for the Hermes UI.
   hermesLocalPort = 19119;
+  # Port the Hermes agent listens on, on the MacBook.
   hermesRemotePort = 9119;
 }
