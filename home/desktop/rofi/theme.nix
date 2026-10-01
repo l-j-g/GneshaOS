@@ -9,7 +9,7 @@
 }:
 
 let
-  v = import ../theme/palette.nix { inherit config pkgs; };
+  v = import ../../theme/palette.nix { inherit config pkgs; };
   # Rofi 2.x rejects inline themes passed as `@theme "<content>"`.
   # Home-manager emits a proper `@theme "custom"` when `theme` is an attrset,
   # writing the content to ~/.local/share/rofi/themes/custom.rasi.
@@ -48,9 +48,6 @@ let
 in
 {
   programs.rofi = {
-    enable = true;
-    package = pkgs.rofi;
-    terminal = variables.terminal;
     theme = {
       "*" = {
         font = "monospace ${toString variables.terminalFontSize}";

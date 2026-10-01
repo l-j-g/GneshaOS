@@ -29,12 +29,6 @@ let
     "first-empty-workspace" = mkCommand "first-empty-workspace" ./scripts/first-empty-workspace python (with pkgs; [ python3 sway ]);
     "calcurse-daemon-enabled" = mkCommand "calcurse-daemon-enabled" ./scripts/calcurse-daemon-enabled sh (with pkgs; [ gawk ]);
     "ghostty-font-size-notify" = mkCommand "ghostty-font-size-notify" (pkgs.writeText "ghostty-font-size-notify" ghosttyFontSizeNotifyScript) sh (common ++ (with pkgs; [ sway jq libnotify gnused ]));
-    # Rofi dispatches arbitrary selected applications, so keep the installed
-    # Home Manager and system commands on PATH alongside its own runtime tools.
-    "gnesha-rofi" = pkgs.writeShellScriptBin "gnesha-rofi" ''
-      export PATH=${lib.makeBinPath (common ++ (with pkgs; [ rofi ]))}:${config.home.profileDirectory}/bin:/run/current-system/sw/bin:$PATH
-      exec ${sh} ${./scripts/gnesha-rofi} "$@"
-    '';
     "inhibit-idle" = mkCommand "inhibit-idle" ./scripts/inhibit-idle python (with pkgs; [ python3 sway ]);
     "once.sh" = mkCommand "once.sh" ./scripts/once.sh sh (common ++ (with pkgs; [ util-linux ]));
     "recorder.sh" = mkCommand "recorder.sh" ./scripts/recorder.sh sh (common ++ (with pkgs; [ libnotify slurp wf-recorder xdg-user-dirs ]));

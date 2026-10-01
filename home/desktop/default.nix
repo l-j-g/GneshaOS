@@ -1,6 +1,6 @@
 # Desktop compositor stack. Sub-modules, one per concern:
 #   waybar.nix      - top bar
-#   rofi.nix        - launcher
+#   rofi/           - launcher, theme, settings menu
 #   mako.nix        - notifications
 #   sway/           - Sway compositor, lock screen, daemons, bindings, scripts
 #   theme/palette.nix - shared palette aliases (imported by the others)
@@ -20,7 +20,7 @@ in
   imports = [
     ./sway
     ./waybar.nix
-    ./rofi.nix
+    ./rofi
     ./mako.nix
   ];
 
