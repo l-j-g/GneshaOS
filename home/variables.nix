@@ -41,9 +41,10 @@
   gapsInner = 5;
   gapsOuter = 5;
 
-  # Automatically choose split orientation in Sway. Disable to keep manual
-  # split direction keybindings in control.
-  autotilingEnabled = false;
+  # Automatically choose split orientation in Sway for newly mapped windows.
+  # Each new window is oriented to its shape; a split chosen with Mod1+j /
+  # Mod1+k is left alone until the next new window arrives.
+  autotilingEnabled = true;
 
   # Preferred monospace family for the whole user desktop. Applications request
   # "monospace"; home/fonts maps that alias and selects a rendering profile.

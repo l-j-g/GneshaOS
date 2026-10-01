@@ -124,8 +124,8 @@ in
   "${m}+Shift+m" = "exec first-empty-workspace --move --switch";
 
   # Layout
-  "${m}+b" = "splith";
-  "${m}+v" = "splitv";
+  "Mod1+j" = "splith";
+  "Mod1+k" = "splitv";
   "${m}+s" = "layout stacking";
   "${m}+w" = "layout tabbed";
   "${m}+e" = "layout toggle split";

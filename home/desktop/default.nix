@@ -104,7 +104,6 @@ in
     polkit_gnome
     noisetorch
     nwg-wrapper
-    autotiling
     acpi
     wf-recorder
     swappy

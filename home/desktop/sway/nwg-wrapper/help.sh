@@ -19,7 +19,10 @@ Mod+f             fullscreen
 Mod+Shift+f       fullscreen global
 Mod+Shift+Space   floating toggle
 Mod+Space         focus mode toggle
-Mod+v / Mod+b     split vertical / horizontal
+Alt+j             split horizontal
+Alt+k             split vertical
+                  new windows auto-orient to their shape;
+                  Alt+j / Alt+k override until the next one opens
 Mod+s / Mod+w     stacking / tabbed
 Mod+e             toggle split
 Mod+Shift+q       kill window

@@ -24,6 +24,8 @@ let
   sh = "${pkgs.dash}/bin/dash";
   bash = "${pkgs.bash}/bin/bash";
   python = "${pkgs.python3}/bin/python3";
+  # sway-autotile needs the sway IPC client, which the plain python3 lacks.
+  pythonI3ipc = "${pkgs.python3.withPackages (ps: [ ps.i3ipc ])}/bin/python3";
   common = with pkgs; [ coreutils ];
   manifest = {
     "first-empty-workspace" = mkCommand "first-empty-workspace" ./scripts/first-empty-workspace python (with pkgs; [ python3 sway ]);
@@ -33,6 +35,7 @@ let
     "once.sh" = mkCommand "once.sh" ./scripts/once.sh sh (common ++ (with pkgs; [ util-linux ]));
     "recorder.sh" = mkCommand "recorder.sh" ./scripts/recorder.sh sh (common ++ (with pkgs; [ libnotify slurp wf-recorder xdg-user-dirs ]));
     "scale.sh" = mkCommand "scale.sh" (pkgs.writeText "scale.sh" scaleScript) sh (common ++ (with pkgs; [ sway jq gawk way-displays libnotify ]));
+    "sway-autotile" = mkCommand "sway-autotile" ./scripts/sway-autotile pythonI3ipc [ ];
     "sway-help" = mkCommand "sway-help" ./scripts/sway-help sh (common ++ (with pkgs; [ sway jq nwg-wrapper ]));
     "swaycwd" = mkCommand "swaycwd" ./scripts/swaycwd sh (common ++ (with pkgs; [ sway jq ]));
     "theme-picker" = mkCommand "theme-picker" (pkgs.writeText "theme-picker" themePickerScript) sh (common ++ (with pkgs; [ rofi libnotify util-linux gnugrep gnused kitty sway jq nix nh dash ]));

@@ -166,6 +166,8 @@ in
   };
 
   # --- Optional auto split orientation.
+  # sway-autotile only reacts to newly mapped windows, so a split chosen with
+  # Mod1+j / Mod1+k is not revisited when focus moves.
   systemd.user.services.autotiling = lib.mkIf variables.autotilingEnabled {
     Unit = {
       Description = "Autotiling for Sway";
@@ -174,7 +176,7 @@ in
     };
     Service = {
       Type = "simple";
-      ExecStart = "${pkgs.autotiling}/bin/autotiling";
+      ExecStart = "${config.home.homeDirectory}/.config/sway/scripts/sway-autotile";
       Restart = "on-failure";
     };
     Install.WantedBy = [ sessionTarget ];

@@ -21,7 +21,7 @@ FIELDS = {
     'browserDefaultZoom': ('Browser zoom', 'Webpage zoom factor from 0.3 to 5.0, for example 1.5', 'float'),
     'gapsInner': ('Inner gaps', 'Pixels between windows; zero removes gaps', 'int'),
     'gapsOuter': ('Outer gaps', 'Pixels around workspaces; zero removes gaps', 'int'),
-    'autotilingEnabled': ('Automatic tiling', 'Automatically choose window split orientation', 'bool'),
+    'autotilingEnabled': ('Automatic tiling', 'Auto-orient new windows to their shape', 'bool'),
     'autoBrightness': ('Automatic brightness', 'Let wluma learn brightness from ambient light', 'bool'),
     'idleDimSec': ('Dim after', 'Idle seconds before dimming; must precede locking', 'int'),
     'idleLockSec': ('Lock after', 'Idle seconds before locking; between dim and screen off', 'int'),
