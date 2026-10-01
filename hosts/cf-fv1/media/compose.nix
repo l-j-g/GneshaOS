@@ -84,7 +84,7 @@ let
             config.users.groups.video.gid
           ]);
         };
-        volumes = [ "./config/emby:/config" "${mediaMountPoint}:${mediaMountPoint}:ro" ];
+        volumes = [ "./config/emby:/config" "${mediaMountPoint}:${mediaMountPoint}" ];
         devices = [ "/dev/dri:/dev/dri" ];
         network_mode = "host";
         restart = "unless-stopped";
