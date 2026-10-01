@@ -14,6 +14,7 @@ let
 in
 {
   imports = [
+    ./fonts
     ./shell
     ./editors
     ./programs

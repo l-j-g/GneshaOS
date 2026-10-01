@@ -16,7 +16,7 @@ in
   programs.kitty = {
     enable = true;
     font = {
-      name = variables.terminalFontFamily;
+      name = "monospace";
       size = variables.terminalFontSize;
     };
     settings = {

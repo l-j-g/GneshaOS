@@ -1,10 +1,11 @@
-# Ghostty terminal — bitmap Terminus with a Nerd Font symbol fallback.
+# Ghostty terminal — selectable family with bitmap-aware rendering and zoom.
 
 {
   config,
   lib,
   pkgs,
   variables,
+  fontProfile,
   ...
 }:
 
@@ -64,7 +65,7 @@ in
 {
   assertions = [
     {
-      assertion = builtins.elem variables.terminalFontSize fontSizeValues;
+      assertion = !fontProfile.terminusZoom || builtins.elem variables.terminalFontSize fontSizeValues;
       message = "terminalFontSize must be one of the supported bitmap sizes: ${lib.concatMapStringsSep ", " toString fontSizeValues}.";
     }
   ];
@@ -72,17 +73,19 @@ in
   programs.ghostty = {
     enable = true;
     settings = {
-      # Fontconfig maps the first family to bitmap Terminus. The second family
-      # supplies Nerd Font symbols only when Terminus lacks the codepoint.
-      "font-family" = [
-        "monospace"
-        "Symbols Nerd Font Mono"
-      ];
+      # Fontconfig owns family selection and the symbol fallback.
+      "font-family" = "monospace";
       "font-size" = variables.terminalFontSize;
-      keybind = fontKeybinds;
+      keybind = if fontProfile.terminusZoom then fontKeybinds else [
+        "ctrl+==increase_font_size:1"
+        "ctrl++=increase_font_size:1"
+        "ctrl+-=decrease_font_size:1"
+        "ctrl+0=reset_font_size"
+      ];
 
-      # Use hard 1-bit glyph edges for the pixel font on Linux/FreeType.
-      "freetype-load-flags" = "monochrome";
+      # Ghostty renders with FreeType directly; share the Fontconfig profile's
+      # antialiasing choice instead of maintaining an independent preference.
+      "freetype-load-flags" = fontProfile.freetypeFlags;
       # Ordinary launches reuse Ghostty's persistent systemd user instance.
       # CLI commands using -e still intentionally start a dedicated instance.
       "gtk-single-instance" = true;

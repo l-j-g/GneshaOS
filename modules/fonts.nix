@@ -1,8 +1,5 @@
-# Font setup:
-#  - Original Terminus bitmap font (terminus_font) as the generic monospace
-#    family, for Ghostty, and for the Linux virtual console.
-#  - Terminess (TTF port of Terminus, nerd-patched) remains available for
-#    artwork and other explicitly selected font families.
+# System font packages and Linux console font. User aliases and rendering
+# profiles belong to home/fonts and follow home/variables.nix.
 
 {
   config,
@@ -51,13 +48,16 @@ in
     pkgs.mplus-outline-fonts.githubRelease
     pkgs.dina-font
     pkgs.proggyfonts
+    pkgs.departure-mono
+    pkgs.nerd-fonts.departure-mono
+    pkgs.cozette
+    pkgs.ibm-plex.mono
+    pkgs.nerd-fonts.blex-mono
+    pkgs.ultimate-oldschool-pc-font-pack
   ];
 
-  fonts.fontconfig = {
-    # Make generic monospace resolve to the bitmap family. Apps that render
-    # Nerd Font icons should add Symbols Nerd Font Mono as an explicit fallback.
-    defaultFonts.monospace = [ "Terminus" ];
-  };
+  # Browse and compare installed families before choosing a desktop font.
+  environment.systemPackages = [ pkgs.font-manager ];
 
   console = {
     # 16x32 double-size Terminus: 135x45 on the 2160x1440 panel.

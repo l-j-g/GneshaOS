@@ -2,7 +2,9 @@
 
 This tree defines the user environment shared by discovered NixOS hosts:
 shell, editors, programs, services, desktop configuration, and theme. System
-fonts and console fonts are configured by `modules/fonts.nix`.
+font packages and console fonts are configured by `modules/fonts.nix`.
+`fonts/` maps the selected family from `variables.nix` to Fontconfig's
+`monospace` alias and supplies the matching rendering profile.
 Each layer has a conventional `default.nix` entry point and focused modules
 for individual concerns.
 

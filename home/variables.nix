@@ -45,9 +45,11 @@
   # split direction keybindings in control.
   autotilingEnabled = false;
 
-  # Font family used by Kitty. The generic alias resolves to bitmap Terminus
-  # through modules/fonts.nix.
-  terminalFontFamily = "monospace";
+  # Preferred monospace family for the whole user desktop. Applications request
+  # "monospace"; home/fonts maps that alias and selects a rendering profile.
+  # Examples: "IBM Plex Mono", "BlexMono Nerd Font Mono", "Departure Mono",
+  # "DepartureMono Nerd Font Mono", "Cozette", "Terminess Nerd Font Mono".
+  terminalFontFamily = "Terminus";
 
   # Font size, in points, for Sway stacked and tabbed window titles.
   stackedViewFontSize = 14;
