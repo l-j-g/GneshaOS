@@ -89,7 +89,16 @@ in
     };
   };
 
-  # Media web interfaces use loopback backends and Tailscale Serve for
+  # Emby uses host networking. Permit its HTTP UI from the home Wi-Fi subnet
+  # without exposing it on VPN interfaces or to other source networks.
+  networking.firewall.extraCommands = ''
+    iptables -A nixos-fw -i wlp0s20f3 -s 192.168.1.0/24 -p tcp --dport 8096 -j nixos-fw-accept
+  '';
+  networking.firewall.extraStopCommands = ''
+    iptables -D nixos-fw -i wlp0s20f3 -s 192.168.1.0/24 -p tcp --dport 8096 -j nixos-fw-accept 2>/dev/null || true
+  '';
+
+  # Other media web interfaces use loopback backends and Tailscale Serve for
   # tailnet-only HTTPS access. Provider-forwarded torrent traffic stays inside
   # Gluetun's VPN namespace and is not opened on host interfaces.
   networking.firewall.interfaces.${config.services.tailscale.interfaceName}.allowedTCPPorts = [
