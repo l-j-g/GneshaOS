@@ -55,14 +55,19 @@ let
         "$flake#nixosConfigurations.${host.hostName}.config.system.build.toplevel"
       nix build --max-jobs 1 --cores 2 --no-link \
         "$flake#homeConfigurations.\"${homeProfile}\".activationPackage"
+      system_path=$(nix eval --raw \
+        "$flake#nixosConfigurations.${host.hostName}.config.system.build.toplevel")
+      home_path=$(nix eval --raw \
+        "$flake#homeConfigurations.\"${homeProfile}\".activationPackage")
+      # Record the closures so a review can diff without re-evaluating.
+      printf '%s\n' "$system_path" > "$candidate/system-path"
+      printf '%s\n' "$home_path" > "$candidate/home-path"
       # Counts are the expensive part, so cache them next to the closures.
       # nvd reports one line per changed store path, which double counts
       # unwrapped variants; count only the distinct packages behind them.
-      system_count=$(nvd diff /run/current-system \
-        "$(nix eval --raw "$flake#nixosConfigurations.${host.hostName}.config.system.build.toplevel")" \
+      system_count=$(nvd diff /run/current-system "$system_path" \
         | grep -cE '^\[U' || echo 0)
-      home_count=$(nvd diff "$HOME/.local/state/nix/profiles/home-manager" \
-        "$(nix eval --raw "$flake#homeConfigurations.\"${homeProfile}\".activationPackage")" \
+      home_count=$(nvd diff "$HOME/.local/state/nix/profiles/home-manager" "$home_path" \
         | grep -cE '^\[U' || echo 0)
       printf '%s %s\n' "$system_count" "$home_count" > "$candidate/count"
       date --iso-8601=seconds > "$candidate/built-at"

@@ -108,7 +108,8 @@ if ! "$previewScript" --apply "$choice"; then
     exit 1
 fi
 
-# Serialize this source edit with update-apply's final freshness check. The
+# Serialize this source edit with any activation that may be reading the
+# repository. The
 # activation process will acquire the same lock again when it starts.
 activationStateDir="$HOME/.local/state/gnesha-activation"
 mkdir -p "$activationStateDir"

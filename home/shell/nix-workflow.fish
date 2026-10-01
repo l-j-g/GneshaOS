@@ -51,12 +51,12 @@ function update-status
         echo "Usage: update-status"
         return 2
     end
-    systemctl status gnesha-nixpkgs-update.service --no-pager
-    if test (systemctl is-active gnesha-nixpkgs-update.service 2>/dev/null) = activating
-        echo "The candidate build is still running; update-review reports progress without waiting for its lock."
+    systemctl status gnesha-lock-refresh.service --no-pager
+    if test (systemctl is-active gnesha-lock-refresh.service 2>/dev/null) = activating
+        echo "Refreshing flake.lock and downloading packages. This does not activate anything."
     end
-    if test -L /var/lib/gnesha-update/ready
-        echo "A tested update is ready. Review with update-review; apply with update-apply."
+    if test -d "$HOME/.local/state/gnesha-lock-refresh/refreshed"
+        echo "Packages are downloaded and will be applied on the next rebuild."
     end
 end
 
@@ -65,15 +65,7 @@ function update-review
         echo "Usage: update-review"
         return 2
     end
-    gnesha-update-apply --review
-end
-
-function update-apply
-    if test (count $argv) -ne 0
-        echo "Usage: update-apply"
-        return 2
-    end
-    gnesha-update-apply
+    updates-pending status
 end
 
 function home-rebuild

@@ -9,7 +9,10 @@ set -eu
 
 case "${1:-status}" in
   review)
-    exec gnesha-update-apply --review
+    # Rebuild activates whatever flake.lock already resolves to, so reviewing
+    # means showing the version diff against the downloaded closures. Run in a
+    # terminal because nvd output is long.
+    exec ${TERMINAL_COMMAND:-foot} -e updates-pending-review
     ;;
   status) ;;
   *)

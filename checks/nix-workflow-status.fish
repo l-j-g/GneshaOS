@@ -23,7 +23,7 @@ end
 source "$workflow"
 
 update-status > "$work/inactive-output"
-if not grep -Fxq 'status gnesha-nixpkgs-update.service --no-pager' "$TOOL_LOG"
+if not grep -Fxq 'status gnesha-lock-refresh.service --no-pager' "$TOOL_LOG"
     echo "update-status did not request systemctl status" >&2
     exit 1
 end
@@ -31,7 +31,7 @@ if not grep -Fq 'stub status output' "$work/inactive-output"
     echo "update-status did not show the status command output" >&2
     exit 1
 end
-if not grep -Fxq 'is-active gnesha-nixpkgs-update.service' "$TOOL_LOG"
+if not grep -Fxq 'is-active gnesha-lock-refresh.service' "$TOOL_LOG"
     echo "update-status did not inspect the service state" >&2
     exit 1
 end
@@ -39,11 +39,11 @@ end
 : > "$TOOL_LOG"
 set -gx SYSTEMCTL_ACTIVE_STATE activating
 update-status > "$work/activating-output"
-if not grep -Fq 'candidate build is still running' "$work/activating-output"
+if not grep -Fq 'Refreshing flake.lock' "$work/activating-output"
     echo "update-status omitted its in-progress guidance" >&2
     exit 1
 end
-if not grep -Fxq 'status gnesha-nixpkgs-update.service --no-pager' "$TOOL_LOG"
+if not grep -Fxq 'status gnesha-lock-refresh.service --no-pager' "$TOOL_LOG"
     echo "update-status omitted systemctl status while activating" >&2
     exit 1
 end

@@ -616,7 +616,6 @@
             fish --no-execute ${./checks/nix-workflow-status.fish}
             fish ${./checks/nix-workflow-status.fish} ${./home/shell/nix-workflow.fish}
             bash ${./checks/activation-helper-stubs.sh} ${./home/shell/activation-state.sh}
-            bash ${./checks/update-review-stubs.sh} ${./home/shell/update-review.sh}
             bash ${./checks/update-network-readiness-stubs.sh} ${./hosts/cf-fv1/services/update-network-ready.sh}
             bash ${./checks/calcurse-daemon-optin-stubs.sh} ${./home/desktop/sway/scripts/calcurse-daemon-enabled}
             bash ${./checks/vpn-toggle-stubs.sh} ${./home/desktop/sway/scripts/vpn-toggle}

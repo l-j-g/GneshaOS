@@ -1,0 +1,23 @@
+# Print the version diff between the running system and the packages the next
+# rebuild would apply. Invoked in a terminal by updates-pending review.
+set -eu
+
+# shellcheck source=/dev/null
+. "__GNESHA_PENDING_COUNT_LIB__"
+
+if ! system_path=$(pending_system_path); then
+  echo "No refreshed packages cached yet." >&2
+  echo "Run: sudo systemctl start gnesha-lock-refresh" >&2
+  exit 1
+fi
+
+echo "Built at $(pending_built_at || echo unknown)"
+echo
+echo "System:"
+nvd diff /run/current-system "$system_path" || true
+
+if home_path=$(pending_home_path); then
+  echo
+  echo "Home Manager:"
+  nvd diff "$HOME/.local/state/nix/profiles/home-manager" "$home_path" || true
+fi

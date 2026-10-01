@@ -41,6 +41,8 @@ let
     "theme-picker" = mkCommand "theme-picker" (pkgs.writeText "theme-picker" themePickerScript) sh (common ++ (with pkgs; [ rofi libnotify util-linux gnugrep gnused kitty sway jq nix nh dash ]));
     "theme-preview" = mkCommand "theme-preview" (pkgs.writeText "theme-preview" themePreviewScript) sh (common ++ (with pkgs; [ gawk gnused kitty sway jq systemd ]));
     "updates-pending" = mkCommand "updates-pending" (pkgs.writeText "updates-pending" updatesPendingScript) sh (common ++ (with pkgs; [ nvd systemd util-linux ]));
+    # nvd shells out to nix-build, so the review helper needs nix on PATH too.
+    "updates-pending-review" = mkCommand "updates-pending-review" (pkgs.writeText "updates-pending-review" updatesPendingReviewScript) sh (common ++ (with pkgs; [ nvd nix ]));
     "vpn-toggle" = pkgs.writeShellScriptBin "vpn-toggle" ''
       export PATH=${lib.makeBinPath (common ++ (with pkgs; [ networkmanager gnugrep gawk sudo wireguard-tools ]))}
       export WG_BIN=${pkgs.wireguard-tools}/bin/wg
@@ -51,9 +53,12 @@ let
   # scale.sh: "default" resets to the Sway-configured scale.
   scaleScript = lib.replaceStrings [ "__DEFAULT_SCALE__" ] [ variables.displayScale ] (builtins.readFile ./scripts/scale.sh);
   themePreviewScript = lib.replaceStrings [ "__TERMINAL_FONT_SIZE__" ] [ (toString variables.terminalFontSize) ] (builtins.readFile ./scripts/theme-preview);
-  # The script needs the shared pending-count helpers; the store copy would
-  # drift, so point it at the checkout this generation was built from.
-  updatesPendingScript = lib.replaceStrings [ "__PENDING_COUNT_LIB__" ] [ "${config.home.homeDirectory}/.config/nix/home/shell/pending-count.sh" ] (builtins.readFile ./scripts/updates-pending);
+  # The scripts need the shared pending-count helpers; the store copy would
+  # drift, so point them at the checkout this generation was built from.
+  pendingCountLib = "${config.home.homeDirectory}/.config/nix/home/shell/pending-count.sh";
+  updatesPendingScript = lib.replaceStrings [ "__PENDING_COUNT_LIB__" ] [ pendingCountLib ] (builtins.readFile ./scripts/updates-pending);
+  # The terminal inherits the library path so the review helper finds it too.
+  updatesPendingReviewScript = lib.replaceStrings [ "__GNESHA_PENDING_COUNT_LIB__" ] [ pendingCountLib ] (builtins.readFile ./scripts/updates-pending-review);
   themePickerScript = lib.replaceStrings
     [ "__HOME_PROFILE__" "__ACTIVATION_LOCK__" ]
     [ "${user.userName}@${system.hostName}" "${config.home.path}/bin/gnesha-activation-lock" ]

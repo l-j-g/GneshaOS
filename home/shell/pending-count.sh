@@ -30,6 +30,24 @@ pending_count() {
   cat "$ready/count"
 }
 
+# Print the refreshed system closure path, or return 1 when nothing is cached.
+pending_system_path() {
+  # shellcheck disable=SC3043 # dash supports local
+  local ready
+  ready=$(pending_ready) || return 1
+  [ -r "$ready/system-path" ] || return 1
+  cat "$ready/system-path"
+}
+
+# Print the refreshed Home Manager closure path, or return 1 when absent.
+pending_home_path() {
+  # shellcheck disable=SC3043 # dash supports local
+  local ready
+  ready=$(pending_ready) || return 1
+  [ -r "$ready/home-path" ] || return 1
+  cat "$ready/home-path"
+}
+
 # Print the refresh build time as "YYYY-MM-DD HH:MM", or nothing when absent.
 pending_built_at() {
   # shellcheck disable=SC3043 # dash supports local
