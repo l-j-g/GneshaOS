@@ -3,6 +3,7 @@ opencode.json
 
 # Build output
 /result
+/home/result
 
 # Editor output
 /nvim.log
