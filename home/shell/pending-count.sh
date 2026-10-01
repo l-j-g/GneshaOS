@@ -1,43 +1,48 @@
-# Shared helpers for the prepared-update candidate in $GNESHA_UPDATE_STATE.
+# Count package version changes that the next rebuild would apply.
 #
-# The candidate is built by the gnesha-nixpkgs-update system timer, which never
-# activates it. These helpers summarise what activating it would change, so the
-# number can be cached once at build time instead of recomputed on every poll.
+# Rebuild activates the closures that flake.lock already resolves to. The
+# gnesha-lock-refresh timer advances that lock and downloads the resulting
+# closures without activating them, so these helpers compare the running
+# system against the refreshed lock to report what rebuild would change.
+#
+# nvd takes a few seconds over two full closures, so the refresh job caches
+# its result and callers read that cache instead of recomputing.
 
-GNESHA_UPDATE_STATE=${GNESHA_UPDATE_STATE:-/var/lib/gnesha-update}
+GNESHA_UPDATE_STATE=${GNESHA_UPDATE_STATE:-$HOME/.local/state/gnesha-lock-refresh}
 
-# Resolve the candidate directory, or return 1 when nothing has been prepared.
+# Resolve the refreshed closure directory, or return 1 when nothing is cached.
 pending_ready() {
+  # shellcheck disable=SC3043 # dash supports local
   local ready
-  ready=$(readlink -f "$GNESHA_UPDATE_STATE/ready" 2>/dev/null) || return 1
+  [ -d "$GNESHA_UPDATE_STATE" ] || return 1
+  ready=$(readlink -f "$GNESHA_UPDATE_STATE/refreshed" 2>/dev/null) || return 1
   [ -d "$ready" ] || return 1
   printf '%s\n' "$ready"
 }
 
-# Print the number of packages whose version differs between the running system
-# and the prepared candidate. Counts both the system and Home Manager closures.
-# Runs nvd, which takes a few seconds, so callers should cache the result.
+# Print "system home" version-change counts for the pending rebuild, or return
+# 1 when no refresh has completed yet.
 pending_count() {
-  local ready count
+  # shellcheck disable=SC3043 # dash supports local
+  local ready
   ready=$(pending_ready) || return 1
-  count=$({
-    nvd diff /run/current-system "$ready/system" 2>/dev/null
-    nvd diff "$HOME/.local/state/nix/profiles/home-manager" "$ready/home" 2>/dev/null
-  } | grep -cE '^\[U') || count=0
-  printf '%s\n' "$count"
+  [ -r "$ready/count" ] || return 1
+  cat "$ready/count"
 }
 
-# Print the candidate build time as "YYYY-MM-DD HH:MM", or nothing when absent.
+# Print the refresh build time as "YYYY-MM-DD HH:MM", or nothing when absent.
 pending_built_at() {
+  # shellcheck disable=SC3043 # dash supports local
   local ready
   ready=$(pending_ready) || return 1
   [ -r "$ready/built-at" ] || return 1
   cut -c1-16 "$ready/built-at"
 }
 
-# Print the age of the candidate in whole days. Updates are stale once a day
-# has passed without a successful build.
+# Print whole days since the last successful refresh. A refresh older than a
+# day means the lock has not advanced recently.
 pending_age_days() {
+  # shellcheck disable=SC3043 # dash supports local
   local ready built now
   ready=$(pending_ready) || return 1
   built=$(date -d "$(cat "$ready/built-at")" +%s 2>/dev/null) || return 1

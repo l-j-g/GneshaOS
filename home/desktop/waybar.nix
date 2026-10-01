@@ -43,6 +43,7 @@ in
         "pulseaudio#microphone"
         "memory"
         "cpu"
+        "custom/updates"
         "clock"
       ];
 
@@ -99,6 +100,18 @@ in
         # the absolute Home Manager path instead of relying on session PATH.
         exec = "${config.home.homeDirectory}/.config/sway/scripts/vpn-toggle status";
         on-click = "${config.home.homeDirectory}/.config/sway/scripts/vpn-toggle toggle";
+        interval = 5;
+        format = "{}";
+        return-type = "json";
+        tooltip = true;
+      };
+
+      "custom/updates" = {
+        # Waybar launches commands through a minimal systemd user PATH, so
+        # use the absolute Home Manager path. The script reads a cached count;
+        # a 5s poll stays cheap because it never runs nvd itself.
+        exec = "${config.home.homeDirectory}/.config/sway/scripts/updates-pending status";
+        on-click = "${config.home.homeDirectory}/.config/sway/scripts/updates-pending review";
         interval = 5;
         format = "{}";
         return-type = "json";
@@ -207,7 +220,7 @@ in
         color: ${v.foreground};
       }
 
-      #network, #bluetooth, #battery, #backlight, #pulseaudio, #memory, #cpu, #clock, #tray, #custom-vpn {
+      #network, #bluetooth, #battery, #backlight, #pulseaudio, #memory, #cpu, #clock, #tray, #custom-vpn, #custom-updates {
         padding: 0 6px;
       }
 
@@ -217,6 +230,12 @@ in
       #custom-vpn.stopped { color: ${v.subtle}; }
       #custom-vpn.starting, #custom-vpn.active-unverified { color: ${v.warning}; }
       #custom-vpn.failed, #custom-vpn.unavailable { color: ${v.critical}; }
+
+      #custom-updates.current { color: ${v.subtle}; }
+      #custom-updates.pending { color: ${v.accent}; }
+      #custom-updates.working { color: ${v.warning}; }
+      #custom-updates.stale { color: ${v.warning}; }
+      #custom-updates.unknown { color: ${v.subtle}; }
 
       #battery.warning { color: ${v.warning}; }
       #battery.critical { color: ${v.critical}; }
