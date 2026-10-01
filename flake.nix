@@ -128,47 +128,32 @@
           || throw "systemSettings.dockerProxy requires a valid port and noProxy string when enabled";
         params;
       baseHomeVariables = import ./home/variables.nix;
+      # The preference file is deliberately raw: one literal per preference with a
+      # comment above it, and that comment is the description the settings editor
+      # shows. Types therefore come from the literals themselves and are checked by
+      # the editor; only the rules that span preferences are spelled out here.
       validHomeVariables =
         variables:
         let
-          scale =
-            if builtins.isString variables.displayScale then
-              builtins.tryEval (builtins.fromJSON variables.displayScale)
-            else
-              {
-                success = false;
-                value = null;
-              };
-          idleValues = [
-            variables.idleDimSec
-            variables.idleLockSec
-            variables.idleOffSec
-          ];
+          scale = builtins.tryEval (builtins.fromJSON (toString variables.displayScale));
         in
-        builtins.isInt variables.terminalFontSize
-        && variables.terminalFontSize > 0
-        && builtins.isInt variables.stackedViewFontSize
-        && variables.stackedViewFontSize > 0
-        && scale.success
+        scale.success
         && isNumber scale.value
         && scale.value > 0
         && isNumber variables.browserDefaultZoom
-        && variables.browserDefaultZoom > 0
-        && builtins.all (value: builtins.isInt value && value > 0) idleValues
-        && (
-          variables.idleSuspendSec == null
-          || (builtins.isInt variables.idleSuspendSec && variables.idleSuspendSec > variables.idleOffSec)
-        )
-        && variables.idleDimSec < variables.idleLockSec
-        && variables.idleLockSec < variables.idleOffSec
-        && builtins.isBool variables.lidCloseSuspendOnBattery
-        && builtins.isInt variables.idleDimPercent
+        && variables.browserDefaultZoom >= 0.3
+        && variables.browserDefaultZoom <= 5.0
         && variables.idleDimPercent >= 0
         && variables.idleDimPercent <= 100
+        && variables.idleDimSec < variables.idleLockSec
+        && variables.idleLockSec < variables.idleOffSec
+        && (
+          variables.idleSuspendSec == null
+          || variables.idleSuspendSec > variables.idleOffSec
+        )
         && isAbsolutePath variables.screenshotDir
         && isAbsolutePath variables.publicKeyFile
-        && builtins.isBool variables.hermesMacTunnelEnable
-        && builtins.isString variables.hermesSshHost
+        && !(builtins.elem variables.terminalFontFamily [ "monospace" "sans-serif" "serif" ])
         && builtins.match "[A-Za-z0-9][A-Za-z0-9._-]*" variables.hermesSshHost != null
         && builtins.all (port: builtins.isInt port && port >= 1 && port <= 65535) [
           variables.hermesLocalPort
@@ -210,7 +195,7 @@
           || throw "${hostName}/home-variables.nix must use known Home Manager preference names and matching types";
         assert
           validHomeVariables variables
-          || throw "Home Manager preferences need positive font/scale/zoom values, absolute paths, ordered idle timers, and boolean lidCloseSuspendOnBattery";
+          || throw "Home Manager preferences need a positive scale, zoom between 0.3 and 5.0, idle timers in increasing order, absolute paths, a real font family, a valid SSH alias, and ports in 1-65535";
         {
           inherit
             hostName
@@ -622,6 +607,23 @@
             bash ${./checks/lock-readiness-stubs.sh} ${./home/shell/lock-readiness.sh}
             touch "$out"
           '';
+      settingsEditorCheck =
+        checkPkgs.runCommand "gnesha-settings-editor-check"
+          {
+            nativeBuildInputs = [
+              checkPkgs.python3
+              checkPkgs.nix
+            ];
+          }
+          ''
+            cd ${./.}
+            # nix-instantiate keeps state outside the store, so point it at the
+            # build directory: the tests evaluate throwaway preference files.
+            export HOME="$TMPDIR/home" NIX_STATE_DIR="$TMPDIR/state"
+            mkdir -p "$HOME" "$NIX_STATE_DIR"
+            PYTHONDONTWRITEBYTECODE=1 python3 checks/rofi-settings.py home/desktop/rofi/scripts/settings.py
+            touch "$out"
+          '';
       desktopHelperStubCheck =
         checkPkgs.runCommand "gnesha-desktop-helper-stub-checks"
           {
@@ -648,6 +650,7 @@
         inherit
           configurationCombinationChecks
           sourceScriptCheck
+          settingsEditorCheck
           desktopHelperStubCheck
           ghostfolioImportRecoveryCheck
           arrWrapperCheck

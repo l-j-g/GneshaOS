@@ -18,6 +18,23 @@ running machine.
 - `wallpapers/` contains visual assets and `docs/` contains user-facing
   documentation. There is no separate application source or test directory.
 
+## Working in a Worktree
+
+Do not edit the main checkout. Start every task in its own worktree so two
+agents can work in this repository at the same time without overwriting each
+other:
+
+```sh
+git worktree add -b <topic> .worktrees/<topic> HEAD
+```
+
+Work inside `.worktrees/<topic>/`, and run every `nix` command from there so the
+flake resolves to that worktree. `.worktrees/` is ignored, so nothing extra lands
+in the index. When the work is validated, commit on the topic branch and report
+the branch name; the integrating agent merges it. Never force-push, never
+`git checkout` a path that another worktree owns, and never reset the main
+checkout's index — leave unrelated staged and unstaged work alone.
+
 ## Supplemental NixOS Management Reference
 
 For broader NixOS tasks such as installation, remote deployment, image building,
@@ -50,7 +67,9 @@ Use two-space indentation and existing Nix formatting. Prefer declarative
 options and packaged tools over embedded shell code. Name module directories
 by concern (`programs/`, `desktop/`, `services/`) and use `default.nix` as
 their entry point. Keep stable values in `system-parameters.nix` and user
-tweaks in `home/variables.nix`, with comments describing editable settings.
+tweaks in `home/variables.nix`, which stays a plain file of literals: every
+preference gets a comment above it, and that comment is the description the
+Gnesha Settings editor shows, so preferences are catalogued nowhere else.
 
 ## Commits and Pull Requests
 
