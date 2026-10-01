@@ -21,6 +21,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
 vim.lsp.config("nixd", {
   capabilities = capabilities,
+  filetypes = { "nix" },
+  root_markers = { "flake.nix", ".git" },
   settings = {
     nixd = nixd.settings(),
   },
