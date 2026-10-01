@@ -121,6 +121,12 @@ let
   ];
 in
 {
+  # Dolphin ships no Home Manager module, so this one owns its packages.
+  home.packages = [
+    pkgs.kdePackages.dolphin
+    pkgs.kdePackages.dolphin-plugins
+  ];
+
   # Dolphin now stores the global view as global/.directory. Remove the old
   # Home Manager-managed symlink first, otherwise activation cannot create the
   # directory at the same path.

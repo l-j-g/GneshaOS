@@ -10,15 +10,18 @@
 {
   imports = [
     ./nvim
+    ./emacs.nix
+    ./git.nix
     ./terminals
     ./browsers.nix
     ./dolphin.nix
     ./integrations.nix
-    ./nnn.nix
-    ./lf.nix
+    ./nnn
+    ./lf
     ./tmux.nix
     ./gpg.nix
     ./ncdu.nix
+    ./yazi.nix
   ];
 
   # Canonical list of standalone applications and support tools. Program
@@ -32,8 +35,6 @@
       keepassxc
       monero-gui
       kdePackages.kleopatra
-      kdePackages.dolphin
-      kdePackages.dolphin-plugins
       tor-browser
       discord
       imv
@@ -53,7 +54,6 @@
       ffmpegthumbnailer
       less
       mediainfo
-      ncdu
       poppler-utils
       tree
       unzip

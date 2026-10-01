@@ -1,5 +1,5 @@
-# Ncdu defaults. The package stays in programs/default.nix; this module owns
-# the small amount of configuration needed to make its runtime behavior useful.
+# Ncdu defaults. This module owns the ncdu command: the wrapper below is the
+# only entry point, so ncdu is not listed in programs/default.nix.
 
 {
   pkgs,
@@ -21,8 +21,7 @@ in
   '';
 
   # ~/.local/bin is already placed before packaged applications by the shared
-  # integrations module, so this wrapper transparently replaces the raw ncdu
-  # command while keeping ncdu in the canonical package list.
+  # integrations module, so this wrapper is the ncdu command on PATH.
   home.file.".local/bin/ncdu" = {
     source = ncduWithAllThreads;
     executable = true;
