@@ -7,6 +7,9 @@ opencode.json
 # Editor output
 /nvim.log
 
+# Python bytecode from the helper scripts under checks/
+__pycache__/
+
 # Install transcripts / scratch / backups
 session-*.md
 *.orig

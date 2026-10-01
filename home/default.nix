@@ -16,7 +16,6 @@ in
   imports = [
     ./fonts
     ./shell
-    ./editors
     ./programs
     ./services
     ./theme

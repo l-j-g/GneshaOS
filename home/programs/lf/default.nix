@@ -4,11 +4,11 @@
 }:
 
 let
-  lfPreviewer = ./scripts/lf/preview;
+  lfPreviewer = ./preview;
 in
 {
   home.file.".local/bin/lf-image" = {
-    source = ./scripts/lf/lf-image;
+    source = ./lf-image;
     executable = true;
   };
   home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
