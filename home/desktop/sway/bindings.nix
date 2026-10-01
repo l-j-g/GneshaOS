@@ -17,6 +17,7 @@
   brightnessDown,
   themePicker,
   scaleScript,
+  settings,
 }:
 let
   m = mod;
@@ -35,6 +36,9 @@ in
 
   # Launch // Clipboard picker
   "${m}+Shift+p" = "exec ${clipboard}";
+
+  # Launch // Gnesha settings editor
+  "${m}+Shift+s" = "exec ${settings}";
 
   # Launch // Base16 theme picker (runtime preview + background Home Manager activation)
   "${m}+Shift+t" = "exec ${themePicker}";

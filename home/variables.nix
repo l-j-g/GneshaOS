@@ -5,7 +5,7 @@
 # Stable machine values belong in ../system-parameters.nix instead.
 
 {
-  # Local dictation: 変換 (right of Space) toggles recording; Shift cancels.
+  # Local dictation: hold 変換 (right of Space) to record; Shift cancels.
   # Larger speech/cleanup models trade latency and memory for accuracy.
   dictation = {
     speechModel = "base.en";
@@ -15,7 +15,7 @@
 
   # Base16 theme name. Use "matrix-green" or any scheme exposed by
   # nix-colors, such as "ayu-dark", "dracula", or "nord".
-  themeName = "phd";
+  themeName = "tokyo-night-storm";
 
   # Default webpage zoom for Firefox and LibreWolf (1.5 = 150%). Browser UI
   # scaling and any saved per-site zoom choices remain independent.
@@ -50,7 +50,7 @@
   # "monospace"; home/fonts maps that alias and selects a rendering profile.
   # Examples: "IBM Plex Mono", "BlexMono Nerd Font Mono", "Departure Mono",
   # "DepartureMono Nerd Font Mono", "Cozette", "Terminess Nerd Font Mono".
-  terminalFontFamily = "Terminus";
+  terminalFontFamily = "IBM Plex Mono";
 
   # Font size, in points, for Sway stacked and tabbed window titles.
   stackedViewFontSize = 14;
