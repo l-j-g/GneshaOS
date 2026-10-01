@@ -1,16 +1,31 @@
+# File manager with the upstream preview-tui plugin. Previews reuse the running
+# Kitty instance through its remote-control socket, so this module installs its
+# own opener script and passes Kitty's own socket setting through.
+
 {
+  config,
+  lib,
   pkgs,
   ...
 }:
 
 {
+  home.file.".local/bin/nnn-opener" = {
+    source = ./opener;
+    executable = true;
+  };
+
   home.sessionVariables = {
-    # Open text files with the configured nnn opener and use Kitty's image
-    # protocol in preview-tui when the active Kitty instance supports it.
     NNN_OPENER = "nnn-opener";
-    NNN_TERMINAL = "kitty";
+    # preview-tui reads this as a mode selector rather than a command: only the
+    # literal "icat" turns on Kitty graphics previews.
     NNN_PREVIEWIMGPROG = "icat";
-    KITTY_LISTEN_ON = "unix:$XDG_RUNTIME_DIR/kitty-{kitty_pid}";
+    # NNN_TERMINAL is deliberately unset. With KITTY_LISTEN_ON below,
+    # preview-tui picks tmux or kitty itself, so naming a terminal here could
+    # only contradict that choice.
+  } // lib.optionalAttrs config.programs.kitty.enable {
+    # The same value Kitty itself is configured with, so the two cannot drift.
+    KITTY_LISTEN_ON = config.programs.kitty.settings.listen_on or "";
   };
 
   programs.nnn = {

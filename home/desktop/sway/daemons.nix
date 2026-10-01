@@ -53,7 +53,11 @@ in
     systemdTargets = [ sessionTarget ];
   };
 
-  # Monitor configuration daemon (keeps per-monitor config between connects).
+  # Monitor configuration daemon. It owns output scaling, because direct Sway
+  # changes are reverted on the next reconnect, so the per-monitor list below is
+  # the only scale authority. The internal panel follows the shared preference;
+  # the external monitor keeps a machine-specific scale from
+  # system-parameters.nix.
   services.way-displays = {
     enable = true;
     systemdTarget = sessionTarget;
@@ -63,11 +67,14 @@ in
       # The scale shortcut reports the factor without a verbose display toast.
       CALLBACK_CMD = "";
 
-      # The BenQ's native scale makes UI text too small in practice.
       SCALE = [
         {
-          NAME_DESC = "BenQ RD280UA";
-          SCALE = 2.0;
+          NAME_DESC = system.monitors.internal;
+          SCALE = builtins.fromJSON (toString variables.displayScale);
+        }
+        {
+          NAME_DESC = system.monitors.external;
+          SCALE = system.monitors.externalScale;
         }
       ];
     };
@@ -206,7 +213,7 @@ in
     };
     settings = {
       als.iio = {
-        path = "/sys/bus/iio/devices";
+        path = builtins.dirOf system.alsSensorPath;
         thresholds = {
           "0" = "night";
           "20" = "dark";
@@ -218,7 +225,7 @@ in
       };
       output.backlight = [
         {
-          name = "eDP-1";
+          name = system.monitors.internal;
           path = "/sys/class/backlight/${system.backlightDevice}";
           # Learn from ambient light only; avoid screen-content-driven changes.
           capturer = "none";

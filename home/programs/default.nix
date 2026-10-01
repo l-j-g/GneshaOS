@@ -61,4 +61,8 @@
     ++ [
       inputs.mcp-nixos.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
+
+  # User-installed wrappers live in ~/.local/bin, which comes before the
+  # packaged programs so a module can shadow a packaged command.
+  home.sessionPath = [ "$HOME/.local/bin" ];
 }

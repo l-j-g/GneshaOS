@@ -66,6 +66,7 @@ let
   # sessionPath is loaded into its environment.
   themePicker = "${config.home.homeDirectory}/.config/sway/scripts/theme-picker";
   scaleScript = "${config.home.homeDirectory}/.config/sway/scripts/scale.sh";
+  settings = "${config.home.profileDirectory}/bin/gnesha-settings";
 
   # SwayOSD owns volume/brightness changes and displays the matching OSD.
   volumeUp = "swayosd-client --output-volume raise";
@@ -91,6 +92,7 @@ let
       brightnessDown
       themePicker
       scaleScript
+      settings
       ;
   };
 in
@@ -139,16 +141,10 @@ in
       terminal = term;
       menu = menu;
 
-      output = {
-        # Native panel is ${toString system.displayWidth}x${toString system.displayHeight}
-        # @ 14" -> ~216 dpi; scale comes from home/variables.nix.
-        # (Wallpaper is applied via swaymsg in `startup` so sway config
-        # validation doesn't fail before the SVG exists.)
-        "*" = {
-          scale = variables.displayScale;
-        };
-      };
-
+      # Output scaling is owned by way-displays (see daemons.nix); Sway must not
+      # also set it, or the two daemons overwrite each other on reconnect.
+      # (Wallpaper is applied via swaymsg in `startup` so sway config
+      # validation doesn't fail before the SVG exists.)
       # Use Waybar below; do not also start Sway's default swaybar.
       bars = [ ];
 

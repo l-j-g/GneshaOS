@@ -11,10 +11,20 @@ let
   palette = config.colorScheme.palette;
   ansi = import ./ansi-palette.nix { inherit palette; };
   hash = c: "#${c}";
+  brightness = color:
+    let
+      # pkgs.lib keeps this importable from modules that pass only config/pkgs.
+      channel = offset: pkgs.lib.fromHexString (builtins.substring offset 2 color);
+    in
+    299 * channel 0 + 587 * channel 2 + 114 * channel 4;
 in
 {
   # raw palette (no '#') — for Kitty etc.
   inherit palette ansi;
+
+  # Perceived lightness of the selected theme, so modules can pick a matching
+  # light or dark variant of their own instead of hard-coding one.
+  dark = brightness palette.base00 < brightness palette.base05;
 
   # CSS / Sway style (with '#')
   bg = hash palette.base00;

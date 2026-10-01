@@ -1,5 +1,4 @@
 {
-  config,
   ...
 }:
 
@@ -11,7 +10,6 @@ in
     source = ./lf-image;
     executable = true;
   };
-  home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
 
   programs.lf = {
     enable = true;

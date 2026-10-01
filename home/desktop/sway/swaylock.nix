@@ -66,7 +66,7 @@ in
       background-color: ${v.bg};
       color: ${v.foreground};
       font-family: monospace;
-      font-size: 16px;
+      font-size: ${toString variables.terminalFontSize}px;
     }
     #window-box {
       background-color: ${v.bg};

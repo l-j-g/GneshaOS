@@ -2,6 +2,7 @@
 # only entry point, so ncdu is not listed in programs/default.nix.
 
 {
+  config,
   pkgs,
   ...
 }:
@@ -13,11 +14,13 @@ let
   ncduWithAllThreads = pkgs.writeShellScript "ncdu-with-all-threads" ''
     exec ${pkgs.ncdu}/bin/ncdu --threads "$(${pkgs.coreutils}/bin/nproc)" "$@"
   '';
+  # Match the theme's lightness instead of always rendering the dark variant.
+  v = import ../theme/palette.nix { inherit config pkgs; };
 in
 {
   # Ncdu's config format is one command-line option per line.
   xdg.configFile."ncdu/config".text = ''
-    --color=dark
+    --color=${if v.dark then "dark" else "light"}
   '';
 
   # ~/.local/bin is already placed before packaged applications by the shared

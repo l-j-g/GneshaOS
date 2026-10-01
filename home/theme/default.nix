@@ -79,12 +79,9 @@ let
         Unknown themeName '${themeName}'. Available themes: ${lib.concatStringsSep ", " availableThemes}
       '';
   palette = config.colorScheme.palette;
-  brightness = color:
-    let
-      channel = offset: lib.fromHexString (builtins.substring offset 2 color);
-    in
-    299 * channel 0 + 587 * channel 2 + 114 * channel 4;
-  dark = brightness palette.base00 < brightness palette.base05;
+  # Perceived lightness lives in the shared palette so every module derives the
+  # same answer instead of repeating the formula.
+  dark = (import ./palette.nix { inherit config pkgs; }).dark;
   # adw-gtk3 and libadwaita share these semantic colors. Generate both the
   # GTK named colors and modern GTK4 CSS variables from the selected Base16.
   gtkColors = {

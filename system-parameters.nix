@@ -24,6 +24,17 @@
     displayWidth = 2160;
     displayHeight = 1440;
 
+    # Monitor identities used by the desktop layer. Sway and wluma address
+    # outputs by connector name, so these are machine facts, not preferences.
+    # The desktop layer gives way-displays ownership of output scaling; the
+    # internal panel follows variables.displayScale from home/variables.nix.
+    monitors = {
+      internal = "eDP-1";
+      external = "BenQ RD280UA";
+      # The external panel's native scale renders UI text too small to read.
+      externalScale = 2.0;
+    };
+
     # Keyboard layout and option remaps applied by Sway.
     keyboardLayout = "us";
     keyboardOptions = "ctrl:nocaps";
