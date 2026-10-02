@@ -23,10 +23,9 @@
   # fanControl option only requests its EC quiet profile. CPU power capping is
   # the other heat/noise control.
   letsnote.cpuPower = true;
-  # Leave the firmware's automatic fan curve in control. The CF-FV1
-  # SEFM request is model-specific and its observed return value does not
-  # confirm that a safe fan profile was applied.
-  letsnote.fanControl = false;
+  # Request the EC quiet profile at boot. A manual SEFM 0x01 request
+  # audibly reduced fan noise on this CF-FV1.
+  letsnote.fanControl = true;
   # Remap the dead JIS keys (無変換/変換/かな) to something useful
   letsnote.jisKeys = true;
 
