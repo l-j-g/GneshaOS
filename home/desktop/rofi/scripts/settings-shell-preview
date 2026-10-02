@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# Throwaway shell/Rofi interaction prototype inspired by Swytch's dmenu flow.
+# Run with a repository path; --list prints the rows without opening Rofi.
+# Edits live only in temporary JSON. Closing prints that JSON and discards it.
+# Source writes, domain validation, and activation are deliberately outside this probe.
+set -euo pipefail
+
+repo=${1:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../../.." && pwd)}
+preferences="$repo/home/variables.nix"
+rofi=${GNESHA_ROFI:-gnesha-rofi}
+scratch=$(mktemp -d)
+trap 'rm -rf "$scratch"' EXIT
+nix-instantiate --eval --strict --json "$preferences" > "$scratch/values.json"
+cp "$scratch/values.json" "$scratch/original.json"
+
+# Comments remain the only description catalog. Assignment order is menu order.
+gawk '
+  /^[[:space:]]*#/ {
+    sub(/^[[:space:]]*#[[:space:]]?/, "")
+    help = help (help ? " " : "") $0
+    next
+  }
+  match($0, /^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=.*;[[:space:]]*$/, parts) {
+    print parts[1] "\t" help
+  }
+  /[^[:space:]]/ { help = "" }
+' "$preferences" > "$scratch/comments.tsv"
+rg --no-filename --only-matching --glob '*.nix' \
+  '\bvariables(\.[A-Za-z_][A-Za-z0-9_]*)+' \
+  "$repo/home" "$repo/hosts" "$repo/modules" "$repo/flake.nix" \
+  | sort -u | jq -Rsc 'split("\n") | map(select(length > 0) | ltrimstr("variables."))' \
+  > "$scratch/used.json"
+jq -n --rawfile comments "$scratch/comments.tsv" \
+  --slurpfile values "$scratch/values.json" --slurpfile used "$scratch/used.json" '
+  [$values[0] | paths(type != "object" and type != "array") | map(tostring) | join(".")] as $keys |
+  $comments | split("\n") | map(select(length > 0) | split("\t")) |
+  map(. as $comment | $keys[] | select(split(".")[-1] == $comment[0]) |
+    . as $key | select(any($used[0][]; . as $reference |
+      $reference == $key or ($key | startswith($reference + ".")))) |
+    {key: $key, help: ($comment[1] // "")})
+' > "$scratch/catalog.json"
+
+accent=${GNESHA_ACCENT:-$(gawk 'match($0, /border-color:[[:space:]]*(#[0-9a-fA-F]{6})/, c) { print c[1]; exit }' \
+  "${XDG_CONFIG_HOME:-$HOME/.config}/gnesha/rofi-live.rasi" 2>/dev/null || true)}
+accent=${accent:-#00ff9c}
+[[ $accent =~ ^#[[:xdigit:]]{6}$ ]] || accent='#00ff9c'
+
+rows() {
+  jq -r --arg accent "$accent" --slurpfile values "$scratch/values.json" '
+    .[] | . as $entry | ($values[0] | getpath($entry.key | split("."))) as $value |
+    "<b>\(.key | @html)</b>  <span foreground=\"\($accent)\">[\($value | tostring | @html)]</span> — \(.help | @html)"
+  ' "$scratch/catalog.json"
+  printf '<b>Finish preview</b> — discard session edits\n'
+}
+
+if [[ ${2:-} == --list ]]; then
+  rows
+  exit
+fi
+
+menu() {
+  "$rofi" -dmenu -i -p "$1" -mesg "$2" -lines 12 \
+    -theme-str 'window { width: 85%; }' "${@:3}"
+}
+
+while index=$(rows | menu 'Settings preview' 'Session edits only • Finish discards them' \
+  -markup-rows -no-custom -format i); do
+  [[ $index =~ ^[0-9]+$ ]] || exit 1
+  count=$(jq length "$scratch/catalog.json")
+  (( index < count )) || break
+  key=$(jq -r --argjson index "$index" '.[$index].key' "$scratch/catalog.json")
+  help=$(jq -r --argjson index "$index" '.[$index].help | @html' "$scratch/catalog.json")
+  current=$(jq -c --arg key "$key" 'getpath($key | split("."))' "$scratch/values.json")
+  kind=$(jq -r --arg key "$key" 'getpath($key | split(".")) | type' "$scratch/original.json")
+  choices=''
+  case $key in
+    themeName) choices=$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/gnesha/theme-names") ;;
+    terminalFontFamily) choices=$(fc-list -f '%{family}\n' | tr ',' '\n' | sort -u) ;;
+    terminal)
+      for terminal in foot ghostty kitty; do
+        if command -v "$terminal" >/dev/null; then choices+="$terminal"$'\n'; fi
+      done ;;
+  esac
+  if [[ $kind == boolean ]]; then choices=$'On\nOff'; fi
+  if [[ -n $choices ]]; then
+    if ! raw=$(printf '%s\n' "$choices" | menu "$key" "$help" -no-custom); then continue; fi
+    if [[ $kind == boolean ]]; then
+      if [[ $raw == On ]]; then value=true; else value=false; fi
+    else value=$(jq -Rn --arg value "$raw" '$value'); fi
+  else
+    initial=$(jq -r 'if . == null then "disabled" else tostring end' <<< "$current")
+    if ! raw=$(menu "$key" "$help" -filter "$initial" < /dev/null); then continue; fi
+    case $kind in
+      string) value=$(jq -Rn --arg value "$raw" '$value') ;;
+      null) if [[ $raw == disabled || $raw == null || $raw == off ]]; then value=null;
+            else value=$(jq -en --arg value "$raw" '$value | tonumber') || continue; fi ;;
+      number) value=$(jq -en --arg value "$raw" '$value | tonumber') || continue ;;
+      *) continue ;;
+    esac
+  fi
+  jq --arg key "$key" --argjson value "$value" \
+    'setpath($key | split("."); $value)' "$scratch/values.json" > "$scratch/next.json"
+  mv "$scratch/next.json" "$scratch/values.json"
+done
+cat "$scratch/values.json"
