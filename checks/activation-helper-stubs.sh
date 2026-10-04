@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Variables are consumed by the sourced activation library.
+# shellcheck disable=SC1090,SC2034
 set -euo pipefail
 
 activation_state_lib="$1"
@@ -103,5 +105,49 @@ assert_phase "$activation_id" created
 for id in rebuild-old-build rebuild-old-system rebuild-stale-closure; do
   [[ -s "$activation_transactions/$id/state" ]]
 done
+
+# Terminal logging must preserve the child TTY, literal arguments, and failures.
+printf '#!%s\n' "$(command -v bash)" > "$work/bin/tty-probe"
+cat >> "$work/bin/tty-probe" <<'EOF'
+[[ -t 0 && -t 1 ]] || exit 91
+[[ "$1" == 'a space' && "$2" == 'literal $value; command' ]] || exit 92
+printf 'TTY and arguments preserved\n'
+exit 7
+EOF
+printf '#!%s\n' "$(command -v bash)" > "$work/bin/tty-runner"
+cat >> "$work/bin/tty-runner" <<'EOF'
+set -euo pipefail
+source "$ACTIVATION_LIB"
+activation_dir="$TTY_LOG_DIR"
+activation_run_logged_tty "$TTY_PROBE" 'a space' 'literal $value; command'
+EOF
+chmod +x "$work/bin/tty-probe" "$work/bin/tty-runner"
+ACTIVATION_LIB=$(realpath "$activation_state_lib")
+export ACTIVATION_LIB
+export TTY_LOG_DIR="$activation_dir" TTY_PROBE="$work/bin/tty-probe"
+if SHELL="$BASH" script --quiet --return --command "$work/bin/tty-runner" "$work/outer.log" \
+  < /dev/null > "$work/tty-output"; then
+  echo "TTY child failure was lost" >&2
+  exit 1
+else
+  [[ $? == 7 ]]
+fi
+grep -q 'TTY and arguments preserved' "$activation_dir/run.log"
+if activation_run_logged_tty bash -c 'exit 8' > "$work/plain-output"; then
+  echo "noninteractive child failure was lost" >&2
+  exit 1
+else
+  [[ $? == 8 ]]
+fi
+
+# A summary failure must never turn a completed activation into a failed one.
+prepare_attempt rebuild-summary-failure rebuild built "$work/snapshot-current"
+mkdir -p "$work/previous-system" "$work/previous-home"
+activation_old_system="$work/previous-system"
+activation_old_home="$work/previous-home"
+export NVD_COMMAND=false
+activation_apply_pair
+assert_phase rebuild-summary-failure complete
+unset NVD_COMMAND
 
 echo "activation helper stub checks passed"

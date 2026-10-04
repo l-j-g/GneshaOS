@@ -110,15 +110,46 @@ activation_create() {
   activation_old_lock=
   activation_new_lock=
   activation_state_save
+  printf 'Rebuild attempt: %s\nLog: %s/run.log\n' "$activation_id" "$activation_dir"
 }
 
 activation_set_phase() {
   activation_phase="$1"
   activation_state_save
+  case "$1" in
+    building_system) printf '\n[1/4] Building NixOS…\n' ;;
+    building_home) printf '\n[2/4] Building Home Manager…\n' ;;
+    activating_system) printf '\n[3/4] Activating NixOS…\n' ;;
+    activating_home) printf '\n[4/4] Activating Home Manager…\n' ;;
+  esac
 }
 
 activation_run_logged() {
   "$@" 2>&1 | tee -a "$activation_dir/run.log"
+}
+
+activation_run_logged_tty() {
+  if [[ -t 0 && -t 1 ]]; then
+    local command_line
+    printf -v command_line '%q ' "$@"
+    # Preserve interactive progress without recording terminal input/passwords.
+    SHELL="$BASH" script --quiet --flush --return --append \
+      --log-out "$activation_dir/run.log" --command "$command_line"
+  else
+    activation_run_logged "$@"
+  fi
+}
+
+activation_show_diff() {
+  local label="$1" before="$2" after="$3"
+  printf '\n%s changes\n' "$label"
+  if [[ -z "$before" || ! -d "$before" ]]; then
+    printf 'Previous generation unavailable; skipping comparison.\n'
+  elif [[ "$before" == "$after" ]]; then
+    printf 'No generation change.\n'
+  elif ! activation_run_logged_tty "${NVD_COMMAND:-nvd}" diff "$before" "$after"; then
+    printf 'Activation succeeded, but the %s change summary failed.\n' "$label" >&2
+  fi
 }
 
 activation_prune_completed() {
@@ -160,7 +191,7 @@ activation_build_pair() {
   local host_name="$1" home_profile="$2"
   if [[ ! -e "$activation_dir/system" ]]; then
     activation_set_phase building_system
-    if ! activation_run_logged "${NIX_COMMAND:-nix}" build \
+    if ! activation_run_logged_tty "${NOM_COMMAND:-nom}" build \
       --out-link "$activation_dir/system" --no-write-lock-file \
       "$activation_snapshot#nixosConfigurations.${host_name}.config.system.build.toplevel"; then
       activation_set_phase failed_build_system
@@ -173,7 +204,7 @@ activation_build_pair() {
 
   if [[ ! -e "$activation_dir/home" ]]; then
     activation_set_phase building_home
-    if ! activation_run_logged "${NIX_COMMAND:-nix}" build \
+    if ! activation_run_logged_tty "${NOM_COMMAND:-nom}" build \
       --out-link "$activation_dir/home" --no-write-lock-file \
       "$activation_snapshot#homeConfigurations.\"${home_profile}\".activationPackage"; then
       activation_set_phase failed_build_home
@@ -203,7 +234,7 @@ activation_apply_pair() {
 
   if [[ "$skip_system" != true ]]; then
     activation_set_phase activating_system
-    if ! activation_run_logged "${NH_COMMAND:-nh}" os switch "$activation_dir/system"; then
+    if ! activation_run_logged_tty "${NH_COMMAND:-nh}" os switch "$activation_dir/system"; then
       activation_set_phase failed_system_activation
       printf 'System activation failed. Attempt %s is retained; resume with gnesha-rebuild --resume %s.\n' "$activation_id" "$activation_id" >&2
       return 1
@@ -212,7 +243,7 @@ activation_apply_pair() {
   fi
 
   activation_set_phase activating_home
-  if ! activation_run_logged "${NH_COMMAND:-nh}" home switch "$activation_dir/home" -b backup; then
+  if ! activation_run_logged_tty "${NH_COMMAND:-nh}" home switch "$activation_dir/home" -b backup; then
     activation_set_phase failed_home_activation
     printf 'Home Manager activation failed after the system switch. Attempt %s is retained; resume with gnesha-rebuild --resume %s.\n' "$activation_id" "$activation_id" >&2
     return 1
@@ -220,6 +251,9 @@ activation_apply_pair() {
 
   activation_set_phase complete
   activation_prune_completed
+  activation_unlock
+  activation_show_diff NixOS "$activation_old_system" "$activation_new_system"
+  activation_show_diff 'Home Manager' "$activation_old_home" "$activation_new_home"
   printf 'System and Home Manager activation completed from attempt %s.\n' "$activation_id"
 }
 

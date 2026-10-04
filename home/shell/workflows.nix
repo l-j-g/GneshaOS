@@ -30,7 +30,7 @@ let
   };
   rebuild = pkgs.writeShellApplication {
     name = "gnesha-rebuild";
-    runtimeInputs = [ pkgs.nix pkgs.nh pkgs.jq pkgs.coreutils pkgs.diffutils pkgs.util-linux pkgs.gnused ];
+    runtimeInputs = [ pkgs.nix pkgs.nh pkgs.nix-output-monitor pkgs.nvd pkgs.jq pkgs.coreutils pkgs.diffutils pkgs.util-linux pkgs.gnused ];
     text = ''
       activation_state_root=${lib.escapeShellArg "${params.userSettings.homeDirectory}/.local/state/gnesha-activation"}
       : "$activation_state_root"
