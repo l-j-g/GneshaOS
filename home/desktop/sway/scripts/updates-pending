@@ -24,9 +24,9 @@ esac
 if ! counts=$(pending_count); then
   # No refresh has completed yet. Distinguish "never ran" from "running now".
   if systemctl is-active --quiet gnesha-lock-refresh.service; then
-    printf '{"text":" 󰥔 ","tooltip":{"text":"Refreshing packages..."},"class":"working"}\n'
+    printf '{"text":" 󰥔 ","tooltip":"Refreshing packages...","class":"working"}\n'
   else
-    printf '{"text":" 󰥔 ","tooltip":{"text":"No pending-update data yet.\\nRun: sudo systemctl start gnesha-lock-refresh"},"class":"unknown"}\n'
+    printf '{"text":" 󰥔 ","tooltip":"No pending-update data yet.\\nRun: sudo systemctl start gnesha-lock-refresh","class":"unknown"}\n'
   fi
   exit 0
 fi
@@ -58,5 +58,6 @@ tooltip="Ready to apply on next rebuild:
 
 Refreshed ${built_at}"
 
-printf '{"text":"%s%s ","tooltip":{"text":"%s"},"class":"%s"}\n' \
-  "$icon" "$total" "$tooltip" "$class"
+# Encode the multiline tooltip and any quotes as one JSON string.
+jq -cn --arg text "${icon}${total} " --arg tooltip "$tooltip" --arg class "$class" \
+  '{text: $text, tooltip: $tooltip, class: $class}'

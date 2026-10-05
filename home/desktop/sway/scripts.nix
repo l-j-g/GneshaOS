@@ -40,7 +40,7 @@ let
     "swaycwd" = mkCommand "swaycwd" ./scripts/swaycwd sh (common ++ [ pkgs.sway pkgs.jq ]);
     "theme-picker" = mkCommand "theme-picker" (pkgs.writeText "theme-picker" themePickerScript) sh (common ++ [ pkgs.rofi pkgs.libnotify pkgs.util-linux pkgs.gnugrep pkgs.gnused pkgs.kitty pkgs.sway pkgs.jq pkgs.nix pkgs.nh pkgs.dash ]);
     "theme-preview" = mkCommand "theme-preview" (pkgs.writeText "theme-preview" themePreviewScript) sh (common ++ [ pkgs.gawk pkgs.gnused pkgs.kitty pkgs.sway pkgs.jq pkgs.systemd ]);
-    "updates-pending" = mkCommand "updates-pending" (pkgs.writeText "updates-pending" updatesPendingScript) sh (common ++ [ pkgs.nvd pkgs.systemd pkgs.util-linux ]);
+    "updates-pending" = mkCommand "updates-pending" (pkgs.writeText "updates-pending" updatesPendingScript) sh (common ++ [ pkgs.nvd pkgs.systemd pkgs.util-linux pkgs.jq ]);
     # nvd shells out to nix-build, so the review helper needs nix on PATH too.
     "updates-pending-review" = mkCommand "updates-pending-review" (pkgs.writeText "updates-pending-review" updatesPendingReviewScript) sh (common ++ [ pkgs.nvd pkgs.nix ]);
     "vpn-toggle" = pkgs.writeShellScriptBin "vpn-toggle" ''
