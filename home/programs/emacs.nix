@@ -9,9 +9,9 @@
 {
   # Doom's markdown preview and shell checker need these on the general PATH,
   # not only inside Neovim's wrapper.
-  home.packages = with pkgs; [
-    pandoc
-    shellcheck
+  home.packages = [
+    pkgs.pandoc
+    pkgs.shellcheck
   ];
 
   # Nix owns the Emacs binary; Doom owns its checkout and package sync.

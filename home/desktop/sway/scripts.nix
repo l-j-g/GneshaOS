@@ -26,25 +26,25 @@ let
   python = "${pkgs.python3}/bin/python3";
   # sway-autotile needs the sway IPC client, which the plain python3 lacks.
   pythonI3ipc = "${pkgs.python3.withPackages (ps: [ ps.i3ipc ])}/bin/python3";
-  common = with pkgs; [ coreutils ];
+  common = [ pkgs.coreutils ];
   manifest = {
-    "first-empty-workspace" = mkCommand "first-empty-workspace" ./scripts/first-empty-workspace python (with pkgs; [ python3 sway ]);
-    "calcurse-daemon-enabled" = mkCommand "calcurse-daemon-enabled" ./scripts/calcurse-daemon-enabled sh (with pkgs; [ gawk ]);
-    "ghostty-font-size-notify" = mkCommand "ghostty-font-size-notify" (pkgs.writeText "ghostty-font-size-notify" ghosttyFontSizeNotifyScript) sh (common ++ (with pkgs; [ sway jq libnotify gnused ]));
-    "inhibit-idle" = mkCommand "inhibit-idle" ./scripts/inhibit-idle python (with pkgs; [ python3 sway ]);
-    "once.sh" = mkCommand "once.sh" ./scripts/once.sh sh (common ++ (with pkgs; [ util-linux ]));
-    "recorder.sh" = mkCommand "recorder.sh" ./scripts/recorder.sh sh (common ++ (with pkgs; [ libnotify slurp wf-recorder xdg-user-dirs ]));
-    "scale.sh" = mkCommand "scale.sh" (pkgs.writeText "scale.sh" scaleScript) sh (common ++ (with pkgs; [ sway jq gawk way-displays libnotify ]));
+    "first-empty-workspace" = mkCommand "first-empty-workspace" ./scripts/first-empty-workspace python [ pkgs.python3 pkgs.sway ];
+    "calcurse-daemon-enabled" = mkCommand "calcurse-daemon-enabled" ./scripts/calcurse-daemon-enabled sh [ pkgs.gawk ];
+    "ghostty-font-size-notify" = mkCommand "ghostty-font-size-notify" (pkgs.writeText "ghostty-font-size-notify" ghosttyFontSizeNotifyScript) sh (common ++ [ pkgs.sway pkgs.jq pkgs.libnotify pkgs.gnused ]);
+    "inhibit-idle" = mkCommand "inhibit-idle" ./scripts/inhibit-idle python [ pkgs.python3 pkgs.sway ];
+    "once.sh" = mkCommand "once.sh" ./scripts/once.sh sh (common ++ [ pkgs.util-linux ]);
+    "recorder.sh" = mkCommand "recorder.sh" ./scripts/recorder.sh sh (common ++ [ pkgs.libnotify pkgs.slurp pkgs.wf-recorder pkgs.xdg-user-dirs ]);
+    "scale.sh" = mkCommand "scale.sh" (pkgs.writeText "scale.sh" scaleScript) sh (common ++ [ pkgs.sway pkgs.jq pkgs.gawk pkgs.way-displays pkgs.libnotify ]);
     "sway-autotile" = mkCommand "sway-autotile" ./scripts/sway-autotile pythonI3ipc [ ];
-    "sway-help" = mkCommand "sway-help" ./scripts/sway-help sh (common ++ (with pkgs; [ sway jq nwg-wrapper ]));
-    "swaycwd" = mkCommand "swaycwd" ./scripts/swaycwd sh (common ++ (with pkgs; [ sway jq ]));
-    "theme-picker" = mkCommand "theme-picker" (pkgs.writeText "theme-picker" themePickerScript) sh (common ++ (with pkgs; [ rofi libnotify util-linux gnugrep gnused kitty sway jq nix nh dash ]));
-    "theme-preview" = mkCommand "theme-preview" (pkgs.writeText "theme-preview" themePreviewScript) sh (common ++ (with pkgs; [ gawk gnused kitty sway jq systemd ]));
-    "updates-pending" = mkCommand "updates-pending" (pkgs.writeText "updates-pending" updatesPendingScript) sh (common ++ (with pkgs; [ nvd systemd util-linux ]));
+    "sway-help" = mkCommand "sway-help" ./scripts/sway-help sh (common ++ [ pkgs.sway pkgs.jq pkgs.nwg-wrapper ]);
+    "swaycwd" = mkCommand "swaycwd" ./scripts/swaycwd sh (common ++ [ pkgs.sway pkgs.jq ]);
+    "theme-picker" = mkCommand "theme-picker" (pkgs.writeText "theme-picker" themePickerScript) sh (common ++ [ pkgs.rofi pkgs.libnotify pkgs.util-linux pkgs.gnugrep pkgs.gnused pkgs.kitty pkgs.sway pkgs.jq pkgs.nix pkgs.nh pkgs.dash ]);
+    "theme-preview" = mkCommand "theme-preview" (pkgs.writeText "theme-preview" themePreviewScript) sh (common ++ [ pkgs.gawk pkgs.gnused pkgs.kitty pkgs.sway pkgs.jq pkgs.systemd ]);
+    "updates-pending" = mkCommand "updates-pending" (pkgs.writeText "updates-pending" updatesPendingScript) sh (common ++ [ pkgs.nvd pkgs.systemd pkgs.util-linux ]);
     # nvd shells out to nix-build, so the review helper needs nix on PATH too.
-    "updates-pending-review" = mkCommand "updates-pending-review" (pkgs.writeText "updates-pending-review" updatesPendingReviewScript) sh (common ++ (with pkgs; [ nvd nix ]));
+    "updates-pending-review" = mkCommand "updates-pending-review" (pkgs.writeText "updates-pending-review" updatesPendingReviewScript) sh (common ++ [ pkgs.nvd pkgs.nix ]);
     "vpn-toggle" = pkgs.writeShellScriptBin "vpn-toggle" ''
-      export PATH=${lib.makeBinPath (common ++ (with pkgs; [ networkmanager gnugrep gawk sudo wireguard-tools ]))}
+      export PATH=${lib.makeBinPath (common ++ [ pkgs.networkmanager pkgs.gnugrep pkgs.gawk pkgs.sudo pkgs.wireguard-tools ])}
       export WG_BIN=${pkgs.wireguard-tools}/bin/wg
       exec ${bash} ${./scripts/vpn-toggle} "$@"
     '';

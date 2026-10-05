@@ -43,18 +43,18 @@ in
       };
     };
 
-  home.packages = with pkgs; [
-    lazydocker
-    zoxide
-    eza
-    bat
-    fd
-    ripgrep
-    fzf
-    fastfetch
-    htop
-    btop
-    jq
+  home.packages = [
+    pkgs.lazydocker
+    pkgs.zoxide
+    pkgs.eza
+    pkgs.bat
+    pkgs.fd
+    pkgs.ripgrep
+    pkgs.fzf
+    pkgs.fastfetch
+    pkgs.htop
+    pkgs.btop
+    pkgs.jq
   ];
 
   programs.fish = {

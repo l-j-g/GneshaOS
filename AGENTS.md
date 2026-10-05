@@ -80,6 +80,14 @@ tweaks in `home/variables.nix`, which stays a plain file of literals: every
 preference gets a comment above it, and that comment is the description the
 Gnesha Settings editor shows, so preferences are catalogued nowhere else.
 
+Avoid `with` expressions in repository-owned Nix code. Use explicit attribute
+paths such as `pkgs.rustup`, `pkgs.vimPlugins.nvim-lspconfig`, and
+`config.boot.kernelPackages.acpi_call`. For repeated names, a narrowly scoped
+`let` with `inherit (pkgs) name;` is acceptable. Qualify callback attributes too
+(for example, `p: [ p.tree-sitter-nix ]`). This keeps name origins visible to
+readers and static analysis. Preserve list order when refactoring; do not
+replace ordered lists with `builtins.attrValues`.
+
 ## Commits and Pull Requests
 
 Use concise imperative commit subjects, for example `Add ncdu defaults` or

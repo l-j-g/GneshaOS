@@ -77,40 +77,40 @@ in
     size = 32;
   };
 
-  home.packages = with pkgs; [
-    waybar
-    mako
-    swaylock
-    swayidle
-    wl-clipboard
-    grim
-    slurp
-    wlsunset
-    brightnessctl
-    playerctl
-    pavucontrol
-    vlc
-    way-displays
-    bluetuith
-    xdg-desktop-portal-gtk
-    xdg-desktop-portal-wlr
+  home.packages = [
+    pkgs.waybar
+    pkgs.mako
+    pkgs.swaylock
+    pkgs.swayidle
+    pkgs.wl-clipboard
+    pkgs.grim
+    pkgs.slurp
+    pkgs.wlsunset
+    pkgs.brightnessctl
+    pkgs.playerctl
+    pkgs.pavucontrol
+    pkgs.vlc
+    pkgs.way-displays
+    pkgs.bluetuith
+    pkgs.xdg-desktop-portal-gtk
+    pkgs.xdg-desktop-portal-wlr
 
     # Manjaro Sway alignment
-    rofi
-    flashfocus
-    wl-clip-persist
-    calcurse
-    dex
-    polkit_gnome
-    noisetorch
-    nwg-wrapper
-    acpi
-    wf-recorder
-    swappy
-    sway-contrib.grimshot
-    emoji-picker
-    bc
-    python3
+    pkgs.rofi
+    pkgs.flashfocus
+    pkgs.wl-clip-persist
+    pkgs.calcurse
+    pkgs.dex
+    pkgs.polkit_gnome
+    pkgs.noisetorch
+    pkgs.nwg-wrapper
+    pkgs.acpi
+    pkgs.wf-recorder
+    pkgs.swappy
+    pkgs.sway-contrib.grimshot
+    pkgs.emoji-picker
+    pkgs.bc
+    pkgs.python3
   ];
 
   xdg.portal = {

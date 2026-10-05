@@ -30,34 +30,34 @@ let
     "return {\n"
     + lib.concatMapStringsSep "\n" (field: "  ${field} = \"#${palette.${field}}\",") paletteFields
     + "\n}\n";
-  plugins = with pkgs.vimPlugins; [
-    nvim-lspconfig
-    nvim-cmp
-    cmp-nvim-lsp
-    cmp-buffer
-    cmp-path
-    cmp-cmdline
-    cmp_luasnip
-    luasnip
-    friendly-snippets
-    nvim-tree-lua
-    nvim-web-devicons
-    which-key-nvim
-    telescope-nvim
-    telescope-fzf-native-nvim
-    plenary-nvim
-    project-nvim
-    vim-nix
-    nnn-vim
-    (nvim-treesitter.withPlugins (p: with p; [
-      tree-sitter-nix
-      tree-sitter-bash
-      tree-sitter-lua
-      tree-sitter-python
-      tree-sitter-toml
-      tree-sitter-json
-      tree-sitter-markdown
-      tree-sitter-markdown-inline
+  plugins = [
+    pkgs.vimPlugins.nvim-lspconfig
+    pkgs.vimPlugins.nvim-cmp
+    pkgs.vimPlugins.cmp-nvim-lsp
+    pkgs.vimPlugins.cmp-buffer
+    pkgs.vimPlugins.cmp-path
+    pkgs.vimPlugins.cmp-cmdline
+    pkgs.vimPlugins.cmp_luasnip
+    pkgs.vimPlugins.luasnip
+    pkgs.vimPlugins.friendly-snippets
+    pkgs.vimPlugins.nvim-tree-lua
+    pkgs.vimPlugins.nvim-web-devicons
+    pkgs.vimPlugins.which-key-nvim
+    pkgs.vimPlugins.telescope-nvim
+    pkgs.vimPlugins.telescope-fzf-native-nvim
+    pkgs.vimPlugins.plenary-nvim
+    pkgs.vimPlugins.project-nvim
+    pkgs.vimPlugins.vim-nix
+    pkgs.vimPlugins.nnn-vim
+    (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
+      p.tree-sitter-nix
+      p.tree-sitter-bash
+      p.tree-sitter-lua
+      p.tree-sitter-python
+      p.tree-sitter-toml
+      p.tree-sitter-json
+      p.tree-sitter-markdown
+      p.tree-sitter-markdown-inline
     ]))
   ];
 in
@@ -74,10 +74,10 @@ in
     withRuby = false;
     inherit initLua plugins;
 
-    extraPackages = with pkgs; [
-      tree-sitter
-      shellcheck
-      bash-language-server
+    extraPackages = [
+      pkgs.tree-sitter
+      pkgs.shellcheck
+      pkgs.bash-language-server
     ];
   };
 }

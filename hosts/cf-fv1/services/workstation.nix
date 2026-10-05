@@ -1,30 +1,30 @@
 { pkgs, ... }:
 {
-  environment.systemPackages = with pkgs; [
-    vim
-    git
+  environment.systemPackages = [
+    pkgs.vim
+    pkgs.git
     # Nix language tooling shared by editors and command-line clients.
-    nixd
-    nixfmt
-    curl
-    wget
-    file
-    pciutils
-    usbutils
-    libinput
-    rsync
-    gvfs
-    libmtp
-    udisks2
-    lm_sensors
-    nh
-    brightnessctl
-    acpi
-    powertop
-    docker-compose
-    libnotify
+    pkgs.nixd
+    pkgs.nixfmt
+    pkgs.curl
+    pkgs.wget
+    pkgs.file
+    pkgs.pciutils
+    pkgs.usbutils
+    pkgs.libinput
+    pkgs.rsync
+    pkgs.gvfs
+    pkgs.libmtp
+    pkgs.udisks2
+    pkgs.lm_sensors
+    pkgs.nh
+    pkgs.brightnessctl
+    pkgs.acpi
+    pkgs.powertop
+    pkgs.docker-compose
+    pkgs.libnotify
     # Ghostty sets TERM=xterm-ghostty; make that terminfo entry available
     # system-wide to tmux and programs launched outside Home Manager's shell.
-    ghostty.terminfo
+    pkgs.ghostty.terminfo
   ];
 }

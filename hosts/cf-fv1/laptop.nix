@@ -10,7 +10,7 @@
   # Iris Xe iGPU + VA-API video decode
   hardware.graphics = {
     enable = true;
-    extraPackages = with pkgs; [ intel-media-driver ];
+    extraPackages = [ pkgs.intel-media-driver ];
   };
 
   # Let's Note specific kernel bits (ec charge limit, hotkeys, backlight)

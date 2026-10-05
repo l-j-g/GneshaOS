@@ -68,7 +68,7 @@ in
 
     (lib.mkIf cfg.fanControl {
       boot.kernelModules = [ "acpi_call" ];
-      boot.extraModulePackages = with config.boot.kernelPackages; [ acpi_call ];
+      boot.extraModulePackages = [ config.boot.kernelPackages.acpi_call ];
 
       # CF-FV1's existing host configuration uses 0x01. The old 0x05 note
       # referred to CF-SV1 and did not match this method call. A successful

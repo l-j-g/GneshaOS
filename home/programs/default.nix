@@ -28,35 +28,34 @@
   # modules below provide configuration for packages that need it and manage
   # their own primary package through Home Manager.
   home.packages =
-    with pkgs;
     [
-      tldr
-      signal-desktop
-      keepassxc
-      monero-gui
-      kdePackages.kleopatra
-      tor-browser
-      discord
-      imv
-      mpv
-      nautilus
-      chafa
-      librsvg
-      fastfetch
-      opencode
-      codex
-      nodejs
-      uv
-      steam
-      ppsspp
-      xdelta
-      slack
-      ffmpegthumbnailer
-      less
-      mediainfo
-      poppler-utils
-      tree
-      unzip
+      pkgs.tldr
+      pkgs.signal-desktop
+      pkgs.keepassxc
+      pkgs.monero-gui
+      pkgs.kdePackages.kleopatra
+      pkgs.tor-browser
+      pkgs.discord
+      pkgs.imv
+      pkgs.mpv
+      pkgs.nautilus
+      pkgs.chafa
+      pkgs.librsvg
+      pkgs.fastfetch
+      pkgs.opencode
+      pkgs.codex
+      pkgs.nodejs
+      pkgs.uv
+      pkgs.steam
+      pkgs.ppsspp
+      pkgs.xdelta
+      pkgs.slack
+      pkgs.ffmpegthumbnailer
+      pkgs.less
+      pkgs.mediainfo
+      pkgs.poppler-utils
+      pkgs.tree
+      pkgs.unzip
     ]
     ++ [
       inputs.mcp-nixos.packages.${pkgs.stdenv.hostPlatform.system}.default

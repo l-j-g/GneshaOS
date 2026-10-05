@@ -39,7 +39,7 @@ let
 in
 
 {
-  environment.systemPackages = with commands; [ arr arrPin arrUpdate arrDoctor ];
+  environment.systemPackages = [ commands.arr commands.arrPin commands.arrUpdate commands.arrDoctor ];
   environment.etc."arr/compose.json".source = media.composeFile;
 
   # Docker engine + compose for the self-hosted media stack (Lidarr/Prowlarr/etc.)
