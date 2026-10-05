@@ -76,8 +76,6 @@ in
 
     extraPackages = with pkgs; [
       tree-sitter
-      nixd
-      nixfmt
       shellcheck
       bash-language-server
     ];

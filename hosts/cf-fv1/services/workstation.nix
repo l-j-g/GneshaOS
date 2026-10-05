@@ -3,6 +3,9 @@
   environment.systemPackages = with pkgs; [
     vim
     git
+    # Nix language tooling shared by editors and command-line clients.
+    nixd
+    nixfmt
     curl
     wget
     file
