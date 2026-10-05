@@ -117,8 +117,8 @@ activation_set_phase() {
   activation_phase="$1"
   activation_state_save
   case "$1" in
-    building_system) printf '\n[1/4] Building NixOS…\n' ;;
-    building_home) printf '\n[2/4] Building Home Manager…\n' ;;
+    building_system) printf '\n[1/4] Evaluating and building NixOS…\nPreparing the build plan; the dependency graph appears when jobs are ready.\n' ;;
+    building_home) printf '\n[2/4] Evaluating and building Home Manager…\nPreparing the build plan; the dependency graph appears when jobs are ready.\n' ;;
     activating_system) printf '\n[3/4] Activating NixOS…\n' ;;
     activating_home) printf '\n[4/4] Activating Home Manager…\n' ;;
   esac
@@ -188,14 +188,24 @@ activation_discard() {
 }
 
 activation_build_pair() {
-  local host_name="$1" home_profile="$2"
+  local host_name="$1" home_profile="$2" build_status
   if [[ ! -e "$activation_dir/system" ]]; then
     activation_set_phase building_system
-    if ! activation_run_logged_tty "${NOM_COMMAND:-nom}" build \
+    if GNESHA_BUILD_LOG="$activation_dir/system-build.jsonl" \
+      activation_run_logged_tty "${BUILD_MONITOR_COMMAND:-gnesha-build-monitor}" build \
       --out-link "$activation_dir/system" --no-write-lock-file \
       "$activation_snapshot#nixosConfigurations.${host_name}.config.system.build.toplevel"; then
+      :
+    else
+      build_status=$?
+      if [[ "$build_status" == 130 || "$build_status" == 143 ]]; then
+        activation_set_phase cancelled_build_system
+        printf 'System build cancelled. Attempt %s is retained at %s.\n' "$activation_id" "$activation_dir" >&2
+        return "$build_status"
+      fi
       activation_set_phase failed_build_system
       printf 'System build failed. Attempt %s is retained at %s.\n' "$activation_id" "$activation_dir" >&2
+      printf 'Full build events: %s/system-build.jsonl\n' "$activation_dir" >&2
       return 1
     fi
     activation_new_system=$(readlink -f "$activation_dir/system")
@@ -204,11 +214,21 @@ activation_build_pair() {
 
   if [[ ! -e "$activation_dir/home" ]]; then
     activation_set_phase building_home
-    if ! activation_run_logged_tty "${NOM_COMMAND:-nom}" build \
+    if GNESHA_BUILD_LOG="$activation_dir/home-build.jsonl" \
+      activation_run_logged_tty "${BUILD_MONITOR_COMMAND:-gnesha-build-monitor}" build \
       --out-link "$activation_dir/home" --no-write-lock-file \
       "$activation_snapshot#homeConfigurations.\"${home_profile}\".activationPackage"; then
+      :
+    else
+      build_status=$?
+      if [[ "$build_status" == 130 || "$build_status" == 143 ]]; then
+        activation_set_phase cancelled_build_home
+        printf 'Home Manager build cancelled. Attempt %s is retained at %s.\n' "$activation_id" "$activation_dir" >&2
+        return "$build_status"
+      fi
       activation_set_phase failed_build_home
       printf 'Home Manager build failed. Attempt %s is retained at %s.\n' "$activation_id" "$activation_dir" >&2
+      printf 'Full build events: %s/home-build.jsonl\n' "$activation_dir" >&2
       return 1
     fi
     activation_new_home=$(readlink -f "$activation_dir/home")
@@ -269,7 +289,7 @@ activation_resume() {
       printf 'The saved snapshot or candidate closures are missing; attempt %s cannot be resumed.\n' "$activation_id" >&2
       return 1
     }
-    activation_build_pair "$host_name" "$home_profile" || return 1
+    activation_build_pair "$host_name" "$home_profile" || return "$?"
   else
     activation_new_system=$(readlink -f "$activation_dir/system")
     activation_new_home=$(readlink -f "$activation_dir/home")

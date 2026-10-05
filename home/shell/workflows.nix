@@ -28,9 +28,14 @@ let
       exec flock -x "$activation_lock_file" "$@"
     '';
   };
+  buildMonitor = pkgs.writeShellApplication {
+    name = "gnesha-build-monitor";
+    runtimeInputs = [ pkgs.nix pkgs.nix-output-monitor pkgs.jq pkgs.coreutils ];
+    text = builtins.readFile ./build-monitor;
+  };
   rebuild = pkgs.writeShellApplication {
     name = "gnesha-rebuild";
-    runtimeInputs = [ pkgs.nix pkgs.nh pkgs.nix-output-monitor pkgs.nvd pkgs.jq pkgs.coreutils pkgs.diffutils pkgs.util-linux pkgs.gnused ];
+    runtimeInputs = [ buildMonitor pkgs.nix pkgs.nh pkgs.nix-output-monitor pkgs.nvd pkgs.jq pkgs.coreutils pkgs.diffutils pkgs.util-linux pkgs.gnused ];
     text = ''
       activation_state_root=${lib.escapeShellArg "${params.userSettings.homeDirectory}/.local/state/gnesha-activation"}
       : "$activation_state_root"

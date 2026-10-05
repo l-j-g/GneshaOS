@@ -150,4 +150,33 @@ activation_apply_pair
 assert_phase rebuild-summary-failure complete
 unset NVD_COMMAND
 
+# Build cancellation is retained as cancellation, never activation or failure.
+cat > "$work/bin/build-monitor" <<'EOF'
+#!/usr/bin/env bash
+exit "${BUILD_STUB_STATUS:-130}"
+EOF
+chmod +x "$work/bin/build-monitor"
+export BUILD_MONITOR_COMMAND="$work/bin/build-monitor"
+for layer in system home; do
+  prepare_attempt "rebuild-cancel-$layer" rebuild building_system "$work/snapshot-current"
+  if [[ "$layer" == home ]]; then
+    ln -s "$work/system-closure" "$activation_dir/system"
+  fi
+  status=0
+  activation_build_pair cf-fv1 lg@cf-fv1 > "$work/build-output" 2>&1 || status=$?
+  [[ "$status" == 130 ]]
+  assert_phase "rebuild-cancel-$layer" "cancelled_build_$layer"
+  grep -q 'build cancelled' "$work/build-output"
+  grep -q 'Preparing the build plan' "$work/build-output"
+  [[ ! -e "$activation_dir/home" ]]
+done
+export BUILD_STUB_STATUS=17
+prepare_attempt rebuild-build-failure rebuild building_system "$work/snapshot-current"
+if activation_build_pair cf-fv1 lg@cf-fv1 > "$work/build-output" 2>&1; then
+  echo "failed build unexpectedly succeeded" >&2
+  exit 1
+fi
+assert_phase rebuild-build-failure failed_build_system
+grep -q 'Full build events:' "$work/build-output"
+
 echo "activation helper stub checks passed"

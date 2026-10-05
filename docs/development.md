@@ -115,6 +115,14 @@ writes a separate log under `~/.config/gnesha/theme-activation-logs/`; a failed
 activation leaves the saved selection in place and reports that the live
 preview may differ.
 
+Rebuild output keeps the dependency graph and normal build messages while hiding
+curl's repetitive numeric download rows. The initial evaluation may show only
+an elapsed timer until Nix has a build plan. Full unfiltered events are saved
+as `system-build.jsonl` and `home-build.jsonl` in the attempt directory, alongside
+the terminal transcript `run.log`. Inspect them with
+`nom --json < system-build.jsonl`, or use `nix log <derivation>` for package logs.
+Interrupted builds are reported as cancelled and remain available for retry.
+
 Each `rebuild` attempt records its input snapshot, old and candidate generations,
 phase, and log under `~/.local/state/gnesha-activation/transactions/`. Candidate
 GC roots and logs remain after failure. Retry the exact saved closures with

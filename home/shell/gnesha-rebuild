@@ -27,5 +27,5 @@ fi
 activation_lock
 activation_create rebuild "$snapshot" "$flakePath"
 activation_unlock
-if ! activation_build_pair "$hostName" "$homeProfile"; then exit 1; fi
+activation_build_pair "$hostName" "$homeProfile" || exit "$?"
 activation_apply_pair

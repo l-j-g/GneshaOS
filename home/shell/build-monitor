@@ -1,0 +1,21 @@
+# Run Nix with structured progress, retaining the complete event log separately
+# from the terminal transcript. Only curl's repeated numeric progress rows are
+# hidden; warnings, errors, other build output and graph events pass through.
+set -euo pipefail
+# nom reports signals as exit 1; preserve cancellation for the rebuild caller.
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+"${NIX_COMMAND:-nix}" "$@" --log-format internal-json -v 2>&1 \
+  | tee -a "${GNESHA_BUILD_LOG:?build event log is required}" \
+  | jq --unbuffered --raw-input --raw-output '
+      if startswith("@nix ") then
+        . as $line
+        | (try (.[5:] | fromjson) catch null) as $event
+        | if ($event.action == "result" and $event.type == 101
+              and (($event.fields[0] // "") | test(
+                "^\\s*[0-9]+\\s+\\S+\\s+[0-9]+\\s+\\S+\\s+[0-9]+\\s+\\S+\\s+\\S+\\s+\\S+\\s+\\S+\\s+\\S+\\s+\\S+\\s+\\S+\\s*$"
+              ))) then empty else $line end
+      else . end
+    ' \
+  | "${NOM_COMMAND:-nom}" --json
