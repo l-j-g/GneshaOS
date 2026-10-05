@@ -54,21 +54,35 @@ adaptations. Agents delegated tasks by an integrating agent return changes for
 integration and do not push; agents handling direct human requests follow the
 merge and push policy above.
 
-## Build and Validation
+## Validation
 
-Run checks from the repository root:
+Validate by parsing and evaluation by default. The user runs rebuilds separately;
+run builds only when explicitly requested. Run commands from the task worktree.
+
+- For every change, run `git diff --check` and review the diff.
+- For documentation-only changes, diff review is sufficient; skip Nix checks.
+- Parse every changed Nix file with `nix-instantiate --parse <file>`.
+- Syntax-check changed scripts with their language's non-mutating syntax check.
+- For evaluated configuration changes, run `nix flake check --no-build --show-trace`.
+- Evaluate the affected configuration's derivation (both for shared changes):
 
 ```sh
-nix flake check --show-trace
-nix-instantiate --parse path/to/changed-file.nix
-nixos-rebuild build --flake .#cf-fv1
-nix build --no-link '.#homeConfigurations."lg@cf-fv1".activationPackage'
+nix eval --raw '.#nixosConfigurations.cf-fv1.config.system.build.toplevel.drvPath'
+nix eval --raw '.#homeConfigurations."lg@cf-fv1".activationPackage.drvPath'
 ```
 
-These commands evaluate, parse, or build without activating the system. Run
-`git diff --check` before committing. The project has no test framework or
-coverage requirement; validation consists of Nix parsing, flake checks, and
-build-only evaluation of affected outputs.
+Parsing and evaluation catch configuration errors but do not prove builds or
+runtime behavior. `--no-build` skips building flake checks; evaluation can still
+fetch inputs or trigger import-from-derivation builds. Do not trigger further
+builds to validate routine changes. If evaluation requires a build, report the
+limitation rather than starting a separate build.
+
+Passing the applicable default checks is sufficient to commit, merge, and push.
+For configuration changes, report "evaluation passed; build and runtime
+verification pending". Report skipped or failed checks accurately. Use
+`nixos-rebuild build`, `nix build`, or flake checks without `--no-build` only
+when the user explicitly requests build validation. Activation still requires
+explicit approval.
 
 ## Style and Naming
 

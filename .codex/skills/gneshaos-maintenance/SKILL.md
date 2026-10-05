@@ -36,22 +36,22 @@ unless the user explicitly requests activation.
 
 ## Choose validation by impact
 
-Run every applicable check from the repository root. Validation is cumulative:
-later checks do not replace earlier ones.
+Default to parsing and evaluation; the user runs rebuilds separately. Run all
+applicable checks from the task worktree, without building configuration outputs.
 
 1. For every change, run `git diff --check` and inspect both `git diff` and
-   `git diff --cached`. The worktree may contain changes in both layers.
+   `git diff --cached`. For documentation-only changes, stop after diff review.
 2. Parse every changed `.nix` file with
    `nix-instantiate --parse <file> >/dev/null`.
 3. Syntax-check changed Fish files with `fish --no-execute <file>`. Use the
    language's non-mutating syntax check for other scripts.
-4. For any evaluated configuration change, run
-   `nix flake check --show-trace`.
-5. For changes under `hosts/`, `modules/`, `flake.nix`, or system parameters,
-   run `nixos-rebuild build --flake .#<host>`.
-6. For changes under `home/`, `flake.nix`, or parameters consumed by Home
-   Manager, run
-   `nix build --no-link '.#homeConfigurations."<user>@<host>".activationPackage'`.
+4. For evaluated configuration changes, run
+   `nix flake check --no-build --show-trace`.
+5. For changes affecting the system configuration, evaluate
+   `nix eval --raw '.#nixosConfigurations.<host>.config.system.build.toplevel.drvPath'`.
+6. For changes affecting Home Manager, evaluate
+   `nix eval --raw '.#homeConfigurations."<user>@<host>".activationPackage.drvPath'`.
+   Evaluate both outputs for shared changes.
 
 Discover valid targets instead of assuming them:
 
@@ -60,8 +60,14 @@ nix eval --json .#nixosConfigurations --apply builtins.attrNames
 nix eval --json .#homeConfigurations --apply builtins.attrNames
 ```
 
-Build commands may be skipped when prerequisites are unavailable or the cost is
-disproportionate. Report the exact reason; never claim an unrun check passed.
+`--no-build` skips building flake checks. Evaluation may still fetch inputs or
+trigger import-from-derivation builds; if this prevents evaluation without a
+build, report the limitation rather than starting a separate build.
+
+Passing the applicable default checks is sufficient to commit, merge, and push.
+Run `nixos-rebuild build`, `nix build`, or flake checks without `--no-build` only
+when the user explicitly requests build validation. Report skipped or failed
+checks accurately; never claim an unrun check passed.
 
 ## Protect the machine
 
@@ -74,6 +80,7 @@ and `home-rebuild` as activation commands, not validation commands.
 ## Report the result
 
 Lead with the outcome. List changed paths, validation commands and their exact
-results, then call out skipped checks, remaining risks, and any activation the
-user may choose to perform. Do not imply that a successful build activated the
-configuration.
+results, then call out skipped checks and remaining risks. For configuration
+changes validated by evaluation only, report "evaluation passed; build and
+runtime verification pending". Do not imply evaluation proves a build succeeds
+or that a successful build activated the configuration.
