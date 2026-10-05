@@ -20,9 +20,9 @@ running machine.
 
 ## Working in a Worktree
 
-Do not edit the main checkout. Start every task in its own worktree so two
-agents can work in this repository at the same time without overwriting each
-other:
+Do not make source changes in the main checkout. Start every task in its own
+worktree so two agents can work in this repository at the same time without
+overwriting each other:
 
 ```sh
 git worktree add -b <topic> .worktrees/<topic> HEAD
@@ -30,9 +30,17 @@ git worktree add -b <topic> .worktrees/<topic> HEAD
 
 Work inside `.worktrees/<topic>/`, and run every `nix` command from there so the
 flake resolves to that worktree. `.worktrees/` is ignored, so nothing extra lands
-in the index. When the work is validated, commit on the topic branch and report
-the branch name; the integrating agent merges it. Never force-push, never
-`git checkout` a path that another worktree owns, and never reset the main
+in the index. When the work is validated, commit on the topic branch.
+
+- If an integrating agent created or assigned the task, return the branch name
+  to that agent for merging; do not merge or push it yourself.
+- If a human user requested the task directly, merge your validated topic branch
+  into the main branch and push it to the configured upstream. You are responsible
+  for integration; do not leave it pending for another agent. The main checkout
+  may be used for the merge, while preserving unrelated staged and unstaged work.
+
+Never force-push, never `git checkout` a path that another worktree owns, and
+never reset the main
 checkout's index — leave unrelated staged and unstaged work alone.
 
 ## Supplemental NixOS Management Reference
@@ -42,8 +50,9 @@ impermanence, LUKS, or monitoring, consult `skills/nixos-managing/SKILL.md` and
 its linked references. The repository instructions here and the
 `gneshaos-maintenance` skill take precedence over that supplemental reference.
 See `skills/nixos-managing/PROVENANCE.md` for its source, license, and local
-adaptations. Worker agents return changes for integration and do not push;
-the integrating agent follows this file's commit and push policy.
+adaptations. Agents delegated tasks by an integrating agent return changes for
+integration and do not push; agents handling direct human requests follow the
+merge and push policy above.
 
 ## Build and Validation
 
