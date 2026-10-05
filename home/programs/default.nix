@@ -9,6 +9,7 @@
 
 {
   imports = [
+    ./coding-agents.nix
     ./nvim
     ./emacs.nix
     ./git.nix
@@ -42,8 +43,6 @@
       pkgs.chafa
       pkgs.librsvg
       pkgs.fastfetch
-      pkgs.opencode
-      pkgs.codex
       pkgs.nodejs
       pkgs.uv
       pkgs.steam
