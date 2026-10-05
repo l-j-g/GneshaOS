@@ -86,6 +86,10 @@ explicit approval.
 
 ## Style and Naming
 
+Follow [the Nix style guide](docs/nix-style.md) when writing or reviewing
+repository-owned Nix. It adapts upstream best practices to this flake; repository
+instructions take precedence over examples in external guides or bundled skills.
+
 Use two-space indentation and existing Nix formatting. Prefer declarative
 options and packaged tools over embedded shell code. Name module directories
 by concern (`programs/`, `desktop/`, `services/`) and use `default.nix` as

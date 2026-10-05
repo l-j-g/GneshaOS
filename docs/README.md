@@ -9,6 +9,8 @@ workflows. Build a discovered host with
 - [`development.md`](development.md) describes the non-activating validation
   ladder, target discovery, dependency updates, and repository-local Codex
   workflow.
+- [`nix-style.md`](nix-style.md) records repository Nix conventions and how to
+  apply upstream best practices.
 - [`recovery.md`](recovery.md) separates system generations from application
   data recovery and records the pending restore-drill requirements.
 - [`user-parameters.md`](user-parameters.md) documents supported system and
