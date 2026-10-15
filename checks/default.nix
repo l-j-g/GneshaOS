@@ -237,6 +237,14 @@ let
         bash ${./lock-readiness-stubs.sh} ${../home/shell/lock-readiness.sh}
         touch "$out"
       '';
+  letsnoteFanCheck =
+    checkPkgs.runCommand "gnesha-letsnote-fan-check"
+      { nativeBuildInputs = [ checkPkgs.python3 ]; }
+      ''
+        cd ${../.}
+        PYTHONDONTWRITEBYTECODE=1 python3 checks/letsnote-fan.py
+        touch "$out"
+      '';
   settingsEditorCheck =
     checkPkgs.runCommand "gnesha-settings-editor-check"
       {
@@ -287,6 +295,7 @@ in
     configurationCombinationChecks
     sourceScriptCheck
     settingsEditorCheck
+    letsnoteFanCheck
     desktopHelperStubCheck
     arrWrapperCheck
     arrRuntimeStubCheck

@@ -2,6 +2,7 @@
 
 let
   cfg = config.letsnote;
+  fanController = "${pkgs.python3}/bin/python3 ${./fan.py}";
 in
 {
   imports = [ ./power.nix ];
@@ -12,8 +13,8 @@ in
       Requires the acpi_osi kernel params to fool the BIOS into enabling them.
     '';
     fanControl = lib.mkEnableOption ''
-      acpi_call kernel module for the CF-FV1 EC quiet-fan request.
-      This does not provide fan telemetry or general fan control.
+      Adaptive fan-level requests for the CF-FV1 with BIOS V1.00L25.
+      Uses acpi_call and the two ACPI fan channels; RPM telemetry is unavailable.
     '';
     jisKeys = lib.mkEnableOption ''
       keyd remap for the dead JIS keys (無変換/変換/かな) that have no US-layout
@@ -70,45 +71,28 @@ in
       boot.kernelModules = [ "acpi_call" ];
       boot.extraModulePackages = [ config.boot.kernelPackages.acpi_call ];
 
-      # CF-FV1's existing host configuration uses 0x01. The old 0x05 note
-      # referred to CF-SV1 and did not match this method call. A successful
-      # ACPI method result does not prove the EC applied the requested mode.
       systemd.services.letsnote-fan-eco = {
-        description = "Enable Let's Note EC quiet fan curve (SEFM eco)";
+        description = "Adaptive CF-FV1 fan control";
         wantedBy = [ "multi-user.target" ];
         after = [ "systemd-modules-load.service" ];
         serviceConfig = {
-          Type = "oneshot";
-          ExecStart = pkgs.writeShellScript "letsnote-fan-eco" ''
-            set -eu
-            printf '\\_SB.PC00.LPCB.EC0.SEFM 0x01\n' > /proc/acpi/call
-            # /proc/acpi/call returns a NUL-terminated value. Strip the NUL
-            # before assigning it in Bash so the journal records the value
-            # without an ignored-NUL warning.
-            result=$(${pkgs.coreutils}/bin/tr -d '\000' < /proc/acpi/call)
-            case "$result" in
-              ""|"not called"|Error:*)
-                printf 'ACPI method failed: %s\n' "$result" >&2
-                exit 1
-                ;;
-              *)
-                printf 'ACPI method returned: %s\n' "$result"
-                ;;
-            esac
-          '';
+          Type = "notify";
+          ExecStart = fanController;
+          # Also runs after a crash/watchdog kill, independently of Python cleanup.
+          ExecStopPost = "${fanController} --restore";
+          WatchdogSec = "15s";
+          TimeoutStartSec = "30s";
+          TimeoutStopSec = "10s";
+          # A thermal cutoff or sensor error must leave the firmware in control.
+          Restart = "no";
+          UMask = "0077";
         };
       };
 
-      # Cold boots race the EC's own init and can overwrite an early write;
-      # re-apply a couple of times after boot to be safe (no-op if already set).
-      systemd.timers.letsnote-fan-eco-reapply = {
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnBootSec = [ "45s" "180s" ];
-          AccuracySec = "5s";
-          Unit = "letsnote-fan-eco.service";
-        };
-      };
+      # No boot reapply timer: only the running controller may select EC mode.
+      # Restore firmware control before sleep, then reacquire it on resume.
+      powerManagement.powerDownCommands = "${pkgs.systemd}/bin/systemctl stop letsnote-fan-eco.service";
+      powerManagement.resumeCommands = "${pkgs.systemd}/bin/systemctl start --no-block letsnote-fan-eco.service";
     })
   ];
 }

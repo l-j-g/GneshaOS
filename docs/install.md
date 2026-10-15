@@ -17,8 +17,9 @@ Review the target preconditions and exact commands before formatting.
 
 The repository already configures the Panasonic EC kernel parameters and
 `panasonic-laptop` module. It does not use `panafanpwr`. The CF-FV1
-configuration requests one EC quiet profile through `acpi_call`; that does not
-provide general fan-speed control.
+configuration uses a model/BIOS-specific adaptive policy through `acpi_call`
+and the ACPI fan channels. See [the module notes](../modules/letsnote/README.md)
+for the curve, firmware fallback, and runtime verification still required.
 
 ## Install: preflight and target layout
 
@@ -193,9 +194,9 @@ The flake discovers hosts from `hosts/`. Stable machine values belong in
 - Verify `/media` mounts read/write. Its contents are not covered by host
   snapshots, and no external restore source is configured.
 - Configure LTE if present; identify hardware with `lsusb`/`lspci` first.
-- Do not enable general fan-speed control for the CF-FV1. The existing EC quiet
-  profile request is model-specific and should not be treated as broad fan
-  control.
+- Verify the CF-FV1 adaptive fan policy while idle, charging, and under load.
+  Check suspend/resume and firmware fallback; the inspected interface is
+  specific to CFFV1-1 BIOS V1.00L25 and has no measured RPM telemetry.
 
 ## Known install notes
 

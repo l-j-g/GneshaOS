@@ -18,14 +18,11 @@
   hardware.sensor.iio.enable = true;
 
   letsnote.ecFeatures = true;
-  # CPU power capping (RAPL): 20W sustained on AC, 15W on battery.
-  # The CF-FV1 does not have general fan-speed control here; the separate
-  # fanControl option only requests its EC quiet profile. CPU power capping is
-  # the other heat/noise control.
+  # CPU performance caps reduce heat independently of the fan policy.
   letsnote.cpuPower = true;
-  # Keep the firmware default: SEFM 0x01 reduced noise but caused
-  # prolonged fan-off periods followed by brief fan bursts on this CF-FV1.
-  letsnote.fanControl = false;
+  # Use the trialled temperature curve, including SEN6 while charging.
+  # The controller restores firmware control on errors or at 65C.
+  letsnote.fanControl = true;
   # Remap the dead JIS keys (無変換/変換/かな) to something useful
   letsnote.jisKeys = true;
 
