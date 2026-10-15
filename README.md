@@ -58,6 +58,44 @@ Start with `flake.nix`, which exports separate NixOS and Home Manager
 configurations. `hosts/cf-fv1/default.nix` composes the machine; `home/default.nix`
 composes the user environment. Reusable system behavior lives in `modules/`.
 
+A simplified tree of the main files (supporting files omitted):
+
+```text
+.
+├── flake.nix                    # Inputs and system / user outputs
+├── flake.lock                   # Pinned dependency versions
+├── system-parameters.nix        # Machine and account values
+├── hosts/cf-fv1/
+│   ├── default.nix              # Compose this machine's system modules
+│   └── hardware-configuration.nix  # Generated hardware configuration
+├── modules/                     # Reusable NixOS behavior
+├── home/
+│   ├── default.nix              # Compose the user environment
+│   ├── variables.nix            # Editable desktop preferences
+│   ├── programs/
+│   │   ├── default.nix          # List packages and import configured programs
+│   │   ├── editors/             # Group entry point → Neovim, Emacs
+│   │   ├── shells/              # Group entry point → Fish and integrations
+│   │   ├── terminals/           # Group entry point → Ghostty, Kitty
+│   │   ├── git.nix              # A configured program in its own module
+│   │   └── ncdu.nix             # Another small program-module example
+│   ├── desktop/                 # Sway and desktop components
+│   │   ├── default.nix          # Import components and list desktop packages
+│   │   └── portals.nix          # One focused desktop concern
+│   ├── shell/                   # Rebuild and activation helpers
+│   ├── services/                # Background user services
+│   ├── theme/                   # Shared colors and appearance
+│   └── fonts/                   # Font selection and rendering
+├── checks/                      # Configuration and helper checks
+└── docs/                        # Development, parameters and recovery guides
+```
+
+Read a `default.nix` to see what is included; follow an import to see how that
+program or component is configured.
+
+<details>
+<summary>Configuration flow diagram</summary>
+
 ```mermaid
 flowchart TB
   inputs["flake.lock + upstream inputs"] --> flake["flake.nix"]
@@ -87,6 +125,8 @@ Solid arrows show composition; dashed arrows show parameter flow or validation.
 The system and user outputs are evaluated and activated separately. The diagram
 shows the shared defaults; optional per-host parameter and preference overrides
 are described in [the host guide](hosts/README.md).
+
+</details>
 
 For a program, follow `home/programs/default.nix` to its module. Plain packages
 are listed directly; configured programs have their own modules. Editors,
