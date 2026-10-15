@@ -9,20 +9,24 @@ for configured programs. Keep the existing system/Home Manager separation.
 ## Composition pattern
 
 - Keep home/default.nix as the top-level composition and account settings.
-- Make home/programs/default.nix import explicit category entry points.
-- Group programs into development (editors, Git, coding agents, Node and uv),
-  terminals (existing Ghostty/Kitty modules), files (file managers and file
-  inspection/archive tools), browsers (Firefox, LibreWolf and Tor),
-  communication (Signal, Discord and Slack), media (image/video applications),
-  games (Steam and PPSSPP), and security (GPG, Kleopatra, KeePassXC and Monero).
-- Each category/default.nix lists unconfigured packages directly and imports
-  named modules for configured programs. Do not create one-line modules solely
-  to install an unconfigured package. Preserve package-list order within groups.
-- Keep shared browser zoom behavior in one helper, with Firefox and LibreWolf
-  configuration in their own modules; do not duplicate the zoom implementation.
+- Keep home/programs/default.nix as the explicit program list: standalone
+  packages listed directly, configured programs imported as named modules.
+- Group only natural families: home/programs/editors/ for Neovim and Emacs,
+  home/programs/shells/ for Fish and interactive shell integrations, and the
+  existing home/programs/terminals/ for terminal emulators.
+- Keep other configured programs directly under home/programs/. Keep each
+  program's supporting files beside its module. Do not add broad application
+  categories or one-line modules solely to install an unconfigured package.
+- Each group/default.nix lists unconfigured packages and imports configured
+  programs. Preserve enabled packages and existing import ordering.
+- Keep home/shell/ for Nix workflow and activation helpers, importing it from
+  home/default.nix. Move interactive shell configuration to shells/fish.nix;
+  give configured integrations (direnv, fzf and zoxide) their own modules.
+- Keep shared browser zoom behavior in one helper, in the existing browsers.nix
+  module; avoid unrelated browser restructuring.
 - Keep compositor/session components under home/desktop and shell behavior under
-  home/shell. Extract desktop proxy, screenshot, cursor and portal configuration
-  into focused modules so desktop/default.nix reads as composition plus packages.
+  home/shell. Keep the desktop layout stable in this generation; the focus is the
+  program list and removal of Ghostfolio.
 - Keep cross-program integrations explicit; update relative paths and references
   when moving modules, scripts or assets.
 - Preserve preferences in the literal home/variables.nix file. Do not add a
