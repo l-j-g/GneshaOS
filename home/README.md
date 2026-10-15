@@ -25,6 +25,12 @@ its primary package through Home Manager, along with its configuration.
 `shell/` owns Nix rebuild/activation workflows and the AirVPN command wrapper;
 these are operational helpers rather than another interactive shell.
 
+`desktop/default.nix` follows the same pattern: imports for configured
+components and a list of standalone desktop packages. Desktop proxy settings,
+cursor appearance, portal configuration and the Grimshot wrapper each have a
+focused module. Browser environment settings stay with browser configuration
+in `programs/browsers.nix`.
+
 Edit `variables.nix` for desktop preferences such as the theme, display scale,
 window gaps, terminal font family, and font sizes. Stable account, machine, and
 hardware values are kept in the repository-root `system-parameters.nix`. A

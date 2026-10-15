@@ -36,10 +36,19 @@ let
   };
 in
 {
-  assertions = [{
-    assertion = variables.browserDefaultZoom >= 0.3 && variables.browserDefaultZoom <= 5.0;
-    message = "browserDefaultZoom must be between 0.3 and 5.0.";
-  }];
+  # Firefox runs natively on Wayland (not XWayland) so Sway's `scale 2`
+  # isn't applied twice -> no blurry/oversized UI.
+  home.sessionVariables = {
+    MOZ_ENABLE_WAYLAND = "1";
+    MOZ_WAYLAND_USE_FLOAT_SCALE = "1";
+  };
+
+  assertions = [
+    {
+      assertion = variables.browserDefaultZoom >= 0.3 && variables.browserDefaultZoom <= 5.0;
+      message = "browserDefaultZoom must be between 0.3 and 5.0.";
+    }
+  ];
   programs.firefox = {
     enable = true;
     configPath = ".config/mozilla/firefox";
