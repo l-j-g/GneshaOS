@@ -17,6 +17,8 @@ preferred Braille-mask preview only when that file does not already exist.
   characters.
 - `sources/ganesha-braille.txt` — the source Braille character used by the
   Braille previews.
+- `06-braille-mask-no-caption.svg` — caption-free iteration of `03`, preserving
+  the Ganesha artwork and katakana rain. The original remains available.
 - `05-glpaper-matrix.glsl` — the live shader experiment. It needs glpaper and
   is not used by Sway.
 
