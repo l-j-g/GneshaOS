@@ -24,6 +24,5 @@
     "${config.home.homeDirectory}/.config/emacs/bin"
   ];
 
-  home.sessionVariables.DOOMDIR =
-    "${config.home.homeDirectory}/.config/doom";
+  home.sessionVariables.DOOMDIR = "${config.home.homeDirectory}/.config/doom";
 }

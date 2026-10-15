@@ -1,7 +1,7 @@
 # Development workflow
 
 This repository separates evaluation and build checks from activation. Run
-validation from the repository root and activate only after reviewing the
+validation from the task worktree root and activate only after reviewing the
 resulting diff and build.
 
 ## Before editing
@@ -56,13 +56,17 @@ Run every row that applies to the change. All commands below are non-activating.
 | Changed Nix files | `nix fmt -- --check <files...>` | Check the pinned RFC-style formatter without editing files |
 | Changed Nix file | `nix-instantiate --parse <file>` | Catch syntax errors quickly |
 | Changed Fish file | `fish --no-execute <file>` | Parse Fish without running it |
-| Evaluated configuration | `nix flake check --show-trace` | Evaluate exported flake configurations |
+| Evaluated configuration | `nix flake check --no-build --show-trace` | Evaluate exported configurations and check derivations |
 | Home Manager evaluation only | `nix eval --raw '.#homeConfigurations."lg@cf-fv1".activationPackage.drvPath'` | Evaluate the activation derivation without building its closure |
-| NixOS or shared module | `nixos-rebuild build --flake .#<host>` | Build the system closure without activation |
-| Home Manager or shared input | `nix build --no-link '.#homeConfigurations."<user>@<host>".activationPackage'` | Build the user activation package without running it |
+| NixOS or shared module | `nix eval --raw .#nixosConfigurations.cf-fv1.config.system.build.toplevel.drvPath` | Evaluate the system derivation without building |
+| Home Manager build (only when requested) | `nix build --no-link '.#homeConfigurations."<user>@<host>".activationPackage'` | Build the user activation package without running it |
+
+Run builds only when explicitly requested; activation requires separate approval.
 
 Finish by inspecting both versions of the diff again. Record commands that
 were skipped or failed; an unrun check is not a passing check.
+
+Check definitions live in `checks/default.nix`; `flake.nix` exports them.
 
 The flake exposes the pinned `nixfmt` as its formatter. Apply it only
 to the Nix files in the current change with `nix fmt -- <files...>`; check those
@@ -70,10 +74,11 @@ files first with the formatter's `--check` flag. Routine validation is local and
 non-activating; the repository does not currently configure CI. Use the
 flake's focused configuration-combination, Bash and Fish syntax, and helper
 stub checks for routine feedback. These cover activation recovery, update
-review/status, lock readiness, the Arr wrapper, and Ghostfolio import recovery
+review/status, lock readiness, the Arr wrapper, and media update recovery
 using temporary state. They never invoke real `nix` activation or `nh`. Use the
 explicit Home Manager evaluation/build rows when their scope applies rather
-than hiding the slower closure builds behind formatting.
+than hiding the slower closure builds behind formatting. With `--no-build`,
+flake check evaluates the checks but does not execute their fixture scripts.
 
 ## Activation helpers
 

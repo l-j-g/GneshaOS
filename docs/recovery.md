@@ -30,11 +30,6 @@ does not make the underlying media immutable or backed up. Check the live
 Compose mounts and `findmnt` output before copying or restoring anything,
 because mount configuration can change.
 
-Ghostfolio is disabled. Its configured runtime directory and secrets file were
-absent during the read-only inventory. Do not create or restore a live
-Ghostfolio database based on this document. Its proposed PostgreSQL import
-requires identifying and validating a real source export first.
-
 The Arr runtime root is `/home/lg/src/arr`. Its `.env` contains runtime
 credentials and its `images.lock.json` records image references; neither file
 contains the application configuration or media payload. On 2026-09-28, the
@@ -64,8 +59,7 @@ Btrfs storage; they help recover selected files but do not protect against loss
 of that storage. They also do not cover `/media`.
 
 Do not copy credentials or keys into this repository or into ordinary test
-artifacts. The configured Ghostfolio secrets file is currently absent; do not
-fabricate its contents. This runbook does not create a second copy of secrets.
+artifacts. This runbook does not create a second copy of secrets.
 
 ## Application data and supported recovery
 
@@ -91,10 +85,7 @@ database state; do not restore across incompatible application versions or
 different media paths. These services' UI exports and config files may contain
 credentials. Keep any restore copy private and do not commit it.
 
-Ghostfolio is not running and has no configured runtime data directory or
-secrets file. Its future import is not recoverable until the source database,
-export format, and matching PostgreSQL restore have been identified and tested
-under GF-01. The Arr `images.lock.json` and saved Nix generations are useful for
+The Arr `images.lock.json` and saved Nix generations are useful for
 recreating software versions, but neither contains application databases,
 secrets, downloads, or library files.
 
@@ -143,8 +134,8 @@ This verifies that the selected snapshot files can be copied and inspected. It
 does not prove that a live database snapshot is transactionally consistent,
 that Lidarr can start from the copy, or that the configuration and database
 constitute a supported application restore. It does not test `/media` or
-Ghostfolio. A live application restore remains unverified; do not overwrite
-the live config or database from a snapshot based only on this drill.
+the media services. A live application restore remains unverified; do not
+overwrite the live config or database from a snapshot based only on this drill.
 
 For future file-level recovery, inspect the chosen Home snapshot first, copy
 only selected files into an isolated temporary path, verify copied bytes and

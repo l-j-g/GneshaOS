@@ -43,15 +43,8 @@
     backlightDevice = "intel_backlight";
     alsSensorPath = "/sys/bus/iio/devices/iio:device5/in_illuminance_raw";
 
-    # Runtime Compose state and credentials live outside the Nix store.
-    containersDirectory = "/home/lg/.config/containers";
+    # The media Compose runtime path and credentials live outside the Nix store.
     arrComposePath = "/home/lg/src/arr/docker-compose.yml";
-    # Match this to the current native PostgreSQL major version before import.
-    ghostfolioPostgresMajor = "17";
-    ghostfolio = {
-      enable = false;
-      secretsFile = "/home/lg/.config/containers/ghostfolio/secrets.env";
-    };
 
     # Mount point of the MooGoo drive used for user media directories.
     mediaMountPoint = "/media";

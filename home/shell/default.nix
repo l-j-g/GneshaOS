@@ -1,8 +1,8 @@
-# Shell entry point: interactive appearance/integrations and Nix workflows have
-# separate owners so routine aliases stay independent of activation commands.
+# Nix workflow and activation helpers, plus the AirVPN command wrapper.
+# Interactive shell configuration lives in home/programs/shells.
 {
   imports = [
-    ./interactive.nix
+    ./airvpn.nix
     ./workflows.nix
   ];
 }

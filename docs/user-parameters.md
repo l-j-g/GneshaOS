@@ -73,15 +73,11 @@ directory does not enable another platform.
 | `systemSettings.keyboardOptions` | XKB keyboard option remaps. | `"ctrl:nocaps"` | Sway input |
 | `systemSettings.backlightDevice` | Machine-specific backlight device name. | `"intel_backlight"` | Waybar, SwayOSD, wluma |
 | `systemSettings.alsSensorPath` | Machine-specific ambient-light sensor path. | `"/sys/bus/iio/devices/..."` | hardware documentation |
-| `systemSettings.containersDirectory` | Runtime directory for Compose project state, credentials, and bind-mounted data. | `"/home/lg/.config/containers"` | media and Ghostfolio Compose stacks |
 | `systemSettings.arrComposePath` | Selects the managed media runtime project directory through its parent. The Compose file itself is generated at `/etc/arr/compose.json`; the runtime directory must contain its existing `.env` and `config/`. | `"/home/lg/src/arr/docker-compose.yml"` | media stack and `arr` wrapper |
-| `systemSettings.ghostfolio.enable` | Include and start the optional Ghostfolio Compose stack. Keep false until its migration is ready. | `false` | `services.gnesha.ghostfolio` |
-| `systemSettings.ghostfolio.secretsFile` | Runtime-only Compose environment file; its contents stay outside Nix. | `"/home/lg/.config/containers/ghostfolio/secrets.env"` | Ghostfolio Compose stack |
-| `systemSettings.ghostfolioPostgresMajor` | PostgreSQL container major version; Ghostfolio preflight compares it with the source version recorded in the SQL dump. | `"17"` | Ghostfolio Compose stack and read-only preflight |
 | `systemSettings.mediaMountPoint` | Absolute mount point for user media directories; the host must provide a filesystem mounted there. Directory setup depends on that mount, checks it, and runs as the configured media user. | `"/media"` | Home Manager and media stack |
 | `systemSettings.mediaUiBindAddress` | Local host address for published media web interfaces; keep loopback so Docker ports are not exposed on LAN interfaces. | `"127.0.0.1"` | Compose media web interfaces; Tailscale Serve provides tailnet access |
 | `systemSettings.airVpn.enable` | Whether the host WireGuard profile is loaded into NetworkManager. | `false` | system AirVPN module |
-| `systemSettings.dockerProxy.enable` / `port` / `noProxy` | Enable the Docker Gluetun HTTP proxy independently of host proxy settings. | `true` / `8888` / `"localhost,127.0.0.1,::1"` | media, Ghostfolio, legacy Compose override |
+| `systemSettings.dockerProxy.enable` / `port` / `noProxy` | Enable the Docker Gluetun HTTP proxy independently of host proxy settings. | `true` / `8888` / `"localhost,127.0.0.1,::1"` | media, legacy Compose override |
 | `systemSettings.systemProxy.enable` | Enable an independent host HTTP proxy; leave disabled for native WireGuard. | `false` | NixOS and desktop proxy settings |
 | `systemSettings.systemProxy.host` / `port` | Address of the local HTTP CONNECT proxy. | `"127.0.0.1"` / `8888` | NixOS and desktop proxy settings |
 | `systemSettings.systemProxy.noProxy` | Comma-separated hosts/domains reached directly. | `"localhost,127.0.0.1,::1,cf-fv1,.local"` | NixOS and desktop proxy settings |

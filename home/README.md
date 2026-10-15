@@ -1,8 +1,8 @@
 # Home Manager environment
 
 This tree defines the user environment shared by discovered NixOS hosts in six
-layers: `programs/` (every installed program), `desktop/` (the compositor
-session), `shell/`, `services/` (user services that are not a program's
+layers: `programs/` (applications and interactive shells), `desktop/` (the compositor
+session), `shell/` (Nix workflows and command helpers), `services/` (user services that are not a program's
 configuration), `theme/`, and `fonts/`. System font packages and console fonts
 are configured by `modules/fonts.nix`. `fonts/` maps the selected family from
 `variables.nix` to Fontconfig's `monospace` alias and supplies the matching
@@ -10,12 +10,20 @@ rendering profile.
 Each layer has a conventional `default.nix` entry point and focused modules
 for individual concerns.
 
-Inside `programs/`, one file per program (`lf.nix`, `nnn.nix`) becomes a
-directory with a `default.nix` when the program also ships helper scripts or
-configuration trees (`lf/`, `nnn/`, `nvim/`, `terminals/`). A program module
-owns its own packages: anything it configures is installed by that module, not
-by the list in `programs/default.nix`, which holds only programs with no
-configuration of their own.
+Start at `programs/default.nix`: it lists standalone packages and imports
+configured programs. Natural families have their own entry points:
+`programs/editors/`, `programs/shells/`, and `programs/terminals/`. Other
+configured programs stay directly under `programs/`.
+
+A configured program gets its own module, such as `git.nix`. When it also ships
+supporting scripts or configuration trees, keep those together in a directory,
+such as `lf/`, `nnn/`, or `editors/nvim/`. Each group's `default.nix` lists
+unconfigured packages and imports configured programs. A program module owns
+its primary package through Home Manager, along with its configuration.
+
+`programs/shells/` owns Fish and its direnv, fzf and zoxide integrations.
+`shell/` owns Nix rebuild/activation workflows and the AirVPN command wrapper;
+these are operational helpers rather than another interactive shell.
 
 Edit `variables.nix` for desktop preferences such as the theme, display scale,
 window gaps, terminal font family, and font sizes. Stable account, machine, and

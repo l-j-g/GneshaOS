@@ -32,8 +32,6 @@ the named symbols rather than relying on line numbers, which will move.
   original on `/media/downloads` was left untouched.
 - Existing arr runtime state is `/home/lg/src/arr`, including `.env`, `config/`,
   and `images.lock.json`. No migration to `~/.config/containers/arr` occurred.
-- Ghostfolio's import is commented out in `hosts/cf-fv1/default.nix`. Treat its
-  Compose migration as unfinished. Do not enable it to make documentation true.
 - Prior repair passed flake checks, system build, Home Manager build, Compose
   startup, and `arr-doctor`. This audit additionally parsed all 55 Nix files,
   syntax-checked 15 shell scripts plus the Fish workflow, and checked nine
@@ -107,13 +105,12 @@ P3 = optional cleanup after correctness work.
 Priority: P1. Type: workflow prerequisite. Depends on: none.
 
 Evidence: the repository has dozens of staged and unstaged edits, with some
-files modified in both layers. `modules/ghostfolio.nix` is staged as a new file
-and then substantially rewritten in the working tree. The proxy repair is
-also interleaved with that work.
+files modified in both layers. The proxy repair is interleaved with other
+configuration work.
 
 Implementation:
 1. Inventory changes by concern: proxy repair, terminal/theme, lock behavior,
-   Ghostfolio migration, dependency update, and tooling/docs.
+   dependency update, and tooling/docs.
 2. Preserve a private patch/snapshot of both index and working tree. Keep secret
    files outside it. Do not stash or rearrange changes without understanding
    their owner and dependencies.
@@ -136,8 +133,6 @@ Concern inventory from captured index and worktree patches:
   `modules/airvpn-wireguard.nix`, `system-parameters*.nix`, `docs/user-parameters.md`.
 - Terminal/theme: `home/desktop/`, `home/programs/terminals/`,
   `home/programs/{default,nnn}.nix`, `home/variables.nix`, `modules/fonts.nix`.
-- Ghostfolio migration: `modules/ghostfolio.nix`,
-  `hosts/cf-fv1/{default,services}.nix`.
 - Tooling/docs: `AGENTS.md`, `.codex/`, `README.md`, `docs/`, host docs,
   and `skills/nixos-managing/` (untracked at capture time).
 - Dependency update: `flake.lock` has changes in both layers and remains
@@ -282,7 +277,7 @@ NetworkManager credentials. The configured validator accepted the copied
 profile. Both this profile and Docker's profile parsed, and derived public-key
 comparison confirmed their device identities are the same. The updated flake
 check and NixOS build passed. Home Manager build was blocked because the existing
-untracked `home/shell/rg-fzf.fish` is referenced by the flake; it was preserved.
+untracked `home/programs/shells/rg-fzf.fish` is referenced by the flake; it was preserved.
 Independent review by `work01_review` passed the path ownership, symlink,
 permission, parser, and root-only keyfile checks.
 Operational checks not run and why: the source profile identity matches
@@ -986,19 +981,17 @@ behavior-preserving extraction.
 ### [x] STRUCT-03 — Give reusable modules typed options and explicit enable flags
 
 Priority: P2. Type: architecture refinement.
-Files: `modules/airvpn-wireguard.nix`, `modules/ghostfolio.nix`,
+Files: `modules/airvpn-networkmanager.nix`,
 `modules/hardening.nix`, `modules/btrfs.nix`, `hosts/cf-fv1/default.nix`.
 
 Evidence: reusable modules directly reach into untyped `params` or `username`;
-Ghostfolio is selected by commenting its import, while Let's Note already uses
-module options and `mkIf`.
+Let's Note already uses module options and `mkIf`.
 
 Implementation:
-1. Start with AirVPN and Ghostfolio. Add a small namespaced option set for
+1. Start with AirVPN. Add a small namespaced option set for
    enablement, runtime paths, and genuinely variable service settings.
 2. Separate 'service installed/configured' from 'autostart'. Host VPN's default
-   autostart must remain false. Ghostfolio's default enable must remain false
-   until its migration is explicitly completed.
+   autostart must remain false.
 3. Map existing machine parameters to options at the host composition layer.
    Maintain existing public parameter names during a documented transition.
 4. Add conditional assertions for required values and incompatible combinations;
@@ -1010,19 +1003,11 @@ Done when: disabled modules evaluate without unrelated runtime prerequisites,
 enabled modules produce actionable errors for missing settings, and existing
 host behavior is preserved. Use small commits, not an all-module conversion.
 
-Completed initial AirVPN/Ghostfolio scope (2026-09-27): both modules now declare
-typed `services.gnesha.*` options. The host composition maps the existing
-`systemSettings.airVpn` and Ghostfolio parameters into them. Ghostfolio is
-imported normally but disabled by default; runtime paths, PostgreSQL major, and
-proxy settings are explicit options. AirVPN profile autostart is a distinct
-false-by-default option and is passed to the NetworkManager keyfile generator.
-The example and user-parameter docs describe these settings; secrets remain
-runtime-only. Fixtures verified the AirVPN converter emits false/true settings,
-host evaluation reports Ghostfolio disabled and AirVPN autostart false, and a
-synthetic enabled Ghostfolio config produces its proxy network and expected
-Compose listener without reading the secret file. `nix flake check`, the
-NixOS build, Python parsing, Nix parsing, and `git diff --check` passed. No
-activation or tunnel operation was run.
+Completed AirVPN scope (2026-09-27): the module declares typed
+`services.gnesha.airvpn` options. Host composition maps `systemSettings.airVpn`
+into them; profile autostart is a distinct false-by-default option passed to the
+NetworkManager keyfile generator. Runtime secrets stay outside the Nix store.
+The remaining reusable modules retain their separate follow-up scope.
 
 ### [x] STRUCT-04 — Define a validated parameter contract and host overlays
 
@@ -1189,7 +1174,7 @@ pending; no app or service was activated/restarted during this task.
 ### [x] VPN-02 — Derive Docker profile-helper paths from the same runtime contract
 
 Priority: P2. Type: confirmed future-path inconsistency.
-Files: `home/shell/airvpn-profile`, `home/shell/interactive.nix`, media parameters.
+Files: `home/shell/airvpn-profile`, `home/shell/airvpn.nix`, media parameters.
 
 Evidence: the helper uses the managed `arr` command when available, but still
 writes `active_config` under `$HOME/src/arr/config/gluetun/wg0.conf` by default.
@@ -1403,105 +1388,6 @@ the escaped mount dependency and port 51820. Generated setup fixtures passed
 for a path with spaces, missing mount, and symlink rejection. Existing cf-fv1
 mount and container data paths remain `/media` and unchanged.
 
-### [ ] GF-01 — Define the disabled Ghostfolio migration as an explicit feature
-
-Priority: P1. Type: unfinished migration, not an active-service regression.
-Files: `modules/ghostfolio.nix`, host imports, host README, parameter docs.
-Depends on: STRUCT-03 for the final feature flag, or a minimal equivalent.
-
-Implementation:
-1. Mark docs as proposed/disabled until runtime migration evidence exists.
-2. Parameterize the hardcoded secrets path and runtime directory. Keep secrets
-   loaded at runtime. Ensure enablement has actionable preflight checks for
-   credentials, imported data, PostgreSQL major version, and network prerequisites.
-3. Record the source service/database and export method before changing it.
-   Test restore on a disposable database with the intended version.
-4. Specify cutover, validation, and rollback steps. Do not enable the module,
-   delete the old database, or create an empty replacement as part of this audit.
-
-Done when: the disabled state evaluates cleanly, a dry-run preflight explains
-missing prerequisites, docs match reality, and actual migration remains gated
-on an approved, tested data plan.
-
-Progress (2026-09-27): runtime directory and secrets path already come from
-parameters. Added `ghostfolio-preflight`, available while the stack is disabled;
-it checks mode-600 credentials without printing values, dump and PostgreSQL
-major compatibility, target data/marker consistency, Docker, Compose syntax,
-and the proxy network. It performs no writes or container starts. The disabled
-host build and stubbed missing/invalid/ready prerequisite cases passed. Docs
-now call this a proposed disabled migration and outline verification/rollback.
-Pending: identify and record the actual source service/database/export owner,
-complete a disposable restore with the intended PostgreSQL major, and approve
-the data plan before enabling.
-
-Parameter reconciliation (2026-09-29): found that `system-parameters.nix`
-pointed secrets at `/home/lg/src/ghostfolio/secrets.env`, while the runtime
-directory, example parameters, and user-parameter documentation place the stack
-under `/home/lg/.config/containers/ghostfolio`. Both candidate secrets files
-and the runtime directory are absent; no Ghostfolio container or volume exists.
-Updated the configured path to `${containersDirectory}/ghostfolio/secrets.env`
-and added a host-composition assertion that the secrets path remains beside the
-runtime state. Ghostfolio remains disabled and no secret or database was
-created. The source service/database owner and verified export method, as well
-as the disposable restore, remain pending.
-
-Source-owner recheck (2026-09-29): no PostgreSQL or Ghostfolio systemd service
-or container is present on cf-fv1. This confirms the source database is not
-locally discoverable here; it does not rule out a remote source. The service,
-database owner, and export method remain unidentified.
-
-Live preflight check (2026-09-29): the active system's `ghostfolio-preflight`
-fails safely before Docker or data work because its generation still points to
-`/home/lg/src/ghostfolio/secrets.env`. The current source points to
-`/home/lg/.config/containers/ghostfolio/secrets.env`; that runtime path remains
-absent, and no Ghostfolio container exists. No secret values were read or
-printed, and no files or containers were changed. The path correction requires
-a later NixOS activation; source-owner discovery and a disposable restore are
-still external prerequisites.
-
-### [x] GF-02 — Bound and make Ghostfolio import/update retries safe
-
-Priority: P1 before enabling Ghostfolio. Type: confirmed migration risks.
-Files: `modules/ghostfolio.nix`.
-
-Evidence: previously, PostgreSQL readiness had no deadline, a partial SQL
-import could be retried into the same target, and Compose used moving image tags.
-The implementation now bounds readiness and Docker operations, records import
-states, blocks retries after an uncertain/failed import, and uses reviewed image
-digests. Real source-database restore remains unverified and is gated by GF-01;
-Ghostfolio stays disabled pending that separate migration plan.
-
-Implementation:
-1. Add bounded readiness waits that include useful service status on timeout.
-2. Define importing/success/failure state and refuse blind reruns into a partly
-   imported database. Use a transaction only if the actual dump is compatible;
-   otherwise restore into a fresh disposable target and use an explicit cutover.
-3. Pin resolved image digests and update them deliberately, including PostgreSQL
-   major-version migration handling. Do not share image-lock code with arr
-   until a real common contract exists.
-4. Test interruption before import, mid-import, after import before marker,
-   missing credentials, unavailable registry, and retry.
-
-Completed (2026-09-29): the focused flake fixture uses only synthetic
-credentials, SQL, a temporary runtime root, and a test Docker package. It
-verifies an interruption before import leaves a retryable `ready` state; a
-synthetic process kill after SQL input is consumed leaves `importing` and blocks
-replay; `imported` finalizes marker/dump state without another SQL call; and a
-reported `psql` failure writes `failed` and blocks retry. Missing credentials,
-PostgreSQL-major mismatch, unavailable registry during refresh, and every retry
-path fail before unsafe work. Successful refresh publishes reviewed digests,
-retains the previous manifest and rollback tags, and Compose receives the image
-lock. Bounded pre-import and post-import readiness timeouts report container
-states, while Compose startup and SQL import commands use explicit timeout
-limits. The focused fixture build and full `nix flake check` pass. No real
-credentials, daemon, database, or migration target were accessed. Real source
-dump validation and restore remain pending under GF-01; Ghostfolio stays
-disabled until that separate gate passes.
-
-Done when: the import recovery cases are fixture-verified, no retry silently
-corrupts/duplicates data, commands terminate within known bounds, and
-recreating a stack uses the reviewed image versions.
-
 ### [x] TERM-01 — Make Ghostty font-size transitions respect the configured default
 
 Priority: P2. Type: confirmed preference inconsistency.
@@ -1637,8 +1523,7 @@ Implementation:
 1. Add targeted checks for source-script syntax/lint, important generated files,
    and Home Manager derivation evaluation/build as appropriate to CI cost.
 2. Exercise host VPN configured but not autostarted, host HTTP proxy disabled,
-   Docker proxy on/off, and Ghostfolio disabled/enabled with synthetic nonsecret
-   parameter fixtures. Do not require real secret files at evaluation time.
+   Docker proxy on/off with synthetic nonsecret parameter fixtures. Do not require real secret files at evaluation time.
 3. Assert there is no Compose/multi-user.target cycle and bootstrap services do
    not inherit HTTP proxy dependencies. Validate generated Compose quietly.
 4. Test failure-prone helper behavior with stubs for Docker, systemctl, Nix, and
@@ -1650,7 +1535,7 @@ proxy/order/path defects in fixtures, run without live service changes, and
 clearly distinguish cheap evaluation from full system/home builds.
 
 Progress (2026-09-27): the flake now has a single fast combination check for
-host AirVPN enabled/off-at-boot, host proxy off, Ghostfolio disabled/enabled,
+host AirVPN enabled/off-at-boot, host proxy off,
 Docker proxy on/off, generated Compose proxy values, Docker/Nix daemon proxy
 environment isolation, and service ordering away from `multi-user.target`. A
 focused Bash syntax check is also exposed. `nix flake check --show-trace` passes
@@ -1658,9 +1543,7 @@ with the final assertions; the documented Home Manager activation derivation
 evaluation also passed without building its closure. The flake's source check
 now runs activation helper stubs for stale-source refusal, stopping after a
 failed system switch, and Home-only resume after a failed Home Manager
-activation and the read-only update-review busy/missing/ready paths. A dedicated
-Ghostfolio wrapper fixture also verifies import finalization and blocked retry
-states using a synthetic package overlay. Activation capacity diagnostics
+activation and the read-only update-review busy/missing/ready paths. Activation capacity diagnostics
 now list unresolved attempt IDs, phases, log paths, and phase-specific
 recovery guidance; a stub fixture verifies those details without changing
 attempt state. The generated Arr wrapper is now
@@ -1733,26 +1616,22 @@ Files: `README.md`, `docs/{README,user-parameters,development}.md`,
 `hosts/cf-fv1/README.md`, `modules/letsnote/README.md`, source comments.
 
 Implementation:
-1. Correct Ghostfolio's 'now runs' wording while it is disabled. Separate active
-   stack documentation from a proposed migration procedure.
-2. Update docs index wording for independent host VPN/Docker proxy controls.
+1. Update docs index wording for independent host VPN/Docker proxy controls.
    Explain `airVpn.enable` versus off-at-boot and ordinary direct host traffic.
-3. Update current terminal examples (Ghostty, with intentional Kitty support),
+2. Update current terminal examples (Ghostty, with intentional Kitty support),
    `pubkey` versus the stale `key` comment, and current fan-control implementation.
-4. Explain `cfn` navigation, `nixbuild` build-only, `retest` temporary activation,
+3. Explain `cfn` navigation, `nixbuild` build-only, `retest` temporary activation,
    `rebuild` two-layer activation, and `rebuild-boot` next-boot-only behavior.
-5. Distinguish arrComposePath's parent runtime directory from the generated
+4. Distinguish arrComposePath's parent runtime directory from the generated
    `/etc/arr/compose.json`; don't tell users editing a legacy Compose file changes
    the managed stack.
-6. Keep one canonical operational procedure per topic and link to it from
+5. Keep one canonical operational procedure per topic and link to it from
    indexes. Remove duplicate instructions only after checking their details.
 
 Done when: documentation agrees with evaluated options and installed helper
 interfaces, examples use existing paths/commands, and relative links pass.
 
-Completed (2026-09-27): clarified that Ghostfolio remains a proposed disabled
-migration and documented its digest/import state behavior; documented the
-independent host WireGuard, Docker proxy, and optional host HTTP proxy; corrected
+Completed (2026-09-27): documented the independent host WireGuard, Docker proxy, and optional host HTTP proxy; corrected
 the public-key command to `pubkey`, the configured Ghostty terminal example,
 and Kitty's remaining nnn/theme-preview roles. The media parameter now describes
 the generated `/etc/arr/compose.json` and the runtime directory selected by the
@@ -1764,10 +1643,10 @@ claim general fan control. All 12 checked Markdown files have valid local links.
 ### [x] DOC-02 — Document stateful-app recovery boundaries and restore drills
 
 Priority: P2. Type: missing operational procedure.
-Files: media/Ghostfolio docs, `docs/install.md`, optional `docs/recovery.md`.
+Files: media docs, `docs/install.md`, optional `docs/recovery.md`.
 
 Implementation:
-1. Inventory arr config databases, media files, Ghostfolio database, runtime
+1. Inventory arr config databases, media files, runtime
    credentials, image locks, and Nix/Home Manager generation references.
 2. For each, document ownership, location, consistency requirements, and restore
    procedure. Separate Nix generation rollback from application data rollback.
@@ -1806,12 +1685,10 @@ owned by the user with mode `0644`; its contents were not read. Its parent
 `/home/lg` is mode `0700`, so other unprivileged users cannot traverse to the
 file; no permissions were changed. The recovery runbook now documents the read-only mounts and versions, per-service
 state locations and upstream recovery procedures, database consistency limits,
-credential handling, media boundaries, Nix generation boundaries, the absent
-Ghostfolio source, and the Audiobookshelf `/metadata` persistence gap. It records
+credential handling, media boundaries, Nix generation boundaries, and the Audiobookshelf `/metadata` persistence gap. It records
 that `/media` has no snapshot coverage and no off-disk backup is wanted. DOC-02
 is complete for documentation and the safe file-level drill. Application-level
-service-start restores remain unverified; Audiobookshelf metadata persistence
-and Ghostfolio import readiness remain separate follow-up work.
+service-start restores and Audiobookshelf metadata persistence remain follow-up work.
 
 ### [x] HYGIENE-01 — Remove tracked scratch output and clarify local-only inputs
 

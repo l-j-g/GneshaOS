@@ -14,7 +14,10 @@ let
   activationStateLib = ./activation-state.sh;
   activationLock = pkgs.writeShellApplication {
     name = "gnesha-activation-lock";
-    runtimeInputs = [ pkgs.coreutils pkgs.util-linux ];
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.util-linux
+    ];
     text = ''
       activation_state_root=${lib.escapeShellArg "${params.userSettings.homeDirectory}/.local/state/gnesha-activation"}
       activation_lock_file="$activation_state_root/activation.lock"
@@ -30,12 +33,28 @@ let
   };
   buildMonitor = pkgs.writeShellApplication {
     name = "gnesha-build-monitor";
-    runtimeInputs = [ pkgs.nix pkgs.nix-output-monitor pkgs.jq pkgs.coreutils ];
+    runtimeInputs = [
+      pkgs.nix
+      pkgs.nix-output-monitor
+      pkgs.jq
+      pkgs.coreutils
+    ];
     text = builtins.readFile ./build-monitor;
   };
   rebuild = pkgs.writeShellApplication {
     name = "gnesha-rebuild";
-    runtimeInputs = [ buildMonitor pkgs.nix pkgs.nh pkgs.nix-output-monitor pkgs.nvd pkgs.jq pkgs.coreutils pkgs.diffutils pkgs.util-linux pkgs.gnused ];
+    runtimeInputs = [
+      buildMonitor
+      pkgs.nix
+      pkgs.nh
+      pkgs.nix-output-monitor
+      pkgs.nvd
+      pkgs.jq
+      pkgs.coreutils
+      pkgs.diffutils
+      pkgs.util-linux
+      pkgs.gnused
+    ];
     text = ''
       activation_state_root=${lib.escapeShellArg "${params.userSettings.homeDirectory}/.local/state/gnesha-activation"}
       : "$activation_state_root"
@@ -49,7 +68,11 @@ let
   };
   showPublicKey = pkgs.writeShellApplication {
     name = "pubkey";
-    runtimeInputs = [ pkgs.coreutils pkgs.wl-clipboard pkgs.xclip ];
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.wl-clipboard
+      pkgs.xclip
+    ];
     text = ''
       keyFile=${lib.escapeShellArg variables.publicKeyFile}
       if [[ ! -r "$keyFile" ]]; then
@@ -71,7 +94,11 @@ let
   };
   decryptClipboard = pkgs.writeShellApplication {
     name = "declypt";
-    runtimeInputs = [ pkgs.gnupg pkgs.wl-clipboard pkgs.xclip ];
+    runtimeInputs = [
+      pkgs.gnupg
+      pkgs.wl-clipboard
+      pkgs.xclip
+    ];
     text = ''
       if [[ -n "''${WAYLAND_DISPLAY:-}" ]]; then
         wl-paste --no-newline | gpg --decrypt
@@ -85,7 +112,16 @@ let
   };
 in
 {
-  home.packages = [ rebuild activationLock showPublicKey decryptClipboard pkgs.nh pkgs.nvd pkgs.nix-output-monitor pkgs.nix-inspect ];
+  home.packages = [
+    rebuild
+    activationLock
+    showPublicKey
+    decryptClipboard
+    pkgs.nh
+    pkgs.nvd
+    pkgs.nix-output-monitor
+    pkgs.nix-inspect
+  ];
   home.sessionVariables = {
     GNESHA_FLAKE_PATH = flakePath;
     GNESHA_HOST_NAME = hostName;
@@ -104,7 +140,8 @@ in
     retest-raw = "gnesha-activation-lock sudo nixos-rebuild test --flake ${lib.escapeShellArg "${flakePath}#${hostName}"}";
     rebuild-boot-raw = "gnesha-activation-lock sudo nixos-rebuild boot --flake ${lib.escapeShellArg "${flakePath}#${hostName}"}";
   };
-  programs.fish.interactiveShellInit = builtins.readFile ./nix-workflow.fish;
+  # Keep workflow functions ahead of user key bindings when modules are regrouped.
+  programs.fish.interactiveShellInit = lib.mkBefore (builtins.readFile ./nix-workflow.fish);
   programs.nix-index.enable = true;
   programs.nix-index-database.comma.enable = true;
 }

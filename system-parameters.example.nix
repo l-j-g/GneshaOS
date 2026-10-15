@@ -36,14 +36,8 @@
     backlightDevice = "intel_backlight";
     alsSensorPath = "/sys/bus/iio/devices/iio:device5/in_illuminance_raw";
 
-    # Runtime Compose state and credentials live outside the Nix store.
-    containersDirectory = "/home/your-user/.config/containers";
+    # The media Compose runtime path and credentials live outside the Nix store.
     arrComposePath = "/home/your-user/.config/containers/arr/compose.yml";
-    ghostfolioPostgresMajor = "17";
-    ghostfolio = {
-      enable = false;
-      secretsFile = "/home/your-user/.config/containers/ghostfolio/secrets.env";
-    };
 
     # Mount point of the media drive used for user media directories.
     mediaMountPoint = "/media";
