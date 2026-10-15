@@ -58,6 +58,36 @@ Start with `flake.nix`, which exports separate NixOS and Home Manager
 configurations. `hosts/cf-fv1/default.nix` composes the machine; `home/default.nix`
 composes the user environment. Reusable system behavior lives in `modules/`.
 
+```mermaid
+flowchart TB
+  inputs["flake.lock + upstream inputs"] --> flake["flake.nix"]
+  params["system-parameters.nix<br/>Machine and account values"] -.-> flake
+  flake -->|NixOS output| host["hosts/cf-fv1/default.nix"]
+  flake -->|Home Manager output| home["home/default.nix"]
+  flake -.->|Validation| checks["checks/default.nix"]
+
+  subgraph system["System configuration"]
+    host --> hardware["Host hardware and services"]
+    host --> reusable["modules/<br/>Reusable NixOS behavior"]
+  end
+
+  subgraph user["User environment"]
+    home --> programs["home/programs/default.nix"]
+    home --> layers["desktop / theme / fonts<br/>shell workflows / services"]
+    programs --> plain["Standalone packages"]
+    programs --> configured["Configured program modules<br/>git.nix, ncdu.nix, …"]
+    programs --> groups["editors / shells / terminals<br/>Each has a default.nix"]
+    groups --> example["editors/nvim/default.nix<br/>Configuration + supporting files"]
+  end
+
+  preferences["home/variables.nix<br/>Editable preferences"] -.-> home
+```
+
+Solid arrows show composition; dashed arrows show parameter flow or validation.
+The system and user outputs are evaluated and activated separately. The diagram
+shows the shared defaults; optional per-host parameter and preference overrides
+are described in [the host guide](hosts/README.md).
+
 For a program, follow `home/programs/default.nix` to its module. Plain packages
 are listed directly; configured programs have their own modules. Editors,
 shells and terminal emulators have natural group folders, each with a
