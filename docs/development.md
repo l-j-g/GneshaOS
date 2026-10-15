@@ -112,6 +112,21 @@ The system switch, Home Manager switch, update apply, theme-picker activation,
 and the normal shell activation helpers share one lock, so those activation
 sequences cannot interleave.
 
+Before building, `rebuild` reads the frozen snapshot's declared binary caches
+and signing keys. If the running system does not trust them yet, it displays
+them and asks for approval. Approval uses a privileged Nix client with those
+cache settings for the two builds only; progress rendering and logs remain
+owned by the user. Declining or failing sudo stops before any build or activation.
+Caches already trusted by the system do not need this approval. Both builds
+must still succeed before NixOS and Home Manager activation begins.
+
+To use updated rebuild helpers before Home Manager has installed them, run
+`/etc/nixos/home/shell/rebuild-from-source`. It uses the checked-out helper files
+and freezes that checkout as the build input. This is an activating rebuild,
+with the same approval, locking, and stale-source checks as the installed helper;
+stop older rebuild attempts before using it. After a successful run, the normal
+`rebuild` command uses the newly installed helpers.
+
 Theme picker sessions also take a short user-state lock so previews are
 serialized. Preference writes use the shared activation lock, then replace
 `home/variables.nix` atomically beside the file while preserving its mode.

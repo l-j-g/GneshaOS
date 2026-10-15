@@ -15,6 +15,14 @@ if [[ "$1" == flake && "$2" == metadata ]]; then
   printf '{"path":"%s"}\n' "$CURRENT_SNAPSHOT"
   exit 0
 fi
+if [[ "$1" == eval ]]; then
+  printf '%s\n' '{"substituters":["https://cache.nixos.org/"],"keys":["test-key"]}'
+  exit 0
+fi
+if [[ "$1" == config && "$2" == show ]]; then
+  printf '%s\n' '{"substituters":{"value":["https://cache.nixos.org/"]},"trusted-public-keys":{"value":["test-key"]},"trusted-substituters":{"value":[]}}'
+  exit 0
+fi
 echo "unexpected nix invocation: $*" >&2
 exit 90
 EOF

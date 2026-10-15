@@ -39,7 +39,11 @@ let
       pkgs.jq
       pkgs.coreutils
     ];
-    text = builtins.readFile ./build-monitor;
+    text = ''
+      # Pin the client used for privileged cache-bootstrap builds.
+      NIX_COMMAND=${pkgs.nix}/bin/nix
+      ${builtins.readFile ./build-monitor}
+    '';
   };
   rebuild = pkgs.writeShellApplication {
     name = "gnesha-rebuild";

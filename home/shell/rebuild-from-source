@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Bootstrap updated rebuild helpers before Home Manager installs their wrappers.
+# Variables are consumed by the sourced helpers below.
+# shellcheck disable=SC2034,SC1091
+set -euo pipefail
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+flakePath=$(cd -- "$script_dir/../.." && pwd)
+hostName=${GNESHA_HOST_NAME:-$(hostname -s)}
+homeProfile=${GNESHA_HOME_PROFILE:-${USER:?}@${hostName}}
+export NIX_COMMAND
+NIX_COMMAND=$(readlink -f -- "$(command -v nix)")
+export BUILD_MONITOR_COMMAND="$script_dir/build-monitor"
+# shellcheck source=activation-state.sh
+source "$script_dir/activation-state.sh"
+# shellcheck source=gnesha-rebuild
+source "$script_dir/gnesha-rebuild"

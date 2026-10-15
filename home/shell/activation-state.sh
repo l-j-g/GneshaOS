@@ -187,13 +187,72 @@ activation_discard() {
   printf 'Discarded activation attempt %s and its candidate roots/logs.\n' "$activation_id"
 }
 
+activation_prepare_build_caches() {
+  local host_name="$1" wanted active needs_root answer
+  activation_build_options=()
+  activation_build_as_root=false
+  if ! wanted=$("${NIX_COMMAND:-nix}" eval --json --no-write-lock-file \
+    "$activation_snapshot#nixosConfigurations.${host_name}.config.nix.settings" \
+    --apply 's: { substituters = (s.substituters or []) ++ (s.extra-substituters or []); keys = (s.trusted-public-keys or []) ++ (s.extra-trusted-public-keys or []); }'); then
+    printf 'Could not evaluate the snapshot binary-cache settings; no build started.\n' >&2
+    return 1
+  fi
+  # Read system settings, excluding user/environment overrides the daemon may
+  # refuse. Approval applies only to this frozen snapshot and this build pair.
+  if ! active=$(env -u NIX_CONFIG -u NIX_CONF_DIR NIX_USER_CONF_FILES=/dev/null \
+    "${NIX_COMMAND:-nix}" config show --json); then
+    printf 'Could not read active Nix cache trust; no build started.\n' >&2
+    return 1
+  fi
+  if ! jq -e '
+    [.substituters, .keys] | all(type == "array" and all(.[]; type == "string" and test("^[^[:space:]]+$")))
+  ' <<< "$wanted" >/dev/null; then
+    printf 'Invalid cache settings in the snapshot; no build started.\n' >&2
+    return 1
+  fi
+  needs_root=$(jq -nr --argjson wanted "$wanted" --argjson active "$active" '
+    (($active.substituters.value // []) + ($active["trusted-substituters"].value // [])) as $allowed |
+    ($active["trusted-public-keys"].value // []) as $keys |
+    (($wanted.substituters - $allowed | length) > 0 or ($wanted.keys - $keys | length) > 0)
+  ') || return 1
+  if [[ $needs_root == true ]]; then
+    printf '\nThe snapshot declares cache trust not yet active on this system:\n'
+    jq -r '.substituters[] | "  Cache: " + .' <<< "$wanted"
+    jq -r '.keys[] | "  Signing key: " + .' <<< "$wanted"
+    printf 'Approval lets a privileged Nix client use these caches for both builds.\nNo system settings are activated until both builds succeed.\n'
+    if ! read -r -p 'Use this cache trust for the build? [y/N] ' answer || [[ $answer != y && $answer != Y && $answer != yes ]]; then
+      printf 'Cache trust was not approved; no build started.\n' >&2
+      return 1
+    fi
+    "${GNESHA_SUDO:-sudo}" -v || return 1
+    activation_build_as_root=true
+  fi
+  # Append rather than replace the client's existing caches and signing keys.
+  activation_build_options=(
+    --option extra-substituters "$(jq -r '.substituters | join(" ")' <<< "$wanted")"
+  )
+  if [[ $activation_build_as_root == true ]]; then
+    activation_build_options+=(
+      --option extra-trusted-public-keys "$(jq -r '.keys | join(" ")' <<< "$wanted")"
+    )
+  fi
+}
+
 activation_build_pair() {
   local host_name="$1" home_profile="$2" build_status
+  local activation_build_as_root=false
+  local -a activation_build_options=()
+  if [[ ! -e "$activation_dir/system" || ! -e "$activation_dir/home" ]]; then
+    if ! activation_prepare_build_caches "$host_name"; then
+      activation_set_phase blocked_cache_setup
+      return 1
+    fi
+  fi
   if [[ ! -e "$activation_dir/system" ]]; then
     activation_set_phase building_system
-    if GNESHA_BUILD_LOG="$activation_dir/system-build.jsonl" \
+    if GNESHA_BUILD_LOG="$activation_dir/system-build.jsonl" GNESHA_BUILD_AS_ROOT="$activation_build_as_root" \
       activation_run_logged_tty "${BUILD_MONITOR_COMMAND:-gnesha-build-monitor}" build \
-      --out-link "$activation_dir/system" --no-write-lock-file \
+      "${activation_build_options[@]}" --out-link "$activation_dir/system" --no-write-lock-file \
       "$activation_snapshot#nixosConfigurations.${host_name}.config.system.build.toplevel"; then
       :
     else
@@ -214,9 +273,9 @@ activation_build_pair() {
 
   if [[ ! -e "$activation_dir/home" ]]; then
     activation_set_phase building_home
-    if GNESHA_BUILD_LOG="$activation_dir/home-build.jsonl" \
+    if GNESHA_BUILD_LOG="$activation_dir/home-build.jsonl" GNESHA_BUILD_AS_ROOT="$activation_build_as_root" \
       activation_run_logged_tty "${BUILD_MONITOR_COMMAND:-gnesha-build-monitor}" build \
-      --out-link "$activation_dir/home" --no-write-lock-file \
+      "${activation_build_options[@]}" --out-link "$activation_dir/home" --no-write-lock-file \
       "$activation_snapshot#homeConfigurations.\"${home_profile}\".activationPackage"; then
       :
     else

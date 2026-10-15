@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Run Nix with structured progress, retaining the complete event log separately
 # from the terminal transcript. Only curl's repeated numeric progress rows are
 # hidden; warnings, errors, other build output and graph events pass through.
@@ -6,7 +7,11 @@ set -euo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-"${NIX_COMMAND:-nix}" "$@" --log-format internal-json -v 2>&1 \
+nix_client=("${NIX_COMMAND:-nix}")
+if [[ ${GNESHA_BUILD_AS_ROOT:-false} == true ]]; then
+  nix_client=("${GNESHA_SUDO:-sudo}" -- "${nix_client[@]}")
+fi
+"${nix_client[@]}" "$@" --log-format internal-json -v 2>&1 \
   | tee -a "${GNESHA_BUILD_LOG:?build event log is required}" \
   | jq --unbuffered --raw-input --raw-output '
       if startswith("@nix ") then

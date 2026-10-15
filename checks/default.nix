@@ -229,6 +229,7 @@ let
         fish --no-execute ${./nix-workflow-status.fish}
         fish ${./nix-workflow-status.fish} ${../home/shell/nix-workflow.fish}
         bash ${./activation-helper-stubs.sh} ${../home/shell/activation-state.sh}
+        bash ${./rebuild-cache-stubs.sh} ${../home/shell/activation-state.sh}
         bash ${./build-monitor-stubs.sh} ${../home/shell/build-monitor}
         bash ${./update-network-readiness-stubs.sh} ${../hosts/cf-fv1/services/update-network-ready.sh}
         bash ${./calcurse-daemon-optin-stubs.sh} ${../home/desktop/sway/scripts/calcurse-daemon-enabled}
