@@ -242,6 +242,14 @@ let
         nativeBuildInputs = [
           checkPkgs.python3
           checkPkgs.nix
+          checkPkgs.bash
+          checkPkgs.jq
+          checkPkgs.gawk
+          checkPkgs.ripgrep
+          checkPkgs.coreutils
+          checkPkgs.gnused
+          checkPkgs.util-linux
+          checkPkgs.fontconfig
         ];
       }
       ''
@@ -250,7 +258,7 @@ let
         # build directory: the tests evaluate throwaway preference files.
         export HOME="$TMPDIR/home" NIX_STATE_DIR="$TMPDIR/state"
         mkdir -p "$HOME" "$NIX_STATE_DIR"
-        PYTHONDONTWRITEBYTECODE=1 python3 checks/rofi-settings.py home/desktop/rofi/scripts/settings.py
+        PYTHONDONTWRITEBYTECODE=1 python3 checks/rofi-settings.py home/desktop/rofi/scripts/settings.sh
         touch "$out"
       '';
   desktopHelperStubCheck =

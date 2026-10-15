@@ -1,12 +1,11 @@
 # Gnesha Settings: the rofi editor for the preferences in home/variables.nix.
 #
-# This module supplies only what Nix knows: which terminals are installed and the
-# font sizes a bitmap face accepts. The editor builds its own rows from the
+# This module packages the script-mode callbacks and native Nix validation,
+# plus installed terminals and bitmap font sizes. The editor builds rows from the
 # comments in home/variables.nix, so a preference is described in one place.
 
 {
   config,
-  lib,
   pkgs,
   params,
   variables,
@@ -20,22 +19,42 @@ let
     "kitty"
   ];
 
-  settingsConfig = pkgs.writeText "gnesha-settings.json" (builtins.toJSON {
-    repo = params.systemSettings.flakePath;
-    host = params.systemSettings.hostName;
-    terminal = variables.terminal;
-    stateRoot = "${config.home.homeDirectory}/.local/state/gnesha-activation";
-    fish = "${pkgs.fish}/bin/fish";
-    terminals = terminals;
-    themeNames = "${config.home.homeDirectory}/.config/gnesha/theme-names";
-    fontSizes = import ../../programs/terminals/font-sizes.nix;
-  });
-  settings = pkgs.writeShellApplication {
-    name = "gnesha-settings";
-    runtimeInputs = [ pkgs.python3 pkgs.nix pkgs.fontconfig pkgs.libnotify ];
+  settingsConfig = pkgs.writeText "gnesha-settings.json" (
+    builtins.toJSON {
+      repo = params.systemSettings.flakePath;
+      host = params.systemSettings.hostName;
+      terminal = variables.terminal;
+      stateRoot = "${config.home.homeDirectory}/.local/state/gnesha-activation";
+      fish = "${pkgs.fish}/bin/fish";
+      terminals = terminals;
+      themeNames = "${config.home.homeDirectory}/.config/gnesha/theme-names";
+      fontSizes = import ../../programs/terminals/font-sizes.nix;
+      validator = ./settings-validate.nix;
+    }
+  );
+  settingsMode = pkgs.writeShellApplication {
+    name = "gnesha-settings-mode";
+    runtimeInputs = [
+      pkgs.nix
+      pkgs.jq
+      pkgs.gawk
+      pkgs.ripgrep
+      pkgs.coreutils
+      pkgs.gnused
+      pkgs.util-linux
+      pkgs.fontconfig
+    ];
     text = ''
       export PATH="${config.home.profileDirectory}/bin:/run/current-system/sw/bin:$PATH"
-      exec ${pkgs.python3}/bin/python3 ${./scripts/settings.py} ${settingsConfig}
+      exec ${pkgs.bash}/bin/bash ${./scripts/settings.sh} ${settingsConfig} "$@"
+    '';
+  };
+  settings = pkgs.writeShellApplication {
+    name = "gnesha-settings";
+    text = ''
+      export PATH="${config.home.profileDirectory}/bin:/run/current-system/sw/bin:$PATH"
+      exec gnesha-rofi -show settings -modes "settings:${settingsMode}/bin/gnesha-settings-mode" \
+        -i -lines 12 -theme-str 'window { width: 85%; }'
     '';
   };
 in

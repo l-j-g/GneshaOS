@@ -1,164 +1,220 @@
-import importlib.util
-import re
+"""Exercise real script-mode callbacks against temporary Nix preferences."""
+import fcntl
+import json
+import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
-from unittest.mock import patch
-import fcntl
 
-spec = importlib.util.spec_from_file_location('settings', sys.argv.pop(1))
-settings = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(settings)
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / 'home/variables.nix'
-FONT_SIZES = [int(number) for number in re.findall(r'\d+', (ROOT / 'home/programs/terminals/font-sizes.nix').read_text())]
-
-
-def entries(values=None):
-    values = values if values is not None else settings.read_values(SOURCE)
-    return settings.catalog(SOURCE, values)
+SCRIPT = Path(sys.argv.pop(1)).resolve()
 
 
 class SettingsTests(unittest.TestCase):
-    def test_rows_come_from_the_preference_file(self):
-        rows = {entry['key']: entry for entry in entries()}
-        # The description is the comment above the assignment, nothing else.
-        self.assertIn('webpage zoom', rows['browserDefaultZoom']['help'])
-        self.assertIn('commits', rows['gitUserEmail']['help'])
-        self.assertIn('speech model', rows['dictation.speechModel']['help'])
-        # Kinds are decided by the saved literal, so nothing restates them.
-        self.assertEqual(rows['autoBrightness']['kind'], 'bool')
-        self.assertEqual(rows['terminalFontSize']['kind'], 'int')
-        self.assertEqual(rows['browserDefaultZoom']['kind'], 'float')
-        self.assertEqual(rows['displayScale']['kind'], 'scale')
-        self.assertEqual(rows['idleSuspendSec']['kind'], 'nullable-int')
-        self.assertEqual(rows['gitUserName']['kind'], 'text')
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        (self.root / 'home').mkdir()
+        self.path = self.root / 'home/variables.nix'
+        self.source = (ROOT / 'home/variables.nix').read_text()
+        self.path.write_text(self.source)
+        self.path.chmod(0o640)
+        # Reference a whole group as well as individual keys.
+        (self.root / 'home/default.nix').write_text(
+            'variables.dictation variables.gapsInner variables.autoBrightness '
+            'variables.gitUserName variables.idleLockSec variables.idleSuspendSec variables.browserDefaultZoom '
+            'variables.displayScale variables.terminalFontFamily variables.terminalFontSize')
+        self.config = self.root / 'config.json'
+        self.config.write_text(json.dumps({
+            'repo': str(self.root), 'host': 'test', 'stateRoot': str(self.root / 'state'),
+            'validator': str(ROOT / 'home/desktop/rofi/settings-validate.nix'),
+            'fontSizes': [12, 14, 16, 18, 20, 22, 24, 28, 32],
+            'terminals': ['ghostty'], 'themeNames': str(self.root / 'themes'),
+            'terminal': 'false', 'fish': 'false',
+        }))
 
-    def test_every_preference_is_documented(self):
-        self.assertEqual([entry['key'] for entry in entries() if not entry['help']], [])
+    def call(self, previous=None, info=None, custom=None):
+        env = os.environ.copy()
+        for name in ('ROFI_RETV', 'ROFI_DATA', 'ROFI_INFO'):
+            env.pop(name, None)
+        env['ROFI_RETV'] = '0' if previous is None else '2' if custom is not None else '1'
+        if previous:
+            env['ROFI_DATA'] = previous[0]['data']
+        if info is not None:
+            env['ROFI_INFO'] = info
+        result = subprocess.run(['bash', str(SCRIPT), str(self.config)] + ([] if custom is None else [custom]),
+                                env=env, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        headers, rows = {}, []
+        for line in result.stdout.decode().split('\n'):
+            if line.startswith('\0'):
+                name, value = line[1:].split('\x1f', 1)
+                headers[name] = value
+            elif line:
+                label, _, options = line.partition('\0')
+                fields = options.split('\x1f')
+                rows.append((label, dict(zip(fields[::2], fields[1::2]))))
+        return headers, rows
 
-    def test_unread_preferences_are_hidden(self):
-        rows = entries()
-        self.assertEqual(settings.visible_keys(rows, {'gapsInner'}), ['gapsInner'])
-        # Reading a group counts for every preference inside it.
-        self.assertEqual(settings.visible_keys(rows, {'dictation'}), [e['key'] for e in rows if e['key'].startswith('dictation.')])
-        # An unreadable tree means no opinion: show everything.
-        self.assertEqual(len(settings.visible_keys(rows, None)), len(rows))
+    def select(self, menu, action):
+        for _, options in menu[1]:
+            if options.get('info') == action:
+                return self.call(menu, action)
+        self.fail(f'No action {action!r} in {menu}')
 
-    def test_this_configuration_reads_every_preference(self):
-        # The real tree: nothing in the menu should be a setting nothing uses.
-        rows = settings.catalog(SOURCE, settings.read_values(SOURCE))
-        unused = [entry['key'] for entry in rows if entry['key'] not in settings.visible_keys(rows, settings.referenced_keys(ROOT))]
-        self.assertEqual(unused, [])
+    def edit(self, key, value):
+        menu = self.select(self.call(), key)
+        return self.call(menu, custom=value)
 
-    def test_edit_preserves_unrelated_text(self):
-        source = SOURCE.read_text()
-        changed = settings.replace_value(source, 'terminalFontFamily', 'IBM Plex Mono')
-        strip_family = lambda text: re.sub(r'terminalFontFamily = [^;\n]*;', 'terminalFontFamily = <value>;', text)
-        self.assertEqual(strip_family(changed), strip_family(source))
-        changed = settings.replace_value(source, 'dictation.language', 'ja')
-        self.assertIn('language = "ja";', changed)
+    def values(self):
+        return json.loads(subprocess.check_output(['nix-instantiate', '--eval', '--strict', '--json', str(self.path)]))
 
-    def test_nix_interpolation_is_literal(self):
-        value = '${builtins.abort "unsafe"}'
-        with tempfile.TemporaryDirectory() as d:
-            p = Path(d)/'values.nix'
-            p.write_text(settings.replace_value(SOURCE.read_text(), 'gitUserName', value))
-            self.assertEqual(settings.read_values(p)['gitUserName'], value)
+    def test_documented_nested_rows_and_unused_filter(self):
+        menu = self.call()
+        names = [options.get('info') for _, options in menu[1]]
+        self.assertIn('dictation.language', names)
+        self.assertNotIn('screenshotDir', names)
+        label = next(label for label, opts in menu[1] if opts.get('info') == 'dictation.language')
+        self.assertIn('Language code', label)
+        self.assertIn('<b>', label)
 
-    def test_refuse_ambiguous_or_expression_edits(self):
-        for source in ['{ gapsInner = 1; gapsInner = 2; }', '{\n gapsInner = 1 + 2;\n}']:
-            with self.assertRaises(ValueError):
-                settings.replace_value(source, 'gapsInner', 5)
+    def test_save_only_preserves_comments_and_mode(self):
+        confirmation = self.edit('gapsInner', '17')
+        self.assertEqual(self.path.read_text(), self.source)
+        self.select(confirmation, 'save')
+        self.assertEqual(self.path.read_text(), self.source.replace('gapsInner = 5;', 'gapsInner = 17;'))
+        self.assertEqual(self.path.stat().st_mode & 0o777, 0o640)
+        self.assertEqual(list(self.path.parent.glob('.settings-*')), [])
 
-    def test_validation(self):
-        rows = entries()
-        values = settings.read_values(SOURCE) | {'terminalFontFamily': 'Terminus', 'terminalFontSize': 16}
-        settings.validate(rows, values, FONT_SIZES)
-        for key, value in [('idleLockSec', 1), ('idleSuspendSec', 1), ('displayScale', 'nan'),
-                           ('displayScale', 'true'), ('displayScale', 0), ('gapsInner', '5'),
-                           ('gapsInner', -1), ('autoBrightness', 'yes'), ('terminalFontFamily', 'monospace')]:
-            with self.subTest(key=key), self.assertRaises(ValueError):
-                settings.validate(rows, values | {key: value}, FONT_SIZES)
+    def test_cancel_does_not_write(self):
+        self.select(self.edit('gapsInner', '17'), 'back')
+        self.assertEqual(self.path.read_text(), self.source)
 
-    def test_atomic_save_and_concurrent_edit_refusal(self):
-        with tempfile.TemporaryDirectory() as d:
-            p = Path(d)/'variables.nix'; p.write_text(SOURCE.read_text()); p.chmod(0o640)
-            source = p.read_text()
-            settings.save_value(p, source, 'terminalFontFamily', 'Departure Mono', Path(d)/'state', entries())
-            self.assertEqual(settings.read_values(p)['terminalFontFamily'], 'Departure Mono')
-            self.assertEqual(p.stat().st_mode & 0o777, 0o640)
-            with self.assertRaises(ValueError):
-                settings.save_value(p, source, 'gapsInner', 9, Path(d)/'state', entries())
-            self.assertEqual(settings.read_values(p)['gapsInner'], settings.read_values(SOURCE)['gapsInner'])
+    def test_nested_string_and_interpolation_round_trip(self):
+        for key, value in [('dictation.language', 'ja'), ('gitUserName', '${builtins.abort "unsafe"} \\ <&>')]:
+            self.select(self.edit(key, value), 'save')
+        self.assertEqual(self.values()['dictation']['language'], 'ja')
+        self.assertEqual(self.values()['gitUserName'], '${builtins.abort "unsafe"} \\ <&>')
 
-    def test_activation_lock_refuses_save(self):
-        with tempfile.TemporaryDirectory() as d:
-            p = Path(d)/'variables.nix'; p.write_text(SOURCE.read_text())
-            state = Path(d)/'state'; state.mkdir()
-            with (state/'activation.lock').open('a') as lock:
-                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                with self.assertRaises(ValueError):
-                    settings.save_value(p, p.read_text(), 'gapsInner', 10, state, entries())
-            self.assertEqual(p.read_text(), SOURCE.read_text())
+    def test_boolean_and_nullable_callbacks(self):
+        menu = self.select(self.call(), 'autoBrightness')
+        confirmation = self.select(menu, 'false')
+        self.select(confirmation, 'save')
+        self.assertFalse(self.values()['autoBrightness'])
+        self.select(self.edit('idleSuspendSec', '1900'), 'save')
+        self.assertEqual(self.values()['idleSuspendSec'], 1900)
+        self.select(self.edit('idleSuspendSec', 'disabled'), 'save')
+        self.assertIsNone(self.values()['idleSuspendSec'])
 
-    def test_cancel_and_save_menu_flows(self):
-        with tempfile.TemporaryDirectory() as d:
-            root = Path(d); (root/'home').mkdir()
-            p = root/'home/variables.nix'; p.write_text(SOURCE.read_text())
-            config = {'repo': d, 'stateRoot': d+'/state', 'host': 'test', 'terminals': ['ghostty']}
-            # The temporary tree holds no modules, so nothing is referenced and
-            # the editor would show no rows.
-            show_everything = patch.object(settings, 'referenced_keys', return_value=None)
-            with show_everything, patch.object(settings, 'menu', return_value=None):
-                settings.run(config)
-            self.assertEqual(p.read_text(), SOURCE.read_text())
-            key = [entry['key'] for entry in entries()].index('gapsInner')
-            first = settings.read_values(p)['gapsInner'] + 1
-            second = first + 1
-            with show_everything, patch.object(settings, 'menu', side_effect=[key, str(first), 2, None]):
-                settings.run(config)
-            self.assertEqual(p.read_text(), SOURCE.read_text())
-            original_run = subprocess.run
-            def command(args, **kwargs):
-                if args[0] == 'notify-send':
-                    return subprocess.CompletedProcess(args, 0)
-                return original_run(args, **kwargs)
-            with show_everything, patch.object(settings, 'menu', side_effect=[key, str(first), 0, None]), patch.object(settings.subprocess, 'run', side_effect=command), patch.object(settings, 'launch_apply') as launch:
-                settings.run(config)
-                launch.assert_not_called()
-            self.assertEqual(settings.read_values(p)['gapsInner'], first)
-            with show_everything, patch.object(settings, 'menu', side_effect=[key, str(second), 1]), patch.object(settings, 'launch_apply') as launch:
-                settings.run(config)
-                launch.assert_called_once_with(config)
-            self.assertEqual(settings.read_values(p)['gapsInner'], second)
-            before = p.read_text()
-            with show_everything, patch.object(settings, 'menu', side_effect=[len(entries()), 0]), patch.object(settings, 'launch_apply') as launch:
-                settings.run(config)
-                launch.assert_called_once_with(config)
-            self.assertEqual(p.read_text(), before)
+    def test_invalid_values_never_write(self):
+        for key, value in [('gapsInner', '-1'), ('gapsInner', '1.5'), ('idleLockSec', '1'),
+                           ('idleSuspendSec', '1'), ('displayScale', 'nan'), ('displayScale', '0'),
+                           ('gitUserName', ''), ('gitUserName', 'bad\nline'), ('terminalFontSize', '0')]:
+            with self.subTest(key=key, value=value):
+                menu = self.edit(key, value)
+                if any(opts.get('info') == 'save' for _, opts in menu[1]):
+                    menu = self.select(menu, 'save')
+                self.assertTrue(menu[0].get('message'))
+                self.assertEqual(self.path.read_text(), self.source)
 
-    def test_failed_validation_keeps_original(self):
-        with tempfile.TemporaryDirectory() as d:
-            p = Path(d)/'variables.nix'; p.write_text(SOURCE.read_text())
-            with self.assertRaises(ValueError):
-                settings.save_value(p, p.read_text(), 'idleLockSec', 1, Path(d)/'state', entries())
-            self.assertEqual(p.read_text(), SOURCE.read_text())
-            self.assertEqual(list(Path(d).glob('.settings-*')), [])
+    def test_concurrent_edit_refused(self):
+        menu = self.edit('gapsInner', '17')
+        changed = self.source + '\n# another editor\n'
+        self.path.write_text(changed)
+        result = self.select(menu, 'save')
+        self.assertIn('changed', result[0]['message'])
+        self.assertEqual(self.path.read_text(), changed)
 
-    def test_font_menu_lists_searchable_families(self):
-        with patch.object(settings.subprocess, 'check_output', return_value='Terminus\nIBM Plex Mono,IBM Plex Mono Medm\nTerminus\n'), patch.object(settings, 'menu', return_value=0) as menu:
-            entry = next(entry for entry in entries() if entry['key'] == 'terminalFontFamily')
-            value, selected = settings.choose_value(entry, 'Terminus', {})
-            self.assertTrue(selected)
-            self.assertEqual(value, 'IBM Plex Mono')
-            self.assertEqual(menu.call_args.args[0], ['IBM Plex Mono', 'IBM Plex Mono Medm', 'Terminus'])
-        with patch.object(settings.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, '0\n', '')) as command:
-            self.assertEqual(settings.menu(['IBM Plex Mono'], 'Font'), 0)
-            self.assertIn('-i', command.call_args.args[0])
-            self.assertIn('-no-custom', command.call_args.args[0])
+    def test_lock_refuses_save(self):
+        menu = self.edit('gapsInner', '17')
+        state = self.root / 'state'
+        state.mkdir(exist_ok=True)
+        with (state / 'activation.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = self.select(menu, 'save')
+        self.assertIn('rebuild', result[0]['message'])
+        self.assertEqual(self.path.read_text(), self.source)
+
+    def test_symlink_and_expression_refused(self):
+        menu = self.edit('gapsInner', '17')
+        target = self.root / 'target.nix'
+        self.path.rename(target)
+        self.path.symlink_to(target)
+        self.select(menu, 'save')
+        self.assertEqual(target.read_text(), self.source)
+        self.path.unlink()
+        self.path.write_text(self.source.replace('gapsInner = 5;', 'gapsInner = 2 + 3;'))
+        self.select(self.edit('gapsInner', '17'), 'save')
+        self.assertIn('gapsInner = 2 + 3;', self.path.read_text())
+
+    def test_host_override_refuses_edit(self):
+        host = self.root / 'hosts/test'
+        host.mkdir(parents=True)
+        (host / 'home-variables.nix').write_text('{ gapsInner = 12; }')
+        result = self.select(self.call(), 'gapsInner')
+        self.assertIn('overridden', result[0]['message'])
+        self.assertEqual(self.path.read_text(), self.source)
+
+    def test_apply_and_save_apply_launch_terminal_then_close(self):
+        terminal = self.root / 'terminal'
+        log = self.root / 'terminal-args'
+        terminal.write_text('#!/usr/bin/env bash\nprintf "%s\\n" "$@" > "' + str(log) + '"\n')
+        terminal.chmod(0o700)
+        config = json.loads(self.config.read_text())
+        config.update(terminal=str(terminal), fish='/test/fish')
+        self.config.write_text(json.dumps(config))
+        for action in ('save-apply', 'apply-now'):
+            if action == 'save-apply':
+                menu = self.edit('gapsInner', '17')
+            else:
+                log.unlink()
+                menu = self.select(self.call(), 'apply')
+            result = self.select(menu, action)
+            self.assertEqual(result, ({}, []))
+            for _ in range(100):
+                if log.exists() and log.read_text():
+                    break
+                time.sleep(0.01)
+            args = log.read_text()
+            self.assertIn('/test/fish', args)
+            self.assertIn('home-rebuild;', args)
+        self.assertEqual(self.values()['gapsInner'], 17)
+
+    def test_whole_zoom_keeps_accepting_fractional_values(self):
+        self.select(self.edit('browserDefaultZoom', '1'), 'save')
+        self.assertEqual(self.values()['browserDefaultZoom'], 1)
+        self.select(self.edit('browserDefaultZoom', '1.25'), 'save')
+        self.assertEqual(self.values()['browserDefaultZoom'], 1.25)
+
+    def test_valid_scale_and_rejected_font_alias(self):
+        self.select(self.edit('displayScale', '1.5'), 'save')
+        self.assertEqual(self.values()['displayScale'], '1.5')
+        self.select(self.edit('terminalFontFamily', 'monospace'), 'save')
+        self.assertEqual(self.values()['terminalFontFamily'], 'IBM Plex Mono')
+
+    def test_ambiguous_leaf_and_host_override_added_during_edit(self):
+        self.path.write_text(self.source.replace('gapsInner = 5;', 'gapsInner = 5;\n  duplicate = { gapsInner = 7; };'))
+        original = self.path.read_text()
+        self.select(self.edit('gapsInner', '17'), 'save')
+        self.assertEqual(self.path.read_text(), original)
+        self.path.write_text(self.source)
+        menu = self.edit('gapsInner', '17')
+        host = self.root / 'hosts/test'
+        host.mkdir(parents=True)
+        (host / 'home-variables.nix').write_text('{ gapsInner = 12; }')
+        self.select(menu, 'save')
+        self.assertEqual(self.path.read_text(), self.source)
+
+    def test_apply_requires_confirmation_and_cancel_is_safe(self):
+        menu = self.select(self.call(), 'apply')
+        self.assertIn('pending', menu[0]['message'])
+        self.select(menu, 'back')
+        self.assertEqual(self.path.read_text(), self.source)
+
 
 if __name__ == '__main__':
     unittest.main()
