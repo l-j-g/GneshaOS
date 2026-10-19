@@ -20,9 +20,10 @@ show saved values, which can differ from the currently running configuration.
 Rows are not written down anywhere: `home/variables.nix` stays a plain file of
 literal assignments, and the editor reads the comment above each assignment as
 that preference's description. The key is the row title and the saved value
-decides whether the row is edited as On/Off, a number, or text, so adding a
-preference means writing the value and its comment and nothing else. A
-preference no module reads is left out of the menu, because editing it would
+decides whether the row is edited as On/Off, a number, or text. Types and
+constraints live in `../../preferences/schema.nix`; numeric ranges also supply
+prompt hints. Adding a preference requires its literal, comment, and schema entry.
+A preference no module reads is left out of the menu, because editing it would
 change nothing.
 
 Fonts use a searchable list from `fc-list`; themes use the existing theme
@@ -38,8 +39,8 @@ New font choices use `home/fonts` to configure the shared `monospace` alias;
 applications may need restarting after activation.
 
 The editor preserves comments and unrelated assignments, evaluates a temporary
-Nix file, checks each value against the kind its own literal implies plus the
-idle timers' ordering, then replaces the source file atomically. It refuses
+Nix file, checks the shared preference types and constraints, including host overrides
+and the idle timers' ordering, then replaces the source file atomically. It refuses
 ambiguous/nonliteral assignments, concurrent source changes detected before or during validation, and writes while the
 activation lock is held. It checks again immediately before replacement; an
 external editor that ignores the lock can still race that final rename.
@@ -47,7 +48,12 @@ Host-overridden preferences direct you to the host file instead of silently edit
 ineffective root value. Cancelling or failing validation leaves the source alone.
 
 When adding a preference, write it in `home/variables.nix` with a comment above
-it. The callback tests exercise temporary preferences, including cancellation,
+it and declare its type and constraints in `home/preferences/schema.nix`.
+`home/preferences/default.nix` exposes these as `gnesha.preferences` Home Manager
+options; `home/preferences/validate.nix` checks cross-field rules for Home Manager,
+the flake, and this editor. Descriptions remain solely in `variables.nix`.
+
+The callback tests exercise temporary preferences, including cancellation,
 Nix interpolation escaping, invalid values, concurrent edits, and the activation
 lock. Python is used only as the test runner. They are included in
 `nix flake check`; run them directly without building or changing the desktop:
@@ -64,8 +70,10 @@ candidate beside the preference file; it is removed if validation fails.
 
 Open **Gnesha Keybindings** from the launcher or press **Super+Shift+/**
 (Super+?) for a searchable shortcut reference styled like Settings. Rows come
-from the effective Home Manager Sway bindings (including binding modes), with descriptions taken
-from the comments beside the default bindings. Search also matches commands.
+from the effective Home Manager Sway bindings (including binding modes), with
+descriptions supplied by the structured records in
+`../sway/bindings.nix`. Metadata is used only when it matches the effective command;
+overridden commands fall back to displaying the command. Search also matches commands.
 Enter dismisses the reference; it never executes the selected shortcut.
 Super+Shift+K and Super+Shift+Up move a window up. The menu replaces the old
 Super+? help overlay.

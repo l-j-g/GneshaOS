@@ -27,11 +27,12 @@ class SettingsTests(unittest.TestCase):
         (self.root / 'home/default.nix').write_text(
             'variables.dictation variables.gapsInner variables.autoBrightness '
             'variables.gitUserName variables.idleLockSec variables.idleSuspendSec variables.browserDefaultZoom '
-            'variables.displayScale variables.terminalFontFamily variables.terminalFontSize')
+            'variables.idleDimSec variables.displayScale variables.terminalFontFamily variables.terminalFontSize')
         self.config = self.root / 'config.json'
         self.config.write_text(json.dumps({
             'repo': str(self.root), 'host': 'test', 'stateRoot': str(self.root / 'state'),
             'validator': str(ROOT / 'home/desktop/rofi/settings-validate.nix'),
+            'hints': {'browserDefaultZoom': 'Enter a number between 0.3 and 5.'},
             'fontSizes': [12, 14, 16, 18, 20, 22, 24, 28, 32],
             'terminals': ['ghostty'], 'themeNames': str(self.root / 'themes'),
             'terminal': 'false', 'fish': 'false',
@@ -113,7 +114,8 @@ class SettingsTests(unittest.TestCase):
     def test_invalid_values_never_write(self):
         for key, value in [('gapsInner', '-1'), ('gapsInner', '1.5'), ('idleLockSec', '1'),
                            ('idleSuspendSec', '1'), ('displayScale', 'nan'), ('displayScale', '0'),
-                           ('gitUserName', ''), ('gitUserName', 'bad\nline'), ('terminalFontSize', '0')]:
+                           ('gitUserName', ''), ('gitUserName', 'bad\nline'), ('terminalFontSize', '0'),
+                           ('browserDefaultZoom', '8'), ('browserDefaultZoom', '0.1')]:
             with self.subTest(key=key, value=value):
                 menu = self.edit(key, value)
                 if any(opts.get('info') == 'save' for _, opts in menu[1]):
@@ -207,6 +209,17 @@ class SettingsTests(unittest.TestCase):
         host.mkdir(parents=True)
         (host / 'home-variables.nix').write_text('{ gapsInner = 12; }')
         self.select(menu, 'save')
+        self.assertEqual(self.path.read_text(), self.source)
+
+    def test_zoom_prompt_shows_declared_range(self):
+        menu = self.select(self.call(), 'browserDefaultZoom')
+        self.assertIn('between 0.3 and 5', menu[0]['message'])
+
+    def test_host_override_timer_order_is_checked(self):
+        host = self.root / 'hosts/test'
+        host.mkdir(parents=True)
+        (host / 'home-variables.nix').write_text('{ idleLockSec = 1000; }')
+        self.select(self.edit('idleDimSec', '1100'), 'save')
         self.assertEqual(self.path.read_text(), self.source)
 
     def test_apply_requires_confirmation_and_cancel_is_safe(self):

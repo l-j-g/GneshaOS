@@ -61,14 +61,6 @@
           isNumber value
         else
           builtins.typeOf template == builtins.typeOf value;
-      checkOverlayShape =
-        template: value:
-        builtins.isAttrs template
-        && builtins.isAttrs value
-        && builtins.all (
-          name: builtins.hasAttr name template && checkOverlayShape template.${name} value.${name}
-        ) (builtins.attrNames value)
-        || (!builtins.isAttrs template && builtins.typeOf template == builtins.typeOf value);
       isAbsolutePath = value: builtins.isString value && nixpkgs.lib.hasPrefix "/" value;
       validPort = value: builtins.isInt value && value > 0 && value <= 65535;
       validateSystemParameters =
@@ -125,36 +117,9 @@
       baseHomeVariables = import ./home/variables.nix;
       # The preference file is deliberately raw: one literal per preference with a
       # comment above it, and that comment is the description the settings editor
-      # shows. Types therefore come from the literals themselves and are checked by
-      # the editor; only the rules that span preferences are spelled out here.
-      validHomeVariables =
-        variables:
-        let
-          scale = builtins.tryEval (builtins.fromJSON (toString variables.displayScale));
-        in
-        scale.success
-        && isNumber scale.value
-        && scale.value > 0
-        && isNumber variables.browserDefaultZoom
-        && variables.browserDefaultZoom >= 0.3
-        && variables.browserDefaultZoom <= 5.0
-        && variables.idleDimPercent >= 0
-        && variables.idleDimPercent <= 100
-        && variables.idleDimSec < variables.idleLockSec
-        && variables.idleLockSec < variables.idleOffSec
-        && (variables.idleSuspendSec == null || variables.idleSuspendSec > variables.idleOffSec)
-        && isAbsolutePath variables.screenshotDir
-        && isAbsolutePath variables.publicKeyFile
-        && !(builtins.elem variables.terminalFontFamily [
-          "monospace"
-          "sans-serif"
-          "serif"
-        ])
-        && builtins.match "[A-Za-z0-9][A-Za-z0-9._-]*" variables.hermesSshHost != null
-        && builtins.all (port: builtins.isInt port && port >= 1 && port <= 65535) [
-          variables.hermesLocalPort
-          variables.hermesRemotePort
-        ];
+      # shows. The shared schema supplies types and ranges; the same validator
+      # checks preferences here, in Home Manager, and in the Settings editor.
+      validHomeVariables = variables: import ./home/preferences/validate.nix { inherit variables; };
 
       hostNames = builtins.filter (
         name:
@@ -187,11 +152,8 @@
           username = hostParams.userSettings.userName;
         in
         assert
-          checkOverlayShape baseHomeVariables hostVariables
-          || throw "${hostName}/home-variables.nix must use known Home Manager preference names and matching types";
-        assert
           validHomeVariables variables
-          || throw "Home Manager preferences need a positive scale, zoom between 0.3 and 5.0, idle timers in increasing order, absolute paths, a real font family, a valid SSH alias, and ports in 1-65535";
+          || throw "Home Manager preferences must match home/preferences/schema.nix and the shared font and idle timer constraints";
         {
           inherit
             hostName

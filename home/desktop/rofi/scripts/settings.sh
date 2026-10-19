@@ -80,6 +80,9 @@ edit_menu() {
   fi
   help=$(jq -r --arg key "$key" '.[] | select(.key == $key) | .help | @html' <<< "$entries")
   current=$(jq -c --arg key "$key" 'getpath($key | split("."))' <<< "$values")
+  local hint
+  hint=$(jq -r --arg key "$key" '.hints // {} | getpath($key | split(".")) // ""' "$config")
+  [[ -z $hint ]] || help="$help • $(printf '%s' "$hint" | html)"
   kind=$(jq -r type <<< "$current")
   state=$(jq -cn --arg key "$key" --arg snapshot "$snapshot" --arg kind "$kind" \
     '{stage:"edit", key:$key, snapshot:$snapshot, kind:$kind}')
@@ -164,7 +167,7 @@ save_edit() (
   validator=$(jq -r .validator "$config")
   nix-instantiate --eval --strict --json "$validator" \
     --argstr original "$preferences" --argstr candidate "$candidate" --argstr key "$key" \
-    --argstr valueJSON "$value" --argstr fontSizesJSON "$(jq -c .fontSizes "$config")" >/dev/null || exit 1
+    --argstr hostOverrides "$override" --argstr valueJSON "$value" --argstr fontSizesJSON "$(jq -c .fontSizes "$config")" >/dev/null || exit 1
   [[ ! -L $preferences && $(fingerprint) == "$snapshot" ]] || { echo 'Preferences changed during validation. Nothing was saved.'; exit 1; }
   mv -T -- "$candidate" "$preferences"
 )

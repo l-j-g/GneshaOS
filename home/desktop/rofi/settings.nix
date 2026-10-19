@@ -7,6 +7,7 @@
 {
   config,
   pkgs,
+  lib,
   params,
   variables,
   ...
@@ -19,8 +20,11 @@ let
     "kitty"
   ];
 
+  hintsFor = spec: if spec ? kind then spec.hint or "" else lib.mapAttrs (_: hintsFor) spec;
+
   settingsConfig = pkgs.writeText "gnesha-settings.json" (
     builtins.toJSON {
+      hints = hintsFor (import ../../preferences/schema.nix);
       repo = params.systemSettings.flakePath;
       host = params.systemSettings.hostName;
       terminal = variables.terminal;
@@ -29,7 +33,8 @@ let
       terminals = terminals;
       themeNames = "${config.home.homeDirectory}/.config/gnesha/theme-names";
       fontSizes = import ../../programs/terminals/font-sizes.nix;
-      validator = ./settings-validate.nix;
+      # Preserve relative imports used by the shared preference validator.
+      validator = "${../..}/desktop/rofi/settings-validate.nix";
     }
   );
   settingsMode = pkgs.writeShellApplication {

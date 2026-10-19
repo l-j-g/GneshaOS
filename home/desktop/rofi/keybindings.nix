@@ -7,37 +7,20 @@
 }:
 let
   sway = config.wayland.windowManager.sway.config;
-  # Reuse the comments beside the bindings rather than maintaining a help list.
-  documented =
-    builtins.foldl'
-      (
-        state: line:
-        let
-          comment = builtins.match "[[:space:]]*# (.*)" line;
-          binding = builtins.match ''[[:space:]]*"([^"]+)" = .*'' line;
-        in
-        if comment != null then
-          state // { description = builtins.head comment; }
-        else if binding != null then
-          state
-          // {
-            labels = state.labels // {
-              ${lib.replaceStrings [ "\${m}" ] [ sway.modifier ] (builtins.head binding)} = state.description;
-            };
-          }
-        else
-          state
-      )
-      {
-        description = "";
-        labels = { };
-      }
-      (lib.splitString "\n" (builtins.readFile ../sway/bindings.nix));
+  documented = config.gnesha.keybindings;
   rowsFor =
     mode: bindings:
     lib.mapAttrsToList (key: command: {
       inherit key command mode;
-      description = if mode == "default" then documented.labels.${key} or command else command;
+      # Only reuse metadata if it still describes the effective command.
+      description =
+        let
+          binding = documented.${key} or null;
+        in
+        if mode == "default" && binding != null && binding.command == command then
+          "${binding.category} // ${binding.description}"
+        else
+          command;
     }) (lib.filterAttrs (_: command: command != null) bindings);
   catalog = pkgs.writeText "gnesha-keybindings.json" (
     builtins.toJSON (

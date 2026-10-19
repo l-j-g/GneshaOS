@@ -161,6 +161,7 @@ let
       dockerUnitUnset = base.config.systemd.services.docker.serviceConfig.UnsetEnvironment;
       nixDaemonUnitUnset = base.config.systemd.services.nix-daemon.serviceConfig.UnsetEnvironment;
     in
+    assert import ./preferences.nix;
     assert !disabled.services.gnesha.arr.enable;
     assert !(disabled.systemd.services ? docker-compose);
     assert !(disabled.systemd.services ? tailscale-media-serve);

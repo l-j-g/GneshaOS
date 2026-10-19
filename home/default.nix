@@ -4,16 +4,12 @@
 {
   inputs,
   params,
-  lib,
-  hostVariables ? { },
   ...
 }:
 
-let
-  variables = lib.recursiveUpdate (import ./variables.nix) hostVariables;
-in
 {
   imports = [
+    ./preferences
     ./fonts
     ./shell
     ./programs
@@ -23,10 +19,6 @@ in
     inputs.nix-index-database.homeModules.nix-index
     inputs.nix-colors.homeManagerModules.default
   ];
-
-  # Make the documented preference set available to every Home Manager
-  # module without requiring each module to import it independently.
-  _module.args = { inherit variables; };
 
   home.username = params.userSettings.userName;
   home.homeDirectory = params.userSettings.homeDirectory;

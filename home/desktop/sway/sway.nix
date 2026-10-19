@@ -25,20 +25,21 @@ let
 
   # sway-extra.conf is static sway syntax, so user-adjustable values inside it
   # (gaps, screenshot upload URL) are filled in via placeholder substitution.
-  extraConf = lib.replaceStrings
-    [
-      "__GAPS_INNER_PX__"
-      "__GAPS_OUTER_PX__"
-      "__STACKED_VIEW_FONT_SIZE__"
-      "__SCREENSHOT_UPLOAD_URL__"
-    ]
-    [
-      (toString variables.gapsInner + "px")
-      (toString variables.gapsOuter + "px")
-      (toString variables.stackedViewFontSize)
-      variables.screenshotUploadUrl
-    ]
-    (builtins.readFile ./sway-extra.conf);
+  extraConf =
+    lib.replaceStrings
+      [
+        "__GAPS_INNER_PX__"
+        "__GAPS_OUTER_PX__"
+        "__STACKED_VIEW_FONT_SIZE__"
+        "__SCREENSHOT_UPLOAD_URL__"
+      ]
+      [
+        (toString variables.gapsInner + "px")
+        (toString variables.gapsOuter + "px")
+        (toString variables.stackedViewFontSize)
+        variables.screenshotUploadUrl
+      ]
+      (builtins.readFile ./sway-extra.conf);
 
   # Terminal. Inlined (not $term var):
   # home-manager's sway module doesn't emit `set $term`/`set $menu` here.
@@ -50,10 +51,7 @@ let
     else
       "${term} --directory \"$(swaycwd 2>/dev/null || echo $HOME)\" tmux new-session -A -s main";
   termFloat =
-    if term == "ghostty" then
-      "${term} --class floating_shell -e"
-    else
-      "${term} --class floating_shell";
+    if term == "ghostty" then "${term} --class floating_shell -e" else "${term} --class floating_shell";
 
   # Launcher (Manjaro: rofi combi = drun + run).
   rofiLauncher = "${config.home.homeDirectory}/.config/sway/scripts/gnesha-rofi";
@@ -76,7 +74,7 @@ let
   brightnessUp = "swayosd-client --brightness raise --device ${system.backlightDevice}";
   brightnessDown = "swayosd-client --brightness lower --device ${system.backlightDevice}";
 
-  keybindings = import ./bindings.nix {
+  shortcutDefinitions = import ./bindings.nix {
     inherit
       mod
       term
@@ -97,6 +95,8 @@ let
   };
 in
 {
+  gnesha.keybindings = shortcutDefinitions;
+
   xdg.userDirs = {
     enable = true;
     # The NixOS media-directory-setup service creates these after the drive
@@ -203,7 +203,10 @@ in
         { command = "xdg-user-dirs-update"; }
         { command = "wlsunset -l ${toString system.latitude} -L ${toString system.longitude}"; }
         { command = "dex -a -e SWAY"; }
-        { command = "noisetorch -u && noisetorch -i"; always = true; }
+        {
+          command = "noisetorch -u && noisetorch -i";
+          always = true;
+        }
         {
           # User-selected wallpaper (replace ~/wallpapers/wallpaper to switch).
           command = "swaymsg \"output * bg ${config.home.homeDirectory}/wallpapers/wallpaper fill\"";
@@ -211,7 +214,7 @@ in
         }
       ];
 
-      inherit keybindings;
+      keybindings = lib.mapAttrs (_: binding: binding.command) config.gnesha.keybindings;
     };
     extraConfig = extraConf;
   };
