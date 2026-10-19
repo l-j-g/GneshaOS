@@ -4,7 +4,7 @@
 {
   imports = [
     ./sway.nix
-    ./keybindings.nix
+    ./keybinding-options.nix
     ./swaylock.nix
     ./daemons.nix
     ./scripts.nix

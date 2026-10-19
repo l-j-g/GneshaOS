@@ -31,7 +31,7 @@ let
     { dictation.language = false; }
     { unknownPreference = true; }
   ];
-  bindings = import ../home/desktop/sway/bindings.nix;
+  bindings = import ../home/desktop/sway/keybindings.nix;
   args = builtins.mapAttrs (name: _: if name == "mod" then "Mod4" else name) (
     builtins.functionArgs bindings
   );

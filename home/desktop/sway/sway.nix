@@ -74,7 +74,7 @@ let
   brightnessUp = "swayosd-client --brightness raise --device ${system.backlightDevice}";
   brightnessDown = "swayosd-client --brightness lower --device ${system.backlightDevice}";
 
-  shortcutDefinitions = import ./bindings.nix {
+  shortcutDefinitions = import ./keybindings.nix {
     inherit
       mod
       term

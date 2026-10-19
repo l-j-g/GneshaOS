@@ -72,7 +72,7 @@ Open **Gnesha Keybindings** from the launcher or press **Super+Shift+/**
 (Super+?) for a searchable shortcut reference styled like Settings. Rows come
 from the effective Home Manager Sway bindings (including binding modes), with
 descriptions supplied by the structured records in
-`../sway/bindings.nix`. Metadata is used only when it matches the effective command;
+`../sway/keybindings.nix`. Metadata is used only when it matches the effective command;
 overridden commands fall back to displaying the command. Search also matches commands.
 Enter dismisses the reference; it never executes the selected shortcut.
 Super+Shift+K and Super+Shift+Up move a window up. The menu replaces the old
