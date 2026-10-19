@@ -52,8 +52,9 @@ let
     ];
     text = ''
       export PATH="${config.home.profileDirectory}/bin:/run/current-system/sw/bin:$PATH"
-      exec ${pkgs.bash}/bin/bash ${./scripts/keybindings.sh} ${catalog} "$@"
-    '';
+      set -- ${catalog} "$@"
+    ''
+    + builtins.readFile ./scripts/keybindings.sh;
   };
 in
 {
