@@ -210,6 +210,15 @@ let
         ' media.json >/dev/null
         touch "$out"
       '';
+  sambaAccessCheck = checkPkgs.runCommand "gnesha-samba-access-check" {
+    nativeBuildInputs = [ checkPkgs.bash checkPkgs.samba checkPkgs.gnugrep ];
+  } ''
+    bash ${./samba-access.sh} \
+      ${(hostCheck null).config.environment.etc."samba/smb.conf".source} \
+      ${nixpkgs.lib.escapeShellArg systemParameters.userSettings.userName} \
+      ${nixpkgs.lib.escapeShellArg systemParameters.systemSettings.mediaMountPoint}
+    touch "$out"
+  '';
   sourceScriptCheck =
     checkPkgs.runCommand "gnesha-source-and-helper-checks"
       {
@@ -307,6 +316,7 @@ in
   inherit
     configurationCombinationChecks
     sourceScriptCheck
+    sambaAccessCheck
     settingsEditorCheck
     letsnoteFanCheck
     desktopHelperStubCheck

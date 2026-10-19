@@ -2,11 +2,11 @@
 
 {
   # macOS SMB share for the exFAT media volume.
-  # Access is limited to the home LAN; authentication uses Samba's
-  # separate password database for the user from the top-level params.
+  # Localhost, home LAN, and tailnet clients use Samba's separate password
+  # database for the user from the top-level params.
   services.samba = {
     enable = true;
-    openFirewall = false;
+    openFirewall = true;
     settings = {
       global = {
         workgroup = "WORKGROUP";
@@ -14,8 +14,8 @@
         security = "user";
         "map to guest" = "never";
         "server min protocol" = "SMB2";
-        # This share is local-only. Do not publish SMB ports on LAN interfaces.
-        "hosts allow" = "127.0.0.1 ::1";
+        # Allow localhost, the home LAN, and the Tailscale tailnet; deny everything else.
+        "hosts allow" = "127.0.0.1 ::1 192.168.1.0/24 100.64.0.0/10";
         "hosts deny" = "ALL";
       };
       media = {
