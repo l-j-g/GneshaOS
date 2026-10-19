@@ -219,6 +219,8 @@ let
           ${../home/desktop/sway/scripts/calcurse-daemon-enabled} \
           ${../home/desktop/sway/scripts/recorder.sh} \
           ${../hosts/cf-fv1/services/update-network-ready.sh} \
+          ${../hosts/cf-fv1/services/scripts/lock-refresh.sh} \
+          ${./lock-refresh-stubs.sh} \
           ${./update-network-readiness-stubs.sh} \
           ${./arr-wrapper-stubs.sh}; do
           bash -n "$script"
@@ -230,6 +232,7 @@ let
         bash ${./activation-helper-stubs.sh} ${../home/shell/activation-state.sh}
         bash ${./rebuild-cache-stubs.sh} ${../home/shell/activation-state.sh}
         bash ${./build-monitor-stubs.sh} ${../home/shell/build-monitor}
+        bash ${./lock-refresh-stubs.sh} ${../hosts/cf-fv1/services/scripts/lock-refresh.sh}
         bash ${./update-network-readiness-stubs.sh} ${../hosts/cf-fv1/services/update-network-ready.sh}
         bash ${./calcurse-daemon-optin-stubs.sh} ${../home/desktop/sway/scripts/calcurse-daemon-enabled}
         bash ${./vpn-toggle-stubs.sh} ${../home/desktop/sway/scripts/vpn-toggle}
