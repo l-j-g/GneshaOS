@@ -43,7 +43,6 @@
     pkgs.dex
     pkgs.polkit_gnome
     pkgs.noisetorch
-    pkgs.nwg-wrapper
     pkgs.acpi
     pkgs.wf-recorder
     pkgs.swappy

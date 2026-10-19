@@ -36,7 +36,6 @@ let
     "recorder.sh" = mkCommand "recorder.sh" ./scripts/recorder.sh sh (common ++ [ pkgs.libnotify pkgs.slurp pkgs.wf-recorder pkgs.xdg-user-dirs ]);
     "scale.sh" = mkCommand "scale.sh" (pkgs.writeText "scale.sh" scaleScript) sh (common ++ [ pkgs.sway pkgs.jq pkgs.gawk pkgs.way-displays pkgs.libnotify ]);
     "sway-autotile" = mkCommand "sway-autotile" ./scripts/sway-autotile pythonI3ipc [ ];
-    "sway-help" = mkCommand "sway-help" ./scripts/sway-help sh (common ++ [ pkgs.sway pkgs.jq pkgs.nwg-wrapper ]);
     "swaycwd" = mkCommand "swaycwd" ./scripts/swaycwd sh (common ++ [ pkgs.sway pkgs.jq ]);
     "theme-picker" = mkCommand "theme-picker" (pkgs.writeText "theme-picker" themePickerScript) sh (common ++ [ pkgs.rofi pkgs.libnotify pkgs.util-linux pkgs.gnugrep pkgs.gnused pkgs.kitty pkgs.sway pkgs.jq pkgs.nix pkgs.nh pkgs.dash ]);
     "theme-preview" = mkCommand "theme-preview" (pkgs.writeText "theme-preview" themePreviewScript) sh (common ++ [ pkgs.gawk pkgs.gnused pkgs.kitty pkgs.sway pkgs.jq pkgs.systemd ]);
@@ -83,7 +82,6 @@ let
       (fontSizeCase "down")
     ]
     (builtins.readFile ./scripts/ghostty-font-size-notify);
-  nwgWrapperStyle = lib.replaceStrings [ "__TERMINAL_FONT_SIZE__" ] [ (toString variables.terminalFontSize) ] (builtins.readFile ./nwg-wrapper/style.css);
 in
 {
   home.sessionPath = [ "$HOME/.config/sway/scripts" ];
@@ -94,8 +92,5 @@ in
     (name: package: lib.nameValuePair ".config/sway/scripts/${name}" {
       source = "${package}/bin/${name}";
       executable = true;
-    }) manifest) // {
-    ".config/nwg-wrapper/help.sh".source = ./nwg-wrapper/help.sh;
-    ".config/nwg-wrapper/style.css".text = nwgWrapperStyle;
-  };
+    }) manifest);
 }

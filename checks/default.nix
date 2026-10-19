@@ -218,7 +218,6 @@ let
           ${../home/desktop/sway/scripts/vpn-toggle} \
           ${../home/desktop/sway/scripts/calcurse-daemon-enabled} \
           ${../home/desktop/sway/scripts/recorder.sh} \
-          ${../home/desktop/sway/scripts/sway-help} \
           ${../hosts/cf-fv1/services/update-network-ready.sh} \
           ${./update-network-readiness-stubs.sh} \
           ${./arr-wrapper-stubs.sh}; do
@@ -284,7 +283,6 @@ let
       ''
         bash ${./desktop-helper-stubs.sh} \
           ${../home/desktop/sway/scripts/recorder.sh} \
-          ${../home/desktop/sway/scripts/sway-help} \
           /build/gnesha-desktop-helper-check \
           ${./desktop-wf-recorder-stub.c}
         touch "$out"

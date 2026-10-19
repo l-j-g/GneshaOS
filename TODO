@@ -1422,8 +1422,10 @@ build passed. No live Home Manager activation was run.
 ### [ ] DESKTOP-01 — Correct helper exit reporting and session scoping
 
 Priority: P2. Type: confirmed minor defects plus bounded robustness work.
-Files: `home/desktop/sway/scripts/recorder.sh`, `sway-help`,
+Files: `home/desktop/sway/scripts/recorder.sh`,
 `home/desktop/sway/daemons.nix`, theme/Kitty integrations.
+The old help overlay has been replaced by the searchable Rofi keybinding menu;
+overlay-specific checks and remaining runtime work below no longer apply.
 
 Evidence: recorder says 'Starting in 3...' but sleeps one second, announces
 'Saved' regardless of wf-recorder exit status, and uses unscoped process-name
@@ -1433,7 +1435,7 @@ ExecStartPre removes lock files without verifying their owner process.
 Implementation:
 1. Make recorder timing/text agree and announce success only after a successful
    recording and an existing output. Report cancel/failure accurately.
-2. Track this session's recorder/overlay where practical instead of signaling
+2. Track this session's recorder where practical instead of signaling
    every matching process. Handle two simultaneous invocations deterministically.
 3. Move per-user/session sockets and lock files to a suitable runtime directory;
    update all consumers together. Preserve required Kitty integrations.

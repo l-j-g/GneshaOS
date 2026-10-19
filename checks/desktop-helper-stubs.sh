@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-recorder=${1:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /path/to/sway-help /build/test-root /path/to/recorder-stub.c}
-sway_help=${2:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /path/to/sway-help /build/test-root /path/to/recorder-stub.c}
-test_root=${3:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /path/to/sway-help /build/test-root /path/to/recorder-stub.c}
-recorder_stub_source=${4:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /path/to/sway-help /build/test-root /path/to/recorder-stub.c}
+recorder=${1:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /build/test-root /path/to/recorder-stub.c}
+test_root=${2:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /build/test-root /path/to/recorder-stub.c}
+recorder_stub_source=${3:?usage: desktop-helper-stubs.sh /path/to/recorder.sh /build/test-root /path/to/recorder-stub.c}
 case "$test_root" in
   /tmp/gnesha-desktop-helper-check|/build/gnesha-desktop-helper-check|/build/*/gnesha-desktop-helper-check) ;;
   *) echo "refusing to use a runtime root outside the dedicated build fixture" >&2; exit 2 ;;
 esac
-[[ -f $recorder && -f $sway_help && -f $recorder_stub_source ]] || { echo 'desktop helper source is missing' >&2; exit 2; }
+[[ -f $recorder && -f $recorder_stub_source ]] || { echo 'desktop helper source is missing' >&2; exit 2; }
 
 rm -rf -- "$test_root"
 mkdir -p "$test_root/bin" "$test_root/runtime" "$test_root/home"
@@ -64,20 +63,6 @@ case "${RECORDER_MODE:-write}" in
   block) exec "$RECORDER_PROCESS_STUB" ;;
   *) exit 99 ;;
 esac
-STUB
-cat > "$stub_bin/swaymsg" <<'STUB'
-#!/bin/sh
-printf '[{"name":"fixture-output"}]\n'
-STUB
-cat > "$stub_bin/jq" <<'STUB'
-#!/bin/sh
-# sway-help only needs the output-name query. The fixture returns a fixed name.
-printf 'fixture-output\n'
-STUB
-cat > "$stub_bin/nwg-wrapper" <<'STUB'
-#!/bin/sh
-printf 'wrapper:%s\n' "$*" >> "$STUB_LOG"
-exit 0
 STUB
 for stub in "$stub_bin"/*; do sed -i "1s|^#!.*$|#!$BASH|" "$stub"; done
 chmod +x "$stub_bin"/*
@@ -291,14 +276,5 @@ first_pid=
   echo 'recorder session lock was not cleaned up' >&2; exit 1;
 }
 unset SLURP_ENTERED SLURP_RELEASE
-
-# The keybinding overlay stores wrapper PIDs under the derived session key.
-# Fast-exiting stubs ensure this fixture never signals any process.
-reset_fixture
-SWAYSOCK=/run/user/fixture/help-one sh "$sway_help"
-SWAYSOCK=/run/user/fixture/help-two sh "$sway_help"
-[[ -s "$XDG_RUNTIME_DIR/gneshaos/help-one/sway-help/wrapper-pids" ]] || { echo 'first session overlay state missing' >&2; exit 1; }
-[[ -s "$XDG_RUNTIME_DIR/gneshaos/help-two/sway-help/wrapper-pids" ]] || { echo 'second session overlay state missing' >&2; exit 1; }
-grep -Fq 'fixture-output' "$STUB_LOG" || { echo 'overlay wrapper stub did not run' >&2; exit 1; }
 
 echo 'desktop helper stub checks passed'
