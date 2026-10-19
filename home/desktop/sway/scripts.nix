@@ -54,7 +54,7 @@ let
   themePreviewScript = lib.replaceStrings [ "__TERMINAL_FONT_SIZE__" ] [ (toString variables.terminalFontSize) ] (builtins.readFile ./scripts/theme-preview);
   # The scripts need the shared pending-count helpers; the store copy would
   # drift, so point them at the checkout this generation was built from.
-  pendingCountLib = "${config.home.homeDirectory}/.config/nix/home/shell/pending-count.sh";
+  pendingCountLib = "${system.flakePath}/home/cli/scripts/pending-count.sh";
   updatesPendingScript = lib.replaceStrings [ "__PENDING_COUNT_LIB__" ] [ pendingCountLib ] (builtins.readFile ./scripts/updates-pending);
   # The terminal inherits the library path so the review helper finds it too.
   updatesPendingReviewScript = lib.replaceStrings [ "__GNESHA_PENDING_COUNT_LIB__" ] [ pendingCountLib ] (builtins.readFile ./scripts/updates-pending-review);

@@ -1,4 +1,4 @@
-# Interactive shells and their integrations. Nix workflows live in home/shell.
+# Interactive shells and their integrations. Nix workflows live in home/cli.
 { pkgs, ... }:
 
 {

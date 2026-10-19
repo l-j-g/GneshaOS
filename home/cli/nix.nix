@@ -11,7 +11,7 @@ let
   hostName = params.systemSettings.hostName;
   homeProfile = "${params.userSettings.userName}@${hostName}";
   systemBuildRef = "${flakePath}#nixosConfigurations.${hostName}.config.system.build.toplevel";
-  activationStateLib = ./activation-state.sh;
+  activationStateLib = ./scripts/activation-state.sh;
   activationLock = pkgs.writeShellApplication {
     name = "gnesha-activation-lock";
     runtimeInputs = [
@@ -42,7 +42,7 @@ let
     text = ''
       # Pin the client used for privileged cache-bootstrap builds.
       NIX_COMMAND=${pkgs.nix}/bin/nix
-      ${builtins.readFile ./build-monitor}
+      ${builtins.readFile ./scripts/build-monitor}
     '';
   };
   rebuild = pkgs.writeShellApplication {
@@ -67,7 +67,7 @@ let
       flakePath=${lib.escapeShellArg flakePath}
       hostName=${lib.escapeShellArg hostName}
       homeProfile=${lib.escapeShellArg homeProfile}
-      ${builtins.readFile ./gnesha-rebuild}
+      ${builtins.readFile ./scripts/gnesha-rebuild}
     '';
   };
   showPublicKey = pkgs.writeShellApplication {
@@ -145,7 +145,7 @@ in
     rebuild-boot-raw = "gnesha-activation-lock sudo nixos-rebuild boot --flake ${lib.escapeShellArg "${flakePath}#${hostName}"}";
   };
   # Keep workflow functions ahead of user key bindings when modules are regrouped.
-  programs.fish.interactiveShellInit = lib.mkBefore (builtins.readFile ./nix-workflow.fish);
+  programs.fish.interactiveShellInit = lib.mkBefore (builtins.readFile ./scripts/nix-workflow.fish);
   programs.nix-index.enable = true;
   programs.nix-index-database.comma.enable = true;
 }

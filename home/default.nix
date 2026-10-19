@@ -11,7 +11,7 @@
   imports = [
     ./preferences
     ./fonts
-    ./shell
+    ./cli
     ./programs
     ./services
     ./theme

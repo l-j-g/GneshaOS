@@ -236,7 +236,7 @@ let
       }
       ''
         for script in \
-          ${../home/shell/airvpn-profile} \
+          ${../home/cli/scripts/airvpn-profile} \
           ${../home/desktop/sway/scripts/vpn-toggle} \
           ${../home/desktop/sway/scripts/calcurse-daemon-enabled} \
           ${../home/desktop/sway/scripts/recorder.sh} \
@@ -247,18 +247,18 @@ let
           ${./arr-wrapper-stubs.sh}; do
           bash -n "$script"
         done
-        bash -n ${../home/shell/lock-readiness.sh} ${./lock-readiness-stubs.sh}
-        fish --no-execute ${../home/shell/nix-workflow.fish}
+        bash -n ${../home/cli/scripts/lock-readiness.sh} ${./lock-readiness-stubs.sh}
+        fish --no-execute ${../home/cli/scripts/nix-workflow.fish}
         fish --no-execute ${./nix-workflow-status.fish}
-        fish ${./nix-workflow-status.fish} ${../home/shell/nix-workflow.fish}
-        bash ${./activation-helper-stubs.sh} ${../home/shell/activation-state.sh}
-        bash ${./rebuild-cache-stubs.sh} ${../home/shell/activation-state.sh}
-        bash ${./build-monitor-stubs.sh} ${../home/shell/build-monitor}
+        fish ${./nix-workflow-status.fish} ${../home/cli/scripts/nix-workflow.fish}
+        bash ${./activation-helper-stubs.sh} ${../home/cli/scripts/activation-state.sh}
+        bash ${./rebuild-cache-stubs.sh} ${../home/cli/scripts/activation-state.sh}
+        bash ${./build-monitor-stubs.sh} ${../home/cli/scripts/build-monitor}
         bash ${./lock-refresh-stubs.sh} ${../hosts/cf-fv1/services/scripts/lock-refresh.sh}
         bash ${./update-network-readiness-stubs.sh} ${../hosts/cf-fv1/services/update-network-ready.sh}
         bash ${./calcurse-daemon-optin-stubs.sh} ${../home/desktop/sway/scripts/calcurse-daemon-enabled}
         bash ${./vpn-toggle-stubs.sh} ${../home/desktop/sway/scripts/vpn-toggle}
-        bash ${./lock-readiness-stubs.sh} ${../home/shell/lock-readiness.sh}
+        bash ${./lock-readiness-stubs.sh} ${../home/cli/scripts/lock-readiness.sh}
         touch "$out"
       '';
   letsnoteFanCheck =

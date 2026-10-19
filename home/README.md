@@ -2,7 +2,7 @@
 
 This tree defines the user environment shared by discovered NixOS hosts in six
 layers: `programs/` (applications and interactive shells), `desktop/` (the compositor
-session), `shell/` (Nix workflows and command helpers), `services/` (user services that are not a program's
+session), `cli/` (Nix workflows and command helpers), `services/` (user services that are not a program's
 configuration), `theme/`, and `fonts/`. System font packages and console fonts
 are configured by `modules/fonts.nix`. `fonts/` maps the selected family from
 `variables.nix` to Fontconfig's `monospace` alias and supplies the matching
@@ -22,8 +22,11 @@ unconfigured packages and imports configured programs. A program module owns
 its primary package through Home Manager, along with its configuration.
 
 `programs/shells/` owns Fish and its direnv, fzf and zoxide integrations.
-`shell/` owns Nix rebuild/activation workflows and the AirVPN command wrapper;
-these are operational helpers rather than another interactive shell.
+`cli/` owns Nix rebuild/activation workflows and the AirVPN command wrapper;
+supporting implementations live in `cli/scripts/`.
+`home/shell/pending-count.sh` is a compatibility symlink for update-status
+wrappers from older activated generations; it can be removed once those
+generations are no longer used.
 
 `desktop/default.nix` follows the same pattern: imports for configured
 components and a list of standalone desktop packages. Desktop proxy settings,

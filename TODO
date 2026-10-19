@@ -73,7 +73,7 @@ git diff --check
 nix-instantiate --parse path/to/changed.nix >/dev/null
 bash -n path/to/bash-script
 sh -n path/to/posix-script
-fish --no-execute home/shell/nix-workflow.fish
+fish --no-execute home/cli/scripts/nix-workflow.fish
 nix flake check --show-trace --no-write-lock-file
 nixos-rebuild build --flake .#cf-fv1 --no-write-lock-file
 nix build --no-link --no-write-lock-file '.#homeConfigurations."lg@cf-fv1".activationPackage'

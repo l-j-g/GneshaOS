@@ -3,6 +3,6 @@
 {
   imports = [
     ./airvpn.nix
-    ./workflows.nix
+    ./nix.nix
   ];
 }

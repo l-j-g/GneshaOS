@@ -24,7 +24,7 @@ let
     ];
     text = ''
       # shellcheck disable=SC1091
-      source ${../../shell/lock-readiness.sh}
+      source ${../../cli/scripts/lock-readiness.sh}
       gnesha_lock_acquire
     '';
   };
@@ -41,7 +41,7 @@ let
     ];
     text = ''
       # shellcheck disable=SC1091
-      source ${../../shell/lock-readiness.sh}
+      source ${../../cli/scripts/lock-readiness.sh}
       gnesha_lock_and_suspend "$@"
     '';
   };

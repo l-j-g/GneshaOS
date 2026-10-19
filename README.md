@@ -82,7 +82,7 @@ A simplified tree of the main files (supporting files omitted):
 │   ├── desktop/                 # Sway and desktop components
 │   │   ├── default.nix          # Import components and list desktop packages
 │   │   └── portals.nix          # One focused desktop concern
-│   ├── shell/                   # Rebuild and activation helpers
+│   ├── cli/                     # CLI commands; implementations in scripts/
 │   ├── services/                # Background user services
 │   ├── theme/                   # Shared colors and appearance
 │   └── fonts/                   # Font selection and rendering

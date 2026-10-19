@@ -82,7 +82,7 @@ flake check evaluates the checks but does not execute their fixture scripts.
 
 ## Activation helpers
 
-The Fish helpers in `home/shell/nix-workflow.fish` are convenient after review,
+The Fish helpers in `home/cli/scripts/nix-workflow.fish` are convenient after review,
 but several of them change live state:
 
 | Helper | Effect |
@@ -121,7 +121,7 @@ Caches already trusted by the system do not need this approval. Both builds
 must still succeed before NixOS and Home Manager activation begins.
 
 To use updated rebuild helpers before Home Manager has installed them, run
-`/etc/nixos/home/shell/rebuild-from-source`. It uses the checked-out helper files
+`/etc/nixos/home/cli/scripts/rebuild-from-source`. It uses the checked-out helper files
 and freezes that checkout as the build input. This is an activating rebuild,
 with the same approval, locking, and stale-source checks as the installed helper;
 stop older rebuild attempts before using it. After a successful run, the normal

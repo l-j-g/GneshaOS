@@ -10,7 +10,7 @@ let
   airVpnProfile = pkgs.writeShellScriptBin "airvpn-profile" ''
     export GNESHA_ARR_DIRECTORY=${lib.escapeShellArg arrDirectory}
     export GNESHA_ARR_COMPOSE_FILE=${lib.escapeShellArg params.systemSettings.arrComposePath}
-    exec ${pkgs.bash}/bin/bash ${./airvpn-profile} "$@"
+    exec ${pkgs.bash}/bin/bash ${./scripts/airvpn-profile} "$@"
   '';
 in
 {
