@@ -8,6 +8,8 @@
   accepts.
 - `scripts/settings.sh`: implements Rofi script mode, reads descriptions from
   `home/variables.nix`, and writes narrowly scoped literal edits.
+- `keybindings.nix` generates the shortcut catalog and packages the menu;
+  `scripts/keybindings.sh` renders it through the shared Rofi launcher.
 - `settings-validate.nix`: uses Nix built-ins to check the proposed values and
   ensure that only the selected preference changes. No Python is used at runtime.
 
