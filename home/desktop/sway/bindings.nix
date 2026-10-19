@@ -40,6 +40,9 @@ in
   # Launch // Gnesha settings editor
   "${m}+Shift+s" = "exec ${settings}";
 
+  # Launch // Search keyboard shortcuts
+  "${m}+Shift+k" = "exec gnesha-keybindings";
+
   # Launch // Base16 theme picker (runtime preview + background Home Manager activation)
   "${m}+Shift+t" = "exec ${themePicker}";
 
@@ -81,7 +84,6 @@ in
   "${m}+Shift+Right" = "move right";
   "${m}+Shift+h" = "move left";
   "${m}+Shift+j" = "move down";
-  "${m}+Shift+k" = "move up";
   "${m}+Shift+l" = "move right";
 
   # Navigation // move workspace to output

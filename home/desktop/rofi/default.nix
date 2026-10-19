@@ -4,5 +4,6 @@
     ./launcher.nix
     ./theme.nix
     ./settings.nix
+    ./keybindings.nix
   ];
 }

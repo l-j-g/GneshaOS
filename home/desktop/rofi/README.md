@@ -59,3 +59,12 @@ The shell uses Rofi's [script-mode protocol](https://davatorium.github.io/rofi/c
 and `ROFI_DATA` carries the pending edit between callbacks. There is no temporary
 session directory to clean up when Escape closes the menu. Only a save creates a
 candidate beside the preference file; it is removed if validation fails.
+
+Open **Gnesha Keybindings** from the launcher or press **Super+Shift+K** for a
+searchable shortcut reference styled like Settings. Rows come from the effective
+Home Manager Sway bindings (including binding modes), with descriptions taken
+from the comments beside the default bindings. Search also matches commands.
+Enter dismisses the reference; it never executes the selected shortcut.
+Super+Shift+Up still moves a window up; Super+? keeps the existing help overlay.
+The list reflects the activated Home Manager generation. Rebuild to pick up
+source changes.
