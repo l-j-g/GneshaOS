@@ -8,7 +8,7 @@ terminalFontFamily = "BlexMono Nerd Font Mono";
 
 `home/fonts/default.nix` hands that choice to Fontconfig as the preferred
 `monospace` family, followed by `Symbols Nerd Font Mono` for missing icons.
-Ghostty, Kitty, Foot, Waybar, rofi, and mako request `monospace`; do not put the
+Ghostty, Kitty, Foot, Waybar, rofi, and Dunst request `monospace`; do not put the
 chosen family separately in their configurations.
 
 `home/fonts/profiles.nix` chooses the rendering policy automatically:

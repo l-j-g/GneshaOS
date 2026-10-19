@@ -107,7 +107,7 @@ Positive font/scale/zoom values, absolute screenshot/key paths, and the
 | `gapsInner` / `gapsOuter` | Inner and outer Sway window gaps, in pixels. | `5` | Sway |
 | `terminalFontFamily` | Font family used by Kitty; `monospace` resolves to bitmap Terminus. | `"monospace"` | Kitty |
 | `stackedViewFontSize` | Sway stacked/tabbed title size, in points. | `14` | Sway |
-| `terminalFontSize` | Shared terminal/UI font size, in points. For Ghostty's bitmap font, choose a supported face: 12, 14, 16, 18, 20, 22, 24, 28, or 32. | `16` | Kitty, Ghostty, Foot, Waybar, rofi, mako |
+| `terminalFontSize` | Shared terminal/UI font size, in points. For Ghostty's bitmap font, choose a supported face: 12, 14, 16, 18, 20, 22, 24, 28, or 32. | `16` | Kitty, Ghostty, Foot, Waybar, rofi, Dunst |
 | `screenshotDir` | Directory where grimshot saves screenshots. | `"/media/Pictures/Screenshots"` | Sway |
 | `screenshotUploadUrl` | 0x0-compatible endpoint for screenshot uploads. | `"https://x0.at/"` | Sway bindings |
 | `idleDimSec` | Seconds before the display dims. | `240` | swayidle |

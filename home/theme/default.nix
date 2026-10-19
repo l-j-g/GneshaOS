@@ -1,7 +1,7 @@
 # Shared Base16 desktop theme.
 #
 # One palette (nix-colors "colorscheme", base16 shape) drives every piece of
-# the desktop: GTK, Dolphin, terminals, waybar, rofi, mako, and Sway.
+# the desktop: GTK, Dolphin, terminals, waybar, rofi, Dunst, and Sway.
 # The active wallpaper is selected through the top-level `wallpaper` symlink.
 
 {

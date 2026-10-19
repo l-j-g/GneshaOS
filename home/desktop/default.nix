@@ -7,7 +7,7 @@
     ./sway
     ./waybar.nix
     ./rofi
-    ./mako.nix
+    ./notifications.nix
     ./proxy.nix
     ./grimshot.nix
     ./cursor.nix
@@ -19,7 +19,6 @@
 
   home.packages = [
     pkgs.waybar
-    pkgs.mako
     pkgs.swaylock
     pkgs.swayidle
     pkgs.wl-clipboard

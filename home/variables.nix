@@ -60,8 +60,11 @@
   # Font size, in points, for Sway stacked and tabbed window titles.
   stackedViewFontSize = 14;
 
-  # Font size, in points, used by Kitty, Ghostty, Foot, Waybar, rofi, and mako.
+  # Font size, in points, used by Kitty, Ghostty, Foot, Waybar, rofi, and notifications.
   terminalFontSize = 16;
+
+  # Maximum toast width in pixels; shorter notifications shrink to fit.
+  notificationMaxWidth = 420;
 
   # Directory where grimshot saves screenshots. Keep this on the MooGoo media
   # drive unless you intentionally want screenshots stored elsewhere.
