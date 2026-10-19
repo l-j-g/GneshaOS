@@ -25,6 +25,17 @@ opt.wildmenu = true
 opt.wildmode = { "list:longest" }
 opt.clipboard = "unnamedplus"
 opt.swapfile = true
+opt.autoread = true
+
+-- Check external edits when returning to Neovim or entering a buffer.
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter" }, {
+    group = vim.api.nvim_create_augroup("GneshaAutoRead", { clear = true }),
+    callback = function()
+        vim.schedule(function()
+            vim.cmd("checktime")
+        end)
+    end,
+})
 
 local swap_dir = vim.fn.expand("~/.cache/nvim/swap")
 vim.fn.mkdir(swap_dir, "p")
