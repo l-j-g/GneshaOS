@@ -6,6 +6,7 @@
     ./boot.nix
     ./laptop.nix
     ./services
+    ./docker
     ./media.nix
     ./desktop.nix
     ./security.nix

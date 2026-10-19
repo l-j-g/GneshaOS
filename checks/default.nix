@@ -8,7 +8,9 @@
 }:
 
 let
-  hostCheck = parameterOverrides: hostConfiguration "cf-fv1" parameterOverrides { };
+  hostCheck = parameterOverrides: hostConfiguration "cf-fv1" parameterOverrides {
+    extraModules = [ { services.gnesha.arr.enable = true; } ];
+  };
   hostCheckProxyOff = hostCheck {
     systemSettings = {
       systemProxy.enable = false;
@@ -37,6 +39,7 @@ let
       {
         extraModules = [
           {
+            services.gnesha.arr.enable = true;
             nixpkgs.overlays = [
               (final: prev: { docker = arrDockerStub; })
             ];
@@ -109,6 +112,7 @@ let
       {
         extraModules = [
           {
+            services.gnesha.arr.enable = true;
             nixpkgs.overlays = [
               (final: prev: { docker = arrRuntimeDockerStub; })
             ];
@@ -146,6 +150,7 @@ let
   configurationCombinationChecks =
     let
       base = hostCheck null;
+      disabled = (hostConfiguration "cf-fv1" null { }).config;
       home = (homeConfiguration "cf-fv1").config;
       arrUnit = base.config.systemd.services.docker-compose;
       calcurseCondition = home.systemd.user.services.calcurse-daemon.Service.ExecCondition;
@@ -156,6 +161,13 @@ let
       dockerUnitUnset = base.config.systemd.services.docker.serviceConfig.UnsetEnvironment;
       nixDaemonUnitUnset = base.config.systemd.services.nix-daemon.serviceConfig.UnsetEnvironment;
     in
+    assert !disabled.services.gnesha.arr.enable;
+    assert !(disabled.systemd.services ? docker-compose);
+    assert !(disabled.systemd.services ? tailscale-media-serve);
+    assert !(disabled.environment.etc ? "arr/compose.json");
+    assert !(builtins.any (package: package.name == "arr") disabled.environment.systemPackages);
+    assert !(builtins.elem 8443 (disabled.networking.firewall.interfaces.${disabled.services.tailscale.interfaceName}.allowedTCPPorts or [ ]));
+    assert base.config.services.gnesha.arr.enable;
     assert base.config.services.gnesha.airvpn.enable;
     assert nixpkgs.lib.hasInfix "calcurse-daemon-enabled" calcurseCondition;
     assert nixpkgs.lib.hasInfix
