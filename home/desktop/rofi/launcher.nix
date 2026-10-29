@@ -10,7 +10,7 @@ in
   programs.rofi = {
     enable = true;
     package = pkgs.rofi;
-    terminal = variables.terminal;
+    settings.terminal = variables.terminal;
   };
   home.packages = [ launcher ];
   # Keep existing Sway bindings and the theme picker working at their old path.
