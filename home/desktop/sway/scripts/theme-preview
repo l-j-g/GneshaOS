@@ -332,7 +332,8 @@ apply_runtime() {
     # Ghostty can be launched by Sway directly or by its user service.
     # Signal every instance owned by this user, but only once its reload
     # handler is installed; older versions must not receive a fatal signal.
-    if pkill --signal USR2 --require-handler --euid "$(id -u)" --exact ghostty; then
+    # Nix wraps the binary; Linux truncates its process name to 15 bytes.
+    if pkill --signal USR2 --require-handler --euid "$(id -u)" --exact 'ghostty|\.ghostty-wrap.*'; then
         :
     else
         reloadStatus=$?

@@ -37,7 +37,7 @@ with tempfile.TemporaryDirectory(prefix='gnesha-theme-check-') as directory:
         assert 'selection-foreground = #000006\n' in output
         for i in range(16):
             assert f'palette = {i}=#{palette[16+i]}\n' in output
-        assert f'--signal USR2 --require-handler --euid {os.geteuid()} --exact ghostty' in log.read_text()
+        assert rf'--signal USR2 --require-handler --euid {os.geteuid()} --exact ghostty|\.ghostty-wrap.*' in log.read_text()
         assert ('Ghostty reload failed' in result.stderr) == (status == '2')
         notification = configparser.ConfigParser()
         notification.read(data / 'dunst-live.conf')
