@@ -308,20 +308,27 @@ apply_runtime() {
         printf '%s\n' "theme-preview: swaymsg is unavailable; window colors were not applied live" >&2
     fi
 
-    if command -v systemctl >/dev/null 2>&1; then
-        # Reload only an existing instance; do not launch a terminal here.
-        if systemctl --user is-active --quiet app-com.mitchellh.ghostty.service; then
-            if ! systemctl --user reload app-com.mitchellh.ghostty.service >/dev/null 2>&1; then
-                printf '%s\n' "theme-preview: Ghostty reload failed; its palette was written. Reload with Ctrl+Shift+," >&2
-            fi
+    # Ghostty can be launched by Sway directly or by its user service.
+    # Signal every instance owned by this user, but only once its reload
+    # handler is installed; older versions must not receive a fatal signal.
+    if pkill --signal USR2 --require-handler --euid "$(id -u)" --exact ghostty; then
+        :
+    else
+        reloadStatus=$?
+        # Exit 1 means no running instance, which needs no live update.
+        if [ "$reloadStatus" -ne 1 ]; then
+            printf '%s\n' "theme-preview: Ghostty reload failed; its palette was written. Reload with Ctrl+Shift+," >&2
         fi
+    fi
+
+    if command -v systemctl >/dev/null 2>&1; then
         # Waybar is a Home Manager user service. Restart that one service so
         # the old bar is stopped before the live stylesheet is loaded.
         if ! systemctl --user restart waybar.service >/dev/null 2>&1; then
             printf '%s\n' "theme-preview: Waybar restart failed; its stylesheet was written" >&2
         fi
     else
-        printf '%s\n' "theme-preview: systemctl is unavailable; Ghostty and Waybar files were written but not reloaded" >&2
+        printf '%s\n' "theme-preview: systemctl is unavailable; Waybar stylesheet was written but not reloaded" >&2
     fi
 }
 
