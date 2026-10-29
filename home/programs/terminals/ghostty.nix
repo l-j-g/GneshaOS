@@ -70,6 +70,10 @@ in
     }
   ];
 
+  home.activation.resetGneshaGhosttyLiveTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run rm -f ${lib.escapeShellArg "${config.xdg.configHome}/gnesha/ghostty-live.conf"}
+  '';
+
   programs.ghostty = {
     enable = true;
     settings = {
@@ -94,6 +98,8 @@ in
       "window-padding-x" = 8;
       "window-padding-y" = 8;
 
+      # The picker writes only colors here; fonts and keybindings stay declarative.
+      "config-file" = "?${config.xdg.configHome}/gnesha/ghostty-live.conf";
       background = p.base00;
       foreground = p.base05;
       "selection-foreground" = p.base06;

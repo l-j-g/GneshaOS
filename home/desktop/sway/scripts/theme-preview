@@ -207,6 +207,20 @@ color15 #${ansi0F}
 EOF
 }
 
+write_ghostty_theme() {
+    # Publish a complete palette before asking Ghostty to reload it.
+    {
+        printf 'background = #%s\nforeground = #%s\n' "$base00" "$base05"
+        printf 'selection-background = #%s\nselection-foreground = #%s\n' "$base02" "$base06"
+        index=0
+        while [ "$index" -le 15 ]; do
+            printf 'palette = %s=#%s\n' "$index" "$(palette_color "$index")"
+            index=$((index + 1))
+        done
+    } > "$gneshaDir/ghostty-live.conf.$$"
+    mv -f "$gneshaDir/ghostty-live.conf.$$" "$gneshaDir/ghostty-live.conf"
+}
+
 write_nvim_theme() {
     cat > "$gneshaDir/nvim-theme.lua" <<EOF
 return {
@@ -267,6 +281,7 @@ apply_runtime() {
     mkdir -p "$gneshaDir"
     write_rofi_theme
     write_kitty_theme
+    write_ghostty_theme
     write_nvim_theme
     write_waybar_theme
     write_shell_colors
@@ -294,13 +309,19 @@ apply_runtime() {
     fi
 
     if command -v systemctl >/dev/null 2>&1; then
+        # Reload only an existing instance; do not launch a terminal here.
+        if systemctl --user is-active --quiet app-com.mitchellh.ghostty.service; then
+            if ! systemctl --user reload app-com.mitchellh.ghostty.service >/dev/null 2>&1; then
+                printf '%s\n' "theme-preview: Ghostty reload failed; its palette was written. Reload with Ctrl+Shift+," >&2
+            fi
+        fi
         # Waybar is a Home Manager user service. Restart that one service so
         # the old bar is stopped before the live stylesheet is loaded.
         if ! systemctl --user restart waybar.service >/dev/null 2>&1; then
             printf '%s\n' "theme-preview: Waybar restart failed; its stylesheet was written" >&2
         fi
     else
-        printf '%s\n' "theme-preview: systemctl is unavailable; Waybar stylesheet was written but not reloaded" >&2
+        printf '%s\n' "theme-preview: systemctl is unavailable; Ghostty and Waybar files were written but not reloaded" >&2
     fi
 }
 
