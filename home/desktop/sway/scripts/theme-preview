@@ -221,6 +221,20 @@ write_ghostty_theme() {
     mv -f "$gneshaDir/ghostty-live.conf.$$" "$gneshaDir/ghostty-live.conf"
 }
 
+write_dunst_theme() {
+    # Layer only colors over the generated config, preserving layout/timeouts.
+    {
+        for urgency in low normal critical; do
+            border=$base0B
+            if [ "$urgency" = critical ]; then border=$base08; fi
+            printf '[urgency_%s]\n' "$urgency"
+            printf 'background = "#%s"\nforeground = "#%s"\nframe_color = "#%s"\n' \
+                "$base00" "$base05" "$border"
+        done
+    } > "$gneshaDir/dunst-live.conf.$$"
+    mv -f "$gneshaDir/dunst-live.conf.$$" "$gneshaDir/dunst-live.conf"
+}
+
 write_nvim_theme() {
     cat > "$gneshaDir/nvim-theme.lua" <<EOF
 return {
@@ -282,6 +296,7 @@ apply_runtime() {
     write_rofi_theme
     write_kitty_theme
     write_ghostty_theme
+    write_dunst_theme
     write_nvim_theme
     write_waybar_theme
     write_shell_colors
@@ -306,6 +321,12 @@ apply_runtime() {
         done
     else
         printf '%s\n' "theme-preview: swaymsg is unavailable; window colors were not applied live" >&2
+    fi
+
+    # Reload in place so notification history and pause state survive.
+    if ! dunstctl reload "${XDG_CONFIG_HOME:-$HOME/.config}/dunst/dunstrc" \
+        "$gneshaDir/dunst-live.conf" >/dev/null 2>&1; then
+        printf '%s\n' "theme-preview: Dunst reload failed; notification colors were written but not applied live" >&2
     fi
 
     # Ghostty can be launched by Sway directly or by its user service.
