@@ -12,5 +12,5 @@ jq -r --arg accent "$accent" '
   (.key | gsub("Mod4"; "Super") | gsub("Mod1"; "Alt")) as $key |
   "<b>\($key | @html)</b>  <span foreground=\"\($accent)\">[\(.mode | @html)]</span> — \(.description | @html)\u0000meta\u001f\(.command | gsub("[\\r\\n]"; " "))"
 ' "$catalog" | gnesha-rofi -dmenu -i -no-custom -markup-rows \
-  -p Keybindings -mesg 'Search shortcuts or actions • Super = Windows key • Escape closes' \
+  -p Keybirdings -mesg 'Search shortcuts or actions • Super = Windows key • Escape closes' \
   -lines 12 -theme-str 'window { width: 85%; }' >/dev/null || [[ $? == 1 ]]

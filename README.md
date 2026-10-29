@@ -93,59 +93,12 @@ A simplified tree of the main files (supporting files omitted):
 Read a `default.nix` to see what is included; follow an import to see how that
 program or component is configured.
 
-<details>
-<summary>Configuration flow diagram</summary>
-
-```mermaid
-flowchart TB
-  inputs["flake.lock + upstream inputs"] --> flake["flake.nix"]
-  params["system-parameters.nix<br/>Machine and account values"] -.-> flake
-  flake -->|NixOS output| host["hosts/cf-fv1/default.nix"]
-  flake -->|Home Manager output| home["home/default.nix"]
-  flake -.->|Validation| checks["checks/default.nix"]
-
-  subgraph system["System configuration"]
-    host --> hardware["Host hardware and services"]
-    host --> reusable["modules/<br/>Reusable NixOS behavior"]
-  end
-
-  subgraph user["User environment"]
-    home --> programs["home/programs/default.nix"]
-    home --> layers["desktop / theme / fonts<br/>shell workflows / services"]
-    programs --> plain["Standalone packages"]
-    programs --> configured["Configured program modules<br/>git.nix, ncdu.nix, …"]
-    programs --> groups["editors / shells / terminals<br/>Each has a default.nix"]
-    groups --> example["editors/nvim/default.nix<br/>Configuration + supporting files"]
-  end
-
-  preferences["home/variables.nix<br/>Editable preferences"] -.-> home
-```
-
-Solid arrows show composition; dashed arrows show parameter flow or validation.
-The system and user outputs are evaluated and activated separately. The diagram
-shows the shared defaults; optional per-host parameter and preference overrides
-are described in [the host guide](hosts/README.md).
-
-</details>
-
 For a program, follow `home/programs/default.nix` to its module. Plain packages
 are listed directly; configured programs have their own modules. Editors,
 shells and terminal emulators have natural group folders, each with a
 `default.nix`. Supporting scripts stay beside the program that owns them.
 
 For a talk walkthrough, open these in order:
-
-1. `flake.nix`: inputs and the two configuration outputs; checks are in `checks/`.
-2. `hosts/cf-fv1/default.nix`: host composition and reusable system modules.
-3. `home/default.nix`, then `home/programs/default.nix`: user layers and programs.
-4. `home/programs/editors/default.nix`, then `nvim/default.nix`: group → program.
-5. `home/programs/ncdu.nix`: a small, self-contained program configuration.
-6. `home/variables.nix`: editable preferences consumed by those modules.
-7. Evaluate the system and Home Manager derivations using
-   [the development guide](docs/development.md). Explain that evaluation does
-   not build or activate, and that system and Home Manager activation are
-   separate. A generation rollback restores configuration and packages;
-   application data has its own [recovery boundaries](docs/recovery.md).
 
 ## Features
 
