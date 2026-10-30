@@ -9,9 +9,10 @@
 - `scripts/settings.sh`: implements Rofi script mode, reads descriptions from
   `home/variables.nix`, and writes narrowly scoped literal edits.
 - `keybindings.nix` generates the shortcut catalog and packages the menu;
-  `scripts/keybindings.sh` renders it through the shared Rofi launcher.
+  `scripts/keybindings.sh` edits keys through the shared Rofi launcher;
+  `scripts/capture-key.py` records a key combination in a small Wayland window.
 - `settings-validate.nix`: uses Nix built-ins to check the proposed values and
-  ensure that only the selected preference changes. No Python is used at runtime.
+  ensure that only the selected preference changes. This Settings validator uses no Python.
 
 Open **Gnesha Settings** through the normal application launcher, or run
 `gnesha-settings`. Type to search names, descriptions, or variable names. Rows
@@ -69,13 +70,38 @@ session directory to clean up when Escape closes the menu. Only a save creates a
 candidate beside the preference file; it is removed if validation fails.
 
 Open **Gnesha Keybindings** from the launcher or press **Super+Shift+/**
-(Super+?) for a searchable shortcut reference styled like Settings. Rows come
+(Super+?) for searchable, editable shortcuts styled like Settings. Rows come
 from the effective Home Manager Sway bindings (including binding modes), with
 descriptions supplied by the structured records in
 `../sway/keybindings.nix`. Metadata is used only when it matches the effective command;
 overridden commands fall back to displaying the command. Search also matches commands.
-Enter dismisses the reference; it never executes the selected shortcut.
+Select an action, press the replacement combination, then choose **Save**.
+Escape cancels recording or closes the menu. Recording times out after 30 seconds.
+The recorder requests exclusive keyboard focus while recording.
+The small recorder uses Python/GTK; the menu and safe
+writes use shell and Nix.
+
+Key changes are saved in `../sway/keybinding-edits.nix`. They rename keys in
+Home Manager's merged `wayland.windowManager.sway.config.keybindings` and `modes`
+options, retaining the commands and descriptions from their owning modules.
+Commands are not copied into the edits file, so package updates keep working.
+The editor preserves flags, checks for conflicting keys in the same mode, and
+refuses to overwrite concurrent edits. Pressing an action's original combination
+removes its saved change; deleting its entry from the file has the same effect.
+
+Normal bindings no longer show `[default]`. Other modes remain labeled; behavior
+flags appear as descriptions such as “on release” instead of part of the keys.
+Bindings written directly in `sway-extra.conf` are outside these Nix options and
+are not listed or checked for conflicts by this editor.
 Super+Shift+K and Super+Shift+Up move a window up. The menu replaces the old
 Super+? help overlay.
-The list reflects the activated Home Manager generation. Rebuild to pick up
-source changes.
+The catalog reflects the activated Home Manager generation, with pending key
+changes overlaid immediately. Run **home-rebuild** to apply saved changes.
+The menu never rebuilds, activates, or executes the selected shortcut.
+
+The shortcut editor's checks run alongside the Settings checks in `nix flake check`.
+Run them directly without building or changing the desktop:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 checks/rofi-keybindings.py home/desktop/rofi/scripts/keybindings.sh
+```

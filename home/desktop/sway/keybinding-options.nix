@@ -1,6 +1,14 @@
 # Metadata travels with the command; Sway and the shortcut menu share it.
 { lib, ... }:
 {
+  # Transform the merged native options without copying their commands.
+  options.wayland.windowManager.sway.config = lib.mkOption {
+    apply = import ./keybinding-remap.nix {
+      inherit lib;
+      edits = import ./keybinding-edits.nix;
+    };
+  };
+
   options.gnesha.keybindings = lib.mkOption {
     default = { };
     type = lib.types.attrsOf (

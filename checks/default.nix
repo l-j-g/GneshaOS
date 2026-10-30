@@ -270,6 +270,7 @@ let
         touch "$out"
       '';
   settingsEditorCheck =
+    assert import ./keybindings.nix { lib = checkPkgs.lib; };
     checkPkgs.runCommand "gnesha-settings-editor-check"
       {
         nativeBuildInputs = [
@@ -292,6 +293,7 @@ let
         export HOME="$TMPDIR/home" NIX_STATE_DIR="$TMPDIR/state"
         mkdir -p "$HOME" "$NIX_STATE_DIR"
         PYTHONDONTWRITEBYTECODE=1 python3 checks/rofi-settings.py home/desktop/rofi/scripts/settings.sh
+        PYTHONDONTWRITEBYTECODE=1 python3 checks/rofi-keybindings.py home/desktop/rofi/scripts/keybindings.sh
         touch "$out"
       '';
   desktopHelperStubCheck =
