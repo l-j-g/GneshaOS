@@ -10,13 +10,24 @@ let
   sway = config.wayland.windowManager.sway.config;
   documented = config.gnesha.keybindings;
   edits = import ../sway/keybinding-edits.nix;
+  # Index replacements once per mode so catalog rows can recover their source key.
+  reverseKeys =
+    changes:
+    builtins.listToAttrs (
+      lib.mapAttrsToList (name: value: {
+        name = value;
+        value = name;
+      }) changes
+    );
+  originalKeys = reverseKeys edits.keybindings;
+  originalModeKeys = lib.mapAttrs (_: reverseKeys) edits.modes;
   rowsFor =
     mode: bindings:
     lib.mapAttrsToList (
       key: command:
       let
-        changes = if mode == "default" then edits.keybindings else edits.modes.${mode} or { };
-        original = lib.findFirst (name: changes.${name} == key) key (builtins.attrNames changes);
+        originals = if mode == "default" then originalKeys else originalModeKeys.${mode} or { };
+        original = originals.${key} or key;
       in
       {
         inherit key command mode;
@@ -32,28 +43,7 @@ let
             command;
       }
     ) (lib.filterAttrs (_: command: command != null) bindings);
-  capturePython = pkgs.python3.withPackages (p: [ p.pygobject3 ]);
-  capture = pkgs.stdenvNoCC.mkDerivation {
-    pname = "gnesha-capture-key";
-    version = "1";
-    dontUnpack = true;
-    nativeBuildInputs = [
-      pkgs.wrapGAppsHook4
-      pkgs.gobject-introspection
-    ];
-    buildInputs = [
-      pkgs.gtk4
-      pkgs.gtk4-layer-shell
-    ];
-    installPhase = ''
-      runHook preInstall
-      mkdir -p "$out/bin"
-      makeWrapper ${capturePython}/bin/python3 "$out/bin/gnesha-capture-key" \
-        --add-flags ${./scripts/capture-key.py} \
-        --prefix LD_PRELOAD : ${pkgs.gtk4-layer-shell}/lib/libgtk4-layer-shell.so
-      runHook postInstall
-    '';
-  };
+  capture = import ./capture-key.nix { inherit pkgs; };
   menuConfig = pkgs.writeText "gnesha-keybindings.json" (
     builtins.toJSON ({
       repo = params.systemSettings.flakePath;
