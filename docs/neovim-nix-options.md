@@ -1,7 +1,19 @@
 # Nix option documentation in Neovim
 
 Use `K` on an option for nixd's hover documentation. Press `K` again to enter
-that window and scroll it. Defaults appear when nixd supplies them.
+that window and scroll it. Both hover and completion documentation include a
+**Default** section supplied by the local nixd option-description helper.
+
+Scalar defaults are evaluated in the selected flake configuration. For example,
+`programs.direnv.enableFishIntegration` shows `true`, followed by its documented
+reference to `home.shell.enableFishIntegration`. This is the option default,
+not necessarily its configured value. Complex defaults use `defaultText` when
+provided; otherwise they get a depth-limited preview. Failed default evaluation
+is marked unavailable. The helper changes only the descriptions supplied to
+nixd and leaves module configuration and completion snippets intact.
+
+After rebuilding, restart Neovim (or its nixd client) to load the descriptions.
+They use saved flake contents, so unsaved edits are excluded.
 
 Completion suggestions show their kind and source in a bordered menu, beside a
 bordered documentation panel. Use `Ctrl-d` and `Ctrl-f` to scroll that panel,
