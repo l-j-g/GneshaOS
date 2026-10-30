@@ -400,7 +400,8 @@ case "${1:-}" in
         kitty --class gnesha-theme-preview --title "$previewTitle" "$0" --terminal "$stateFile" >/dev/null 2>&1 &
         previewPid=$!
         # The rule in sway-extra.conf makes this a floating window. Place it
-        # on the right side of the focused output after Kitty maps it.
+        # on the right side of the focused output after Kitty maps it. Output
+        # rectangles use global coordinates, so the move must be absolute.
         if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
             outputRect=""
             attempt=0
@@ -429,7 +430,7 @@ EOF
                 previewX=$((outputX + outputWidth - previewWidth - 40))
                 previewY=$((outputY + 80))
                 [ "$previewX" -lt "$outputX" ] && previewX=$outputX
-                swaymsg "[title=\"$previewTitle\"] resize set $previewWidth $previewHeight, move position $previewX $previewY" >/dev/null 2>&1 || true
+                swaymsg "[title=\"$previewTitle\"] resize set $previewWidth $previewHeight, move absolute position $previewX $previewY" >/dev/null 2>&1 || true
             fi
             if [ "$attempt" -ge 20 ]; then
                 [ -z "$previewPid" ] || kill "$previewPid" >/dev/null 2>&1 || true
