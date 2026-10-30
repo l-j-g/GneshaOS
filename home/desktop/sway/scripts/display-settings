@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Keep one owner of the temporary layout and of daemon restoration.
+exec 9>"${XDG_RUNTIME_DIR:?}/gnesha-display-settings.lock"
+if ! flock -n 9; then
+  notify-send "Displays" "Display settings are already open."
+  exit 0
+fi
+
+restore=0
+gui_pid=""
+cleanup() {
+  result=$?
+  trap - EXIT
+  if [ -n "$gui_pid" ]; then
+    kill "$gui_pid" 2>/dev/null || true
+    wait "$gui_pid" 2>/dev/null || true
+  fi
+  if [ "$restore" = 1 ] && ! systemctl --user start way-displays.service; then
+    notify-send -u critical "Displays" "Could not restore automatic layout. Run: systemctl --user start way-displays.service" || true
+    result=1
+  fi
+  exit "$result"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+if systemctl --user is-active --quiet way-displays.service; then
+  restore=1
+  systemctl --user stop way-displays.service
+fi
+
+notify-send "Displays" "Keep this window open during your presentation. Closing it restores automatic display management." || true
+wdisplays &
+gui_pid=$!
+wait "$gui_pid"
+gui_pid=""
