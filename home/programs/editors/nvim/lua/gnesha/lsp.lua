@@ -1,5 +1,6 @@
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 local nixd = require("gnesha.nixd")
+require("gnesha.option-info").setup()
 
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup("UserLspAttach", { clear = true }),
@@ -10,7 +11,12 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
     map("gd", vim.lsp.buf.definition, "Go to definition")
     map("gr", vim.lsp.buf.references, "References")
-    map("K", vim.lsp.buf.hover, "Hover documentation")
+    map("K", function()
+      vim.lsp.buf.hover({ border = "rounded", max_width = 90, max_height = 30 })
+    end, "Hover documentation")
+    if vim.bo[ev.buf].filetype == "nix" then
+      map("<leader>nv", "<cmd>NixOption<CR>", "Nix option default and evaluated value")
+    end
     map("<leader>rn", vim.lsp.buf.rename, "Rename symbol")
     map("<leader>ca", vim.lsp.buf.code_action, "Code action")
     map("<leader>lf", vim.lsp.buf.format, "Format buffer")
