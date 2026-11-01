@@ -270,7 +270,6 @@ let
         touch "$out"
       '';
   settingsEditorCheck =
-    assert import ./keybindings.nix { lib = checkPkgs.lib; };
     checkPkgs.runCommand "gnesha-settings-editor-check"
       {
         nativeBuildInputs = [

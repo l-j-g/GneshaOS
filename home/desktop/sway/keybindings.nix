@@ -1,7 +1,9 @@
 # Sway keybindings, mirroring Manjaro Sway's modes/default with the agreed
 # deviations (btop via task manager, stacking kept on Mod+s, etc.).
 #
-# Invoked from sway.nix with the shared variables.
+# Edit the key on the left and the category, description, and command below.
+# sway.nix assigns this structure to gnesha.keybindings, then projects each
+# binding.command into Sway. Rofi uses the same metadata for its reference.
 {
   mod,
   termCwd,
