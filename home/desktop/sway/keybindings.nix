@@ -165,8 +165,9 @@ in
   # Layout
   "Mod1+j" = bind "Layout" "Split horizontally" "splith";
   "Mod1+k" = bind "Layout" "Split vertically" "splitv";
-  "${m}+s" = bind "Action" "Layout stacking" "layout stacking";
-  "${m}+w" = bind "Action" "Layout tabbed" "layout tabbed";
+  # Isolate the focused window so siblings stay beside its new stack or tabs.
+  "${m}+s" = bind "Layout" "Stack focused window" "split v; layout stacking";
+  "${m}+w" = bind "Layout" "Tab focused window" "split v; layout tabbed";
   "${m}+e" = bind "Action" "Layout toggle split" "layout toggle split";
 
   # Fullscreen

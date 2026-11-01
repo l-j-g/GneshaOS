@@ -24,3 +24,7 @@ category and the command as their explanation when no metadata is available.
 
 After editing, run the usual Home Manager rebuild to apply the configuration.
 There is no separate remapping file or menu save step.
+
+**Super+s** starts a stack around the focused window; **Super+w** starts a
+tabbed container around it. Other windows stay beside that container. New
+windows opened while it is focused join its stack or tabs.
