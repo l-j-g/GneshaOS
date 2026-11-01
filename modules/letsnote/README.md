@@ -14,8 +14,10 @@ Linux exposes each channel as 50 steps of 2% control. These are requests,
 not measured RPM. The controller requires both channels and the SEN6/CPU
 sensors; every sensor discovered at startup must remain readable.
 
-The hottest monitored SEN, CPU, or ACPI sensor selects the same request for
-both fan channels, regardless of power source:
+The hottest monitored SEN, CPU, or ACPI sensor except SEN6 selects the same
+request for both fan channels, regardless of power source. SEN6 remains required
+and logged, and participates in the startup refusal and 65C firmware fallback,
+but does not select normal fan speed while charging or on battery:
 
 | Temperature | Request |
 | --- | --- |

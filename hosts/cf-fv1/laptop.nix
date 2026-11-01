@@ -20,7 +20,7 @@
   letsnote.ecFeatures = true;
   # CPU performance caps reduce heat independently of the fan policy.
   letsnote.cpuPower = true;
-  # Use the trialled temperature curve, including SEN6 while charging.
+  # Use the trialled temperature curve, keeping SEN6 for safety checks only.
   # The controller restores firmware control on errors or at 65C.
   letsnote.fanControl = true;
   # Remap the dead JIS keys (無変換/変換/かな) to something useful

@@ -43,6 +43,11 @@ def read_temperatures(sensors):
     return values
 
 
+def fan_temperature(values):
+    # SEN6 remains monitored for startup refusal and the firmware safety cutoff.
+    return max(value for name, value in values.items() if name != "SEN6")
+
+
 def target_state(temperature):
     return next(state for lower, state in reversed(CURVE) if temperature >= lower)
 
@@ -85,7 +90,7 @@ def control(sensors, fans):
         if max(values.values()) >= 60:
             raise RuntimeError("Already warm; leaving firmware in control")
         paths = [path for path, _ in fans]
-        state = target_state(max(values.values()))
+        state = target_state(fan_temperature(values))
         cool_since = None
         set_fans(paths, state)
         acpi("SEFM 0x01")
@@ -98,7 +103,7 @@ def control(sensors, fans):
             if hottest >= 65:
                 print("65C cutoff reached; returning to firmware until restarted", flush=True)
                 return
-            requested, cool_since = next_state(hottest, state, cool_since, now)
+            requested, cool_since = next_state(fan_temperature(values), state, cool_since, now)
             if requested != state:
                 set_fans(paths, requested)
                 state = requested
