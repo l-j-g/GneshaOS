@@ -53,26 +53,26 @@ class FanChecks(unittest.TestCase):
             self.assertEqual([p.read_text().strip() for p in paths], ["0", "0"])
 
     def test_hot_or_failed_monitor_restores_firmware(self):
-        for temperatures in [{"SEN6": 65}, OSError("sensor lost")]:
+        for temperatures in [{"TCPU": 65}, OSError("sensor lost")]:
             commands = []
             with tempfile.TemporaryDirectory() as directory:
                 paths = [Path(directory) / name for name in ["TFN1", "TFN2"]]
                 for p in paths:
                     p.write_text("0")
-                readings = [{"SEN6": 35}]
+                readings = [{"TCPU": 35}]
                 if isinstance(temperatures, Exception):
                     readings.append(temperatures)
                 else:
-                    readings.append(temperatures)
+                    readings.extend([temperatures, {"TCPU": 60}, {"TCPU": 59}, OSError("stop after resume")])
                 with patch.object(fan, "read_temperatures", side_effect=readings), \
                      patch.object(fan, "acpi", side_effect=lambda cmd: commands.append(cmd) or 0), \
-                     patch.object(fan, "notify"):
-                    if isinstance(temperatures, Exception):
-                        with self.assertRaises(OSError):
-                            fan.control({}, list(zip(paths, [0, 0])))
-                    else:
+                     patch.object(fan, "notify"), patch.object(fan.time, "sleep"):
+                    with self.assertRaises(OSError):
                         fan.control({}, list(zip(paths, [0, 0])))
-                self.assertEqual(commands, ["SEFM 0x01", "SEFM 0x00", "CEFM"])
+                expected = ["SEFM 0x01", "SEFM 0x00", "CEFM"]
+                if not isinstance(temperatures, Exception):
+                    expected += ["SEFM 0x01", "SEFM 0x00", "CEFM"]
+                self.assertEqual(commands, expected)
                 self.assertEqual([p.read_text().strip() for p in paths], ["0", "0"])
 
 

@@ -10,6 +10,16 @@ import time
 EC = r"\_SB.PC00.LPCB.EC0"
 CALL = Path("/proc/acpi/call")
 THERMAL = Path("/sys/class/thermal")
+EXCLUDED_SENSOR = "SEN6"
+REQUIRED_SENSOR = "x86_pkg_temp"
+SENSOR_PREFIXES = ("SEN", "TCPU", "acpitz", "x86_pkg")
+FAN_CHANNELS = {"TFN1", "TFN2"}
+FIRMWARE_COMMAND = "SEFM 0x00"
+MANUAL_COMMAND = "SEFM 0x01"
+MODE_QUERY = "CEFM"
+MANUAL_RESUME_C = 60
+FIRMWARE_CUTOFF_C = 65
+POLL_SECONDS = 2
 # ACPI control levels, not measured percentages of maximum RPM.
 CURVE = [(float("-inf"), 10), (40, 15), (45, 20), (50, 25), (55, 35), (60, 50)]
 
@@ -44,8 +54,7 @@ def read_temperatures(sensors):
 
 
 def fan_temperature(values):
-    # SEN6 remains monitored for startup refusal and the firmware safety cutoff.
-    return max(value for name, value in values.items() if name != "SEN6")
+    return max(values.values())
 
 
 def target_state(temperature):
@@ -76,10 +85,10 @@ def set_fans(paths, state):
 
 
 def restore(fans=()):
-    acpi("SEFM 0x00")
+    acpi(FIRMWARE_COMMAND)
     for path, previous in fans:
         path.write_text(f"{previous}\n")
-    if acpi("CEFM") != 0:
+    if acpi(MODE_QUERY) != 0:
         raise RuntimeError("Firmware mode readback failed")
     print("Restored firmware fan mode (CEFM=0)", flush=True)
 
@@ -87,22 +96,35 @@ def restore(fans=()):
 def control(sensors, fans):
     try:
         values = read_temperatures(sensors)
-        if max(values.values()) >= 60:
+        if max(values.values()) >= MANUAL_RESUME_C:
             raise RuntimeError("Already warm; leaving firmware in control")
         paths = [path for path, _ in fans]
         state = target_state(fan_temperature(values))
         cool_since = None
         set_fans(paths, state)
-        acpi("SEFM 0x01")
+        acpi(MANUAL_COMMAND)
         notify("READY=1")
         report_at = 0
         while True:
             values = read_temperatures(sensors)
             hottest = max(values.values())
             now = time.monotonic()
-            if hottest >= 65:
-                print("65C cutoff reached; returning to firmware until restarted", flush=True)
-                return
+            if hottest >= FIRMWARE_CUTOFF_C:
+                print(f"{FIRMWARE_CUTOFF_C}C cutoff reached; returning to firmware", flush=True)
+                restore(fans)
+
+                while hottest >= MANUAL_RESUME_C:
+                    notify("WATCHDOG=1")
+                    time.sleep(POLL_SECONDS)
+                    values = read_temperatures(sensors)
+                    hottest = max(values.values())
+
+                state = target_state(fan_temperature(values))
+                cool_since = None
+                set_fans(paths, state)
+                acpi(MANUAL_COMMAND)
+                print(f"Below {MANUAL_RESUME_C}C; resumed manual fan control", flush=True)
+                continue
             requested, cool_since = next_state(fan_temperature(values), state, cool_since, now)
             if requested != state:
                 set_fans(paths, requested)
@@ -113,7 +135,7 @@ def control(sensors, fans):
                 ), flush=True)
                 report_at = now + 30
             notify("WATCHDOG=1")
-            time.sleep(2)
+            time.sleep(POLL_SECONDS)
     finally:
         restore(fans)
 
@@ -122,19 +144,19 @@ def discover():
     sensors = {}
     for directory in THERMAL.glob("thermal_zone*"):
         name = (directory / "type").read_text().strip()
-        if name.startswith(("SEN", "TCPU", "acpitz", "x86_pkg")):
+        if name != EXCLUDED_SENSOR and name.startswith(SENSOR_PREFIXES):
             sensors[name] = directory / "temp"
-    if not {"SEN6", "x86_pkg_temp"}.issubset(sensors):
-        raise RuntimeError("Required SEN6/CPU sensors unavailable")
+    if REQUIRED_SENSOR not in sensors:
+        raise RuntimeError("Required CPU sensor unavailable")
     fans = {}
     for directory in THERMAL.glob("cooling_device*"):
         name = (directory / "type").read_text().strip()
-        if name in ("TFN1", "TFN2"):
+        if name in FAN_CHANNELS:
             if int((directory / "max_state").read_text()) != 50:
                 raise RuntimeError(f"Unexpected fan scale: {name}")
             path = directory / "cur_state"
             fans[name] = (path, int(path.read_text()))
-    if set(fans) != {"TFN1", "TFN2"}:
+    if set(fans) != FAN_CHANNELS:
         raise RuntimeError("Both fan channels required")
     return sensors, list(fans.values())
 
@@ -165,7 +187,7 @@ def main():
             if time.monotonic() >= deadline:
                 raise
             time.sleep(1)
-    if acpi("CEFM") != 0:
+    if acpi(MODE_QUERY) != 0:
         raise RuntimeError("EC already in non-default fan mode")
     control(sensors, fans)
 
