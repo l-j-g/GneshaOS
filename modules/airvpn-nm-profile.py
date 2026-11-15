@@ -140,7 +140,7 @@ def keyfile_lines(profile_path, autostart=False):
     )
     lines = [
         "[connection]",
-        "id=AirVPN",
+        "id=Americas",
         "uuid=" + str(uuid.uuid5(uuid.NAMESPACE_URL, "gneshaos-airvpn-host")),
         "type=wireguard",
         "interface-name=airvpn-wg",

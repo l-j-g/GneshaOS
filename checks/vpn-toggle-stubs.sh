@@ -14,12 +14,12 @@ cat >> "$work/bin/nmcli" <<'STUB'
 printf '%s\n' "$*" >> "$NMCLI_LOG"
 case "$*" in
   'general status') exit 0 ;;
-  '--terse --fields NAME connection show') printf 'AirVPN\n' ;;
-  '--terse --fields NAME connection show --active')
+  '--terse --fields UUID connection show') printf '60d25a7b-a0a9-56c7-8a6d-ea7ea3061f65\n' ;;
+  '--terse --fields UUID connection show --active')
     if [[ $ACTIVE_QUERY_FAIL == 1 ]]; then exit 1; fi
     printf '\n'
     ;;
-  'connection up id AirVPN'|'connection down id AirVPN') exit 0 ;;
+  'connection up uuid 60d25a7b-a0a9-56c7-8a6d-ea7ea3061f65'|'connection down uuid 60d25a7b-a0a9-56c7-8a6d-ea7ea3061f65') exit 0 ;;
   *) echo "unexpected nmcli call: $*" >&2; exit 2 ;;
 esac
 STUB
@@ -40,7 +40,7 @@ if bash "$helper" toggle > "$work/toggle.json" 2>/dev/null; then
   exit 1
 fi
 jq -e '.class == "failed"' "$work/toggle.json" >/dev/null
-if grep -Eq '^connection (up|down) id AirVPN$' "$NMCLI_LOG"; then
+if grep -Eq '^connection (up|down) uuid 60d25a7b-a0a9-56c7-8a6d-ea7ea3061f65$' "$NMCLI_LOG"; then
   echo 'toggle changed the connection despite not knowing its current state' >&2
   exit 1
 fi

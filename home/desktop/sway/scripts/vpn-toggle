@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Show the AirVPN NetworkManager and WireGuard status for Waybar.
+# Show the Americas VPN NetworkManager and WireGuard status for Waybar.
 set -uo pipefail
 
-connection="AirVPN"
+connection="60d25a7b-a0a9-56c7-8a6d-ea7ea3061f65"
 interface="airvpn-wg"
 handshake_max_age=180
 
@@ -17,7 +17,7 @@ nmcli_bounded() {
 
 is_active() {
   local active_connections
-  if ! active_connections=$(nmcli_bounded --terse --fields NAME connection show --active 2>/dev/null); then
+  if ! active_connections=$(nmcli_bounded --terse --fields UUID connection show --active 2>/dev/null); then
     return 2
   fi
   printf '%s\n' "$active_connections" \
@@ -30,12 +30,12 @@ status() {
     emit "󰒄" "unavailable" "NetworkManager unavailable"
     return
   fi
-  if ! connections=$(nmcli_bounded --terse --fields NAME connection show 2>/dev/null); then
+  if ! connections=$(nmcli_bounded --terse --fields UUID connection show 2>/dev/null); then
     emit "󰒄" "unavailable" "Could not read NetworkManager connections"
     return
   fi
   if ! printf '%s\n' "$connections" | grep --fixed-strings --line-regexp --quiet "$connection"; then
-    emit "󰒄" "unavailable" "AirVPN connection is not configured"
+    emit "󰒄" "unavailable" "Americas VPN connection is not configured"
     return
   fi
   if is_active; then
@@ -45,47 +45,47 @@ status() {
     if (( active_result == 2 )); then
       emit "󰒄" "unavailable" "Could not read active NetworkManager connections"
     else
-      emit "󰒄" "stopped" "AirVPN is stopped; host traffic uses direct routes"
+      emit "󰒄" "stopped" "Americas VPN is stopped; host traffic uses direct routes"
     fi
     return
   fi
 
   if ! state=$(nmcli_bounded --terse --fields GENERAL.STATE device show "$interface" 2>/dev/null); then
-    emit "󰒃" "active-unverified" "AirVPN active; interface state could not be read"
+    emit "󰒃" "active-unverified" "Americas VPN active; interface state could not be read"
     return
   fi
   case "$state" in
     "40 (connecting)"|"50 (connecting (IP configuration))"|"70 (connecting (getting IP configuration))")
-      emit "󰒃" "starting" "AirVPN is starting"
+      emit "󰒃" "starting" "Americas VPN is starting"
       return
       ;;
     "120 (failed)")
-      emit "󰒄" "failed" "AirVPN interface failed"
+      emit "󰒄" "failed" "Americas VPN interface failed"
       return
       ;;
   esac
 
   if ! output=$(timeout 3s sudo -n "${WG_BIN:-/run/current-system/sw/bin/wg}" show "$interface" latest-handshakes 2>/dev/null); then
-    emit "󰒃" "active-unverified" "AirVPN active; handshake status unavailable"
+    emit "󰒃" "active-unverified" "Americas VPN active; handshake status unavailable"
     return
   fi
   latest=$(awk '$1 == "" { next } $2 > newest { newest = $2 } END { print newest + 0 }' <<< "$output")
   if (( latest == 0 )); then
-    emit "󰒃" "active-unverified" "AirVPN active; no peer handshake recorded"
+    emit "󰒃" "active-unverified" "Americas VPN active; no peer handshake recorded"
     return
   fi
   now=$(date +%s)
   if (( now - latest <= handshake_max_age )); then
-    emit "󰒃" "healthy" "AirVPN handshake received within ${handshake_max_age}s"
+    emit "󰒃" "healthy" "Americas VPN handshake received within ${handshake_max_age}s"
   else
-    emit "󰒃" "active-unverified" "AirVPN active; last handshake is stale"
+    emit "󰒃" "active-unverified" "Americas VPN active; last handshake is stale"
   fi
 }
 
 toggle() {
   if is_active; then
-    if ! nmcli_bounded connection down id "$connection"; then
-      emit "󰒄" "failed" "Could not disconnect AirVPN"
+    if ! nmcli_bounded connection down uuid "$connection"; then
+      emit "󰒄" "failed" "Could not disconnect Americas VPN"
       return 1
     fi
   else
@@ -94,8 +94,8 @@ toggle() {
       emit "󰒄" "failed" "Could not read active NetworkManager connections; connection was not changed"
       return 1
     fi
-    if ! nmcli_bounded connection up id "$connection"; then
-      emit "󰒄" "failed" "Could not connect AirVPN; check NetworkManager details"
+    if ! nmcli_bounded connection up uuid "$connection"; then
+      emit "󰒄" "failed" "Could not connect Americas VPN; check NetworkManager details"
       return 1
     fi
   fi

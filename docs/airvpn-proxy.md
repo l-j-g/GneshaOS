@@ -3,7 +3,7 @@
 The host and Docker have separate controls:
 
 - `systemSettings.airVpn` configures the native host WireGuard service.
-  The profile is imported as a NetworkManager connection named `AirVPN`, so
+  The profile is imported as a NetworkManager connection named `Americas`, so
   it can be selected from `nmtui` or the Waybar VPN toggle. With
   `systemSettings.airVpn.enable = true`, the profile is loaded but its
   connection autoconnect remains disabled unless `airVpn.autostart` is
@@ -56,13 +56,24 @@ path, rebuild and activate the system configuration, then load the connection
 with `sudo systemctl restart airvpn-networkmanager-profile`. The importer only
 loads the connection; it does not activate the tunnel. Restarting the loader
 disconnects an active AirVPN session. Use `nmtui` to select and activate
-`AirVPN`, or use the Waybar toggle.
+`Americas`, or use the Waybar toggle.
 
 Do not put profile contents in the repository or Nix store. The current
 `nz.conf` has the same WireGuard device identity as the Docker Gluetun profile.
 It can be listed in NetworkManager, but do not connect both tunnels
 simultaneously until a separate AirVPN device profile has been registered and
 installed. Keep the host tunnel disconnected during route changes.
+
+The managed host connection is named `Americas` because its current
+profile selects `america3.vpn.airdns.org`, a regional endpoint rather than a
+fixed country. Waybar selects it by its stable UUID, independently of its name.
+
+The saved `New Zealand` and `Worldwide` NetworkManager connections were imported
+from the private `~/.config/airvpn/profiles/new-zealand.conf` and
+`all-servers.conf` files. Both have autoconnect disabled. The misleading `nz`
+connection and redundant host import were removed; private source files remain
+outside the repository. Select a region through `nmtui`; the Waybar toggle
+continues to control the managed `Americas` connection.
 
 ## Runtime data
 
