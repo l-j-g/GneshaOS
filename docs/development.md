@@ -94,6 +94,7 @@ but several of them change live state:
 | `retest` | Build and activate a temporary NixOS test generation |
 | `rebuild-boot` | Set a new NixOS boot generation |
 | `rebuild` | Build both outputs from one source snapshot, then activate both |
+| `rebuild-update` | Update all flake inputs, then run the same rebuild workflow |
 | `activation-list` / `activation-resume ID` / `activation-discard ID` | Inspect, retry, or explicitly discard a saved activation attempt |
 | `update-status` | Show background build status |
 | `update-review` | Review the prepared lock and system package diff |
@@ -105,6 +106,14 @@ Manager outputs from one snapshot, then activates both. `home-rebuild` changes
 only Home Manager. `nixgc` runs `sudo nix-collect-garbage -d`, which deletes
 unreferenced store paths and old generations; use it only when you intend to
 remove those rollback roots.
+
+`rebuild` keeps the existing pins in `flake.lock`. `rebuild-update` first runs
+`nix flake update` for all inputs under the shared activation lock, including
+the Neovim base. It stops if updating fails; a later build failure leaves the
+updated lockfile for review and retry. Nix shows input revision/fetch output;
+both builds use nix-output-monitor, with separate update, planning, system,
+and Home Manager phase messages. The background updater already includes all
+flake inputs as well. Updating Neovim receives its maintainer's plugin pins.
 
 `rebuild` freezes one source snapshot and builds both NixOS and Home Manager
 before activating either. Long builds run outside the shared activation lock.
@@ -125,7 +134,8 @@ To use updated rebuild helpers before Home Manager has installed them, run
 and freezes that checkout as the build input. This is an activating rebuild,
 with the same approval, locking, and stale-source checks as the installed helper;
 stop older rebuild attempts before using it. After a successful run, the normal
-`rebuild` command uses the newly installed helpers.
+`rebuild` command uses the newly installed helpers. Pass `--update` to the
+bootstrap script to update all inputs before that first rebuild.
 
 Theme picker sessions also take a short user-state lock so previews are
 serialized. Preference writes use the shared activation lock, then replace
