@@ -40,6 +40,7 @@ refresh() {
 # Fresh login: no state directory exists yet. Zero upgrades must be two numbers.
 refresh
 [[ $(stat -c %a "$state") == 700 ]]
+[[ -e "$HOME/.local/state/gnesha-activation/activation.lock" ]]
 [[ $(cat "$state/refreshed/count") == '0 0' ]]
 [[ $(cat "$state/refreshed/system-path") == /fixture/closure ]]
 [[ $(cat "$state/refreshed/home-path") == /fixture/closure ]]

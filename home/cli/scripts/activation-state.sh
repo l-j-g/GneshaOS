@@ -249,6 +249,7 @@ activation_build_pair() {
     fi
   fi
   if [[ ! -e "$activation_dir/system" ]]; then
+    printf '\nBuilding NixOS with nix-output-monitor…\n'
     activation_set_phase building_system
     if GNESHA_BUILD_LOG="$activation_dir/system-build.jsonl" GNESHA_BUILD_AS_ROOT="$activation_build_as_root" \
       activation_run_logged_tty "${BUILD_MONITOR_COMMAND:-gnesha-build-monitor}" build \
@@ -272,6 +273,7 @@ activation_build_pair() {
   fi
 
   if [[ ! -e "$activation_dir/home" ]]; then
+    printf '\nBuilding Home Manager with nix-output-monitor…\n'
     activation_set_phase building_home
     if GNESHA_BUILD_LOG="$activation_dir/home-build.jsonl" GNESHA_BUILD_AS_ROOT="$activation_build_as_root" \
       activation_run_logged_tty "${BUILD_MONITOR_COMMAND:-gnesha-build-monitor}" build \
