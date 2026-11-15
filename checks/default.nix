@@ -253,7 +253,6 @@ let
         fish ${./nix-workflow-status.fish} ${../home/cli/scripts/nix-workflow.fish}
         bash ${./activation-helper-stubs.sh} ${../home/cli/scripts/activation-state.sh}
         bash ${./rebuild-cache-stubs.sh} ${../home/cli/scripts/activation-state.sh}
-        bash ${./rebuild-update-stubs.sh} ${../home/cli/scripts/gnesha-rebuild} ${../home/cli/scripts/activation-state.sh}
         bash ${./build-monitor-stubs.sh} ${../home/cli/scripts/build-monitor}
         bash ${./lock-refresh-stubs.sh} ${../hosts/cf-fv1/services/scripts/lock-refresh.sh}
         bash ${./update-network-readiness-stubs.sh} ${../hosts/cf-fv1/services/update-network-ready.sh}

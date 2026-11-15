@@ -17,13 +17,12 @@ activation_lock="$HOME/.local/state/gnesha-activation/activation.lock"
 install -d -m 0700 "$state"
 exec 9>"$state/lock"
 flock -n 9 || exit 0
-# Always participate, including a fresh login before the first rebuild has
-# created its lock. Otherwise this refresh could race rebuild-update.
-install -d -m 0700 "$(dirname -- "$activation_lock")"
-exec 8>"$activation_lock"
-if ! flock -n 8; then
-  echo "A rebuild is in progress; skipping lock refresh." >&2
-  exit 0
+if [ -e "$activation_lock" ]; then
+  exec 8>"$activation_lock"
+  if ! flock -n 8; then
+    echo "A rebuild is in progress; skipping lock refresh." >&2
+    exit 0
+  fi
 fi
 candidate=""
 cleanup() {

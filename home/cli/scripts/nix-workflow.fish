@@ -22,14 +22,6 @@ function rebuild
     gnesha-rebuild $argv
 end
 
-function rebuild-update --description "Update all flake inputs, then build and activate with nom"
-    if test (count $argv) -ne 0
-        echo "Usage: rebuild-update"
-        return 2
-    end
-    gnesha-rebuild --update
-end
-
 function activation-list
     if test (count $argv) -ne 0
         echo "Usage: activation-list"

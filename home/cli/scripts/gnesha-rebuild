@@ -1,43 +1,30 @@
-update_inputs=false
 case "$#" in
   0) ;;
   1)
     case "$1" in
       --list) activation_list; exit 0 ;;
-      --update) update_inputs=true ;;
-      *) echo "Usage: gnesha-rebuild [--update | --list | --resume ID | --discard ID]" >&2; exit 2 ;;
+      *) echo "Usage: gnesha-rebuild [--list | --resume ID | --discard ID]" >&2; exit 2 ;;
     esac
     ;;
   2)
     case "$1" in
       --resume) activation_resume "$2" "$hostName" "$homeProfile"; exit $? ;;
       --discard) activation_discard "$2"; exit $? ;;
-      *) echo "Usage: gnesha-rebuild [--update | --list | --resume ID | --discard ID]" >&2; exit 2 ;;
+      *) echo "Usage: gnesha-rebuild [--list | --resume ID | --discard ID]" >&2; exit 2 ;;
     esac
     ;;
-  *) echo "Usage: gnesha-rebuild [--update | --list | --resume ID | --discard ID]" >&2; exit 2 ;;
+  *) echo "Usage: gnesha-rebuild [--list | --resume ID | --discard ID]" >&2; exit 2 ;;
 esac
 
 # Stale login environments must not make recovery depend on Docker.
 unset http_proxy https_proxy all_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY
-# Serialize lock updates and snapshot creation with the background updater.
-activation_lock
-if [[ "$update_inputs" == true ]]; then
-  printf '\nUpdating all flake inputs (fetching latest revisions)…\n'
-  if ! "${NIX_COMMAND:-nix}" flake update --flake "$flakePath"; then
-    echo "Input update failed; no build or activation was started." >&2
-    activation_unlock
-    exit 1
-  fi
-fi
-printf '\nPreparing the frozen build plan (fetching and evaluation may take a while)…\n'
 # Freeze the input once: neither edits nor the background updater can
 # change what gets activated between these two builds.
 if ! snapshot=$("${NIX_COMMAND:-nix}" flake metadata --json --no-write-lock-file "$flakePath" | jq -er .path); then
   echo "Could not freeze the flake input; no activation was started." >&2
-  activation_unlock
   exit 1
 fi
+activation_lock
 activation_create rebuild "$snapshot" "$flakePath"
 activation_unlock
 activation_build_pair "$hostName" "$homeProfile" || exit "$?"
